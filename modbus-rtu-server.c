@@ -480,17 +480,24 @@ void *robotThread(void *vargp)
 {
   uint16_t position=0, control=0;
   int rc;
+  int rewrite = 1;
   while (1)
   {
     //printf("%s %s\n", __FUNCTION__, "Processing Robotic");
-    if(position != robotRegister_sent[0])
+    if(position != robotRegister_sent[0] || (rewrite == 1))
     {
       position = robotRegister_sent[0];
       modbus_set_response_timeout(modbus_rtu_robot_ctx, ROBOT_WRITE_TIMEOUT_S, ROBOT_WRITE_TIMEOUT_uS);
       rc = modbus_write_registers(modbus_rtu_robot_ctx, 0, 3, robotRegister_sent);
-      if(rc != -1)
+      printf("Robot Timeout: %d\n", rc);
+      if(rc == -1)
       {
-        usleep(500000);
+        usleep(1000000);
+        rewrite = 1;
+      }
+      else
+      {
+        rewrite = 0;
       }
     }
     else
@@ -499,7 +506,7 @@ void *robotThread(void *vargp)
     }
     modbus_flush(modbus_rtu_robot_ctx);
     modbus_set_response_timeout(modbus_rtu_robot_ctx, ROBOT_READ_TIMEOUT_S, ROBOT_READ_TIMEOUT_uS);
-    rc = modbus_read_registers(modbus_rtu_robot_ctx, 0, 5, robotRegister_received);
+    rc = modbus_read_registers(modbus_rtu_robot_ctx, 0, 3, robotRegister_received);
     if(rc != -1)
     {
       // int i;
@@ -509,7 +516,7 @@ void *robotThread(void *vargp)
       //   printf("%3d", robotRegister_received[i]);
       // }
       // printf("\n");
-      usleep(500000);
+      usleep(1000000);
     }
   }
   return NULL;
