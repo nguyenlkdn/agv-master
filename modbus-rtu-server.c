@@ -615,7 +615,7 @@ void *userInterface(void *vargp)
           printf("[OK] Station 2 has canceled requests at => %s", getTime());
           robotRegister_sent[0]=4;
           station2Register_sent[0]=0;
-          station3_processed=0;
+          station2_processed=0;
         }
       }
 
@@ -793,7 +793,7 @@ void *userInterface(void *vargp)
             }
           }
           station2Register_sent[0]=0;
-          robotRegister_sent[0]=6;
+          robotRegister_sent[0]=4;
           station2_processed = 0;
         }
       break;
@@ -833,7 +833,7 @@ void *userInterface(void *vargp)
             }
           }
           station3Register_sent[0]=0;
-          robotRegister_sent[0]=6;
+          robotRegister_sent[0]=4;
           station3_processed = 0;
         }
       break;
@@ -873,7 +873,7 @@ void *userInterface(void *vargp)
             }
           }
           station4Register_sent[0]=0;
-          robotRegister_sent[0]=7;
+          robotRegister_sent[0]=1;
           station4_processed = 0;
         }
       break;
@@ -915,7 +915,7 @@ void *userInterface(void *vargp)
           }
         }
         station5Register_sent[0]=0;
-        robotRegister_sent[0]=6;
+        robotRegister_sent[0]=4;
         station5_processed = 0;
       }
       break;
