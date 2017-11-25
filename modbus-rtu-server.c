@@ -49,11 +49,11 @@ enum CALLING_STA{
 
 #define STATION_MAX         5
 #define ROBOT_MAX           1
-#define STATION1_ENABLE     1
-#define STATION2_ENABLE     0
+#define STATION1_ENABLE     0
+#define STATION2_ENABLE     1
 #define STATION3_ENABLE     0
 #define STATION4_ENABLE     1
-#define STATION5_ENABLE     1
+#define STATION5_ENABLE     0
 uint16_t STATION1_WRITING  =  0;
 uint16_t STATION2_WRITING  =  0;
 uint16_t STATION3_WRITING  =  0;
@@ -97,11 +97,11 @@ uint8_t  station3_processed=0;
 uint8_t  station4_processed=0;
 uint8_t  station5_processed=0;
 
-uint64_t station1_counter=0;
-uint64_t station2_counter=0;
-uint64_t station3_counter=0;
-uint64_t station4_counter=0;
-uint64_t station5_counter=0;
+uint32_t station1_counter=0;
+uint32_t station2_counter=0;
+uint32_t station3_counter=0;
+uint32_t station4_counter=0;
+uint32_t station5_counter=0;
 
 uint64_t station1_read_err=0;
 uint16_t station2_read_err=0;
@@ -251,12 +251,27 @@ void *stationThread(void *vargp)
       stationid=2;
       modbus_set_response_timeout(modbus_rtu_station_ctx, STATION_TIMEOUT_S, STATION_TIMEOUT_uS);
       modbus_set_slave(modbus_rtu_station_ctx, stationid);
+      modbus_flush(modbus_rtu_station_ctx);
       rc = modbus_read_registers(modbus_rtu_station_ctx, 1, 5, station2Register_received);
       if(rc == -1)
       {
         memset(station2Register_received, -1, sizeof(station2Register_received));
-        station2_read_err++;
+        station1_read_err++;
+        printf("Reading from Station 2: TIMEOUT\n");
+        STATION2_WRITING=0;
         //printf("[ERROR] Cannot read from station: %d\n", stationid);
+      }
+      else
+      {
+        usleep(500000);
+        STATION2_WRITING = 1;
+        // printf("Reading from Station 1: ");
+        // int i;
+        // for(i=0;i<rc;i++)
+        // {
+        //   printf("%3d", station1Register_received[i]);
+        // }
+        // printf("\n");
       }
       usleep(500000);
     }
@@ -483,20 +498,23 @@ void *robotThread(void *vargp)
   int rewrite = 1;
   while (1)
   {
-    //printf("%s %s\n", __FUNCTION__, "Processing Robotic");
     if(position != robotRegister_sent[0] || (rewrite == 1))
     {
       position = robotRegister_sent[0];
+      modbus_flush(modbus_rtu_robot_ctx);
       modbus_set_response_timeout(modbus_rtu_robot_ctx, ROBOT_WRITE_TIMEOUT_S, ROBOT_WRITE_TIMEOUT_uS);
-      rc = modbus_write_registers(modbus_rtu_robot_ctx, 0, 3, robotRegister_sent);
-      printf("Robot Timeout: %d\n", rc);
-      if(rc == -1)
+      modbus_set_debug(modbus_rtu_robot_ctx, TRUE);
+      rc = modbus_write_registers(modbus_rtu_robot_ctx, 0, 5, robotRegister_sent);
+      modbus_set_debug(modbus_rtu_robot_ctx, FALSE);
+      if(rc != 5)
       {
-        usleep(1000000);
         rewrite = 1;
+        printf("Rewrite to robot!!!\n");
       }
       else
       {
+        //printf("[OK] Sending succesffuly!!\n");
+        sleep(1);
         rewrite = 0;
       }
     }
@@ -504,6 +522,7 @@ void *robotThread(void *vargp)
     {
       //modbus_read_registers(modbus_rtu_robot_ctx, 0, 2, robotRegister_received);
     }
+    
     modbus_flush(modbus_rtu_robot_ctx);
     modbus_set_response_timeout(modbus_rtu_robot_ctx, ROBOT_READ_TIMEOUT_S, ROBOT_READ_TIMEOUT_uS);
     rc = modbus_read_registers(modbus_rtu_robot_ctx, 0, 3, robotRegister_received);
@@ -530,6 +549,16 @@ void *userInterface(void *vargp)
   int16_t station3request;
   int16_t station4request;
   int16_t station5request;
+  int16_t station1control1;
+  int16_t station1control2;
+  int16_t station2control1;
+  int16_t station2control2;
+  int16_t station3control1;
+  int16_t station3control2;
+  int16_t station4control1;
+  int16_t station4control2;
+  int16_t station5control1;
+  int16_t station5control2;
 
   while(1)
   {
@@ -560,7 +589,9 @@ void *userInterface(void *vargp)
       }
     }
 
-    if((station2Register_received[0] == 1))
+    station2request = station2Register_received[0];
+
+    if((station2request == 1))
     {
       hascalling = 2;
       if((robotRegister_sent[0] != 2))
@@ -576,7 +607,8 @@ void *userInterface(void *vargp)
       if((robotRegister_sent[0] == 2))
       {
         printf("[OK] Station 2 has canceled requests at => %s", getTime());
-        station2Register_sent[0]=6;
+        robotRegister_sent[0]=6;
+        station2Register_sent[0]=0;
         station3_processed=0;
       }
     }
@@ -709,7 +741,6 @@ void *userInterface(void *vargp)
                 printf("[OK] Robot finished at Station %d\n", robotlocation);
                 break;
               }
-
             }
           }
           station1Register_sent[0]=0;
@@ -728,28 +759,31 @@ void *userInterface(void *vargp)
           printf("[OK] Robot come to Station %d at %s", robotlocation, getTime());
           while(1)
           {
-            if((station2Register_received[2] == 1) && (robotRegister_sent[0] != 8))
+            station2request = station2Register_received[0];
+            station2control1 = station2Register_received[2];
+            station2control2 = station2Register_received[3];
+            if((station2control1 == 1) && (robotRegister_sent[0] != 8))
             {
-              printf("%s[WARN] Increase Barier at station %d\n%s", KYEL, robotlocation, NONE);
+              printf("%s[WARN] Increased the Carier at station %d\n%s", KYEL, robotlocation, NONE);
               robotRegister_sent[0]=8;
             }
-            else if (station2Register_received[3] == 1)
+            else if ((station2control2 == 1) && (robotRegister_sent[0] != 9))
             {
-              //printf("Ha\n");
+              printf("%s[WARN] Decreased the Carier\n%s", KGRN, NONE);
               robotRegister_sent[0]=9;
             }
-            if((station2Register_received[0] == 0) && station2Register_received[0] != -1)
+            if((station2request == 0) && station2request != -1)
             {
               if(robotRegister_sent[0] == 8)
               {
-                printf("%s\r[ERROR] Please DECREASE the Barier firstly%s", KRED, NONE);
+                printf("%s\r[WARNING] Please DECREASE the Carier firstly%s", KRED, NONE);
               }
               else
               {
                 printf("[OK] Robot finished at Station %d\n", robotlocation);
+                sleep(1);
                 break;
               }
-
             }
           }
           station2Register_sent[0]=0;
