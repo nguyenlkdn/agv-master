@@ -50,11 +50,11 @@ enum CALLING_STA{
 #define STATION_MAX         5
 #define ROBOT_MAX           1
 
-#define STATION1_ENABLE     0
+#define STATION1_ENABLE     1
 #define STATION2_ENABLE     1
-#define STATION3_ENABLE     0
+#define STATION3_ENABLE     1
 #define STATION4_ENABLE     1
-#define STATION5_ENABLE     0
+#define STATION5_ENABLE     1
 uint16_t STATION1_WRITING  =  0;
 uint16_t STATION2_WRITING  =  0;
 uint16_t STATION3_WRITING  =  0;
@@ -161,6 +161,7 @@ modbus_mapping_t *modbus_rtu_station2_mb_mapping;
 modbus_mapping_t *modbus_rtu_station3_mb_mapping;
 modbus_mapping_t *modbus_rtu_station4_mb_mapping;
 modbus_mapping_t *modbus_rtu_station5_mb_mapping;
+int16_t robot_status = 0;
 
 /*
 */
@@ -174,9 +175,9 @@ int main(int argc, char *argv[])
   pthread_t stationThread_id, userThread_id, robotThread_id, userInterface_id;
   pthread_create(&userThread_id, NULL, userThread, NULL);
   pthread_create(&userInterface_id, NULL, userInterface, NULL);
-  pthread_create(&robotThread_id, NULL, robotThread, NULL);
+  //pthread_create(&robotThread_id, NULL, robotThread, NULL);
   pthread_create(&stationThread_id, NULL, stationThread, NULL);
-  pthread_join(robotThread_id, NULL);
+  //pthread_join(robotThread_id, NULL);
   pthread_join(userInterface_id, NULL);
   pthread_join(userThread_id, NULL);
   pthread_join(stationThread_id, NULL);
@@ -497,17 +498,27 @@ void *robotThread(void *vargp)
   uint16_t position=0, control=0;
   int rc;
   int rewrite = 1;
+  int16_t robotRegister_sent_previous[5];
+  memset(robotRegister_sent_previous, 0, sizeof(robotRegister_sent_previous));
+  uint8_t resend = 0;
   while (1)
   {
-    if(robotRegister_received[1] != robotRegister_sent[0] || (rewrite == 1))
+    if(
+           (robotRegister_received[1] != robotRegister_sent[0])
+        || (rewrite == 1)
+        || (robotRegister_sent_previous[1] != robotRegister_sent[1]) 
+        //|| (robotRegister_sent_previous[2] != robotRegister_sent[2])
+      )
     {
-      position = robotRegister_sent[0];
+      printf("Write to robot\n");
+      //position = robotRegister_sent[0];
+      memcpy(robotRegister_sent_previous, robotRegister_sent, sizeof(robotRegister_sent_previous));
       modbus_flush(modbus_rtu_robot_ctx);
       modbus_set_response_timeout(modbus_rtu_robot_ctx, ROBOT_WRITE_TIMEOUT_S, ROBOT_WRITE_TIMEOUT_uS);
       //modbus_set_debug(modbus_rtu_robot_ctx, TRUE);
-      rc = modbus_write_registers(modbus_rtu_robot_ctx, 0, 3, robotRegister_sent);
+      rc = modbus_write_registers(modbus_rtu_robot_ctx, 0, 5, robotRegister_sent);
       //modbus_set_debug(modbus_rtu_robot_ctx, FALSE);
-      if(rc != 3)
+      if(rc != 5)
       {
         rewrite = 1;
         printf("Rewrite to robot!!!\n");
@@ -515,7 +526,7 @@ void *robotThread(void *vargp)
       else
       {
         //printf("[OK] Sending succesffuly!!\n");
-        usleep(500000);
+        //usleep(200000);
         rewrite = 0;
       }
     }
@@ -529,6 +540,16 @@ void *robotThread(void *vargp)
     rc = modbus_read_registers(modbus_rtu_robot_ctx, 0, 3, robotRegister_received);
     if(rc != -1)
     {
+      // if(robotRegister_received[0] == 0)
+      // {
+      //   robotRegister_sent[2] = robot_status;
+      // }
+      // else
+      // {
+      //   robot_status = robotRegister_sent[0];
+      // }
+      // printf("Stored Robot Location: %d\n", robotRegister_received[0]);
+
       // int i;
       // printf("Data: ");
       // for(i=0;i<rc;i++)
@@ -536,8 +557,14 @@ void *robotThread(void *vargp)
       //   printf("%3d", robotRegister_received[i]);
       // }
       // printf("\n");
-      usleep(500000);
+      //usleep(200000);
     }
+    //printf("Robot Location: %d\n", robot_status);
+    if(robotRegister_received[0] == 0)
+    {
+      robotRegister_sent[2] = robot_status;
+    }
+    usleep(200000);
   }
   return NULL;
 }
@@ -577,12 +604,11 @@ void *userInterface(void *vargp)
             printf("[OK] [%6d] Station 1 requests robot at => %s", ++station1_counter, getTime());
             robotRegister_sent[0] = 1;
             station1_processed = 1;
-            //station1Register_sent[0]=1;
           }
         }
         else
         {
-          if((robotRegister_sent[0] == 1))
+          if((robotRegister_sent[0] == 1) && (station1_processed == 1))
           {
             station1Register_sent[0]=0;
             station1_processed = 0;
@@ -605,12 +631,11 @@ void *userInterface(void *vargp)
           printf("[OK] [%6d] Station 2 requests robot at => %s", ++station2_counter, getTime());
           robotRegister_sent[0] = 2; 
           station2_processed=1;
-          //station2Register_sent[0]=2;
         }
       }
       else
       {
-        if((robotRegister_sent[0] == 2))
+        if((robotRegister_sent[0] == 2) && (station2_processed == 1))
         {
           printf("[OK] Station 2 has canceled requests at => %s", getTime());
           robotRegister_sent[0]=4;
@@ -636,12 +661,11 @@ void *userInterface(void *vargp)
             printf("[OK] [%6d] Station 3 requests robot at => %s", ++station3_counter, getTime());
             robotRegister_sent[0] = 3;
             station3_processed = 1;
-            //station3Register_sent[0]=3;
           }
         }
         else
         {
-          if((robotRegister_sent[0] == 3))
+          if((robotRegister_sent[0] == 3) && (station3_processed == 1))
           {
             station3Register_sent[0]=0;
             station3_processed = 0;
@@ -665,12 +689,11 @@ void *userInterface(void *vargp)
             printf("[OK] [%6d] Station 4 requests robot at => %s", ++station4_counter, getTime());
             robotRegister_sent[0] = 4;
             station4_processed = 1;
-            //station4Register_sent[0]=4;
           }
         }
         else
         {
-          if((robotRegister_sent[0] == 4))
+          if((robotRegister_sent[0] == 4) && (station4_processed == 1))
           {
             station4Register_sent[0]=0;
             station4_processed = 0;
@@ -700,7 +723,7 @@ void *userInterface(void *vargp)
         }
         else
         {
-          if((robotRegister_sent[0] == 5))
+          if((robotRegister_sent[0] == 5) && (station5_processed == 1))
           {
             station5Register_sent[0]=0;
             station5_processed = 0;
@@ -712,6 +735,10 @@ void *userInterface(void *vargp)
     }
 
     int16_t robotlocation = robotRegister_received[0];
+    if(robotlocation != 0)
+    {
+      robot_status = robotlocation;
+    }
     switch(robotlocation)
     {
       case 1:
@@ -726,19 +753,22 @@ void *userInterface(void *vargp)
           while(1)
           {
             station1request = station1Register_received[0];
-            if((station1Register_received[2] == 1) && (robotRegister_sent[0] != 8))
+            station1control1 = station1Register_received[2];
+            station1control2 = station1Register_received[3];
+            if((station1control1 == 1) && (station1control1 != -1) && (robotRegister_sent[1] != 1))
             {
               printf("%s[WARN] Increased the Carier at station %d\n%s", KYEL, robotlocation, NONE);
-              robotRegister_sent[0]=8;
+              robotRegister_sent[1]=1;
             }
-            else if ((station1Register_received[3] == 1) && (robotRegister_sent[0] != 9))
+            else if ((station1control2 == 1) && (robotRegister_sent[1] != 0))
             {
               printf("%s[WARN] Decreased the Carier\n%s", KGRN, NONE);
-              robotRegister_sent[0]=9;
+              robotRegister_sent[1]=0;
             }
+
             if((station1request == 0) && station1request != -1)
             {
-              if(robotRegister_sent[0] == 8)
+              if(robotRegister_sent[1] == 1)
               {
                 printf("%s\r[ERROR] Please DECREASE the Carier firstly%s", KRED, NONE);
               }
@@ -750,7 +780,7 @@ void *userInterface(void *vargp)
             }
           }
           station1Register_sent[0]=0;
-          robotRegister_sent[0]=6;
+          robotRegister_sent[0]=4;
           station1_processed = 0;
         }
       break;
@@ -768,30 +798,30 @@ void *userInterface(void *vargp)
             station2request = station2Register_received[0];
             station2control1 = station2Register_received[2];
             station2control2 = station2Register_received[3];
-            if((station2control1 == 1) && (robotRegister_sent[0] != 8))
+            if((station2control1 == 1) && (robotRegister_sent[1] != 1))
             {
               printf("%s[WARN] Increased the Carier at station %d\n%s", KYEL, robotlocation, NONE);
-              robotRegister_sent[0]=8;
+              robotRegister_sent[1]=1;
             }
-            else if ((station2control2 == 1) && (robotRegister_sent[0] != 9))
+            else if ((station2control2 == 1) && (robotRegister_sent[1] != 0))
             {
               printf("%s[WARN] Decreased the Carier\n%s", KGRN, NONE);
-              robotRegister_sent[0]=9;
+              robotRegister_sent[1]=0;
             }
             if((station2request == 0) && station2request != -1)
             {
-              if(robotRegister_sent[0] == 8)
+              if(robotRegister_sent[1] == 1)
               {
                 printf("%s\r[WARNING] Please DECREASE the Carier firstly%s", KRED, NONE);
               }
               else
               {
                 printf("[OK] Robot finished at Station %d\n", robotlocation);
-                sleep(1);
                 break;
               }
             }
           }
+          sleep(1);
           station2Register_sent[0]=0;
           robotRegister_sent[0]=4;
           station2_processed = 0;
@@ -808,19 +838,22 @@ void *userInterface(void *vargp)
           printf("[OK] Robot come to Station %d at %s", robotlocation, getTime());
           while(1)
           {
-            if((station3Register_received[2] == 1) && (robotRegister_sent[0] != 8))
+            station3request = station3Register_received[0];
+            station3control1 = station3Register_received[2];
+            station3control2 = station3Register_received[3];
+            if((station3control1 == 1) && (station3control1 != -1) && (robotRegister_sent[1] != 1))
             {
               printf("%s[WARN] Increased the Barier at station %d\n%s", KYEL, robotlocation, NONE);
-              robotRegister_sent[0]=8;
+              robotRegister_sent[1]=1;
             }
-            else if ((station3Register_received[3] == 1) && (robotRegister_sent[0] != 9))
+            else if ((station3control2 == 1) && (station3control2 != -1) && (robotRegister_sent[1] != 0))
             {
               printf("%s[WARN] Decreased the Barier\n%s", KGRN, NONE);
-              robotRegister_sent[0]=9;
+              robotRegister_sent[1]=0;
             }
             if((station3Register_received[0] == 0) && station3Register_received[0] != -1)
             {
-              if(robotRegister_sent[0] == 8)
+              if(robotRegister_sent[1] == 1)
               {
                 printf("%s\r[ERROR] Please DECREASE the Barier firstly%s", KRED, NONE);
               }
@@ -832,6 +865,7 @@ void *userInterface(void *vargp)
 
             }
           }
+          sleep(1);
           station3Register_sent[0]=0;
           robotRegister_sent[0]=4;
           station3_processed = 0;
@@ -848,19 +882,22 @@ void *userInterface(void *vargp)
           printf("[OK] Robot come to Station %d at %s", robotlocation, getTime());
           while(1)
           {
-            if((station4Register_received[2] == 1) && (robotRegister_sent[0] != 8))
+            station4request = station4Register_received[0];
+            station4control1 = station4Register_received[2];
+            station4control2 = station4Register_received[3];
+            if((station4control1 == 1) && (station4control1 != -1) && (robotRegister_sent[1] != 1))
             {
               printf("%s[WARN] Increased the Barier at station %d\n%s", KYEL, robotlocation, NONE);
-              robotRegister_sent[0]=8;
+              robotRegister_sent[1]=1;
             }
-            else if ((station4Register_received[3] == 1) && (robotRegister_sent[0] != 9))
+            else if ((station4control2 == 1) && (station4control2 != -1) && (robotRegister_sent[1] != 0))
             {
               printf("%s[WARN] Decreased the Barier\n%s", KGRN, NONE);
-              robotRegister_sent[0]=9;
+              robotRegister_sent[1]=0;
             }
-            if((station4Register_received[0] == 0) && station4Register_received[0] != -1)
+            if((station4request == 0) && station4request != -1)
             {
-              if(robotRegister_sent[0] == 8)
+              if(robotRegister_sent[1] == 1)
               {
                 printf("%s\r[ERROR] Please DECREASE the Barier firstly%s", KRED, NONE);
               }
@@ -872,6 +909,7 @@ void *userInterface(void *vargp)
 
             }
           }
+          sleep(1);
           station4Register_sent[0]=0;
           robotRegister_sent[0]=1;
           station4_processed = 0;
@@ -890,19 +928,21 @@ void *userInterface(void *vargp)
         while(1)
         {
           station5request=station5Register_received[0];
-          if((station5Register_received[2] == 1) && (robotRegister_sent[0] != 8))
+          station5control1=station5Register_received[2];
+          station5control2=station5Register_received[3];
+          if((station5control1 == 1) && (robotRegister_sent[0] != 1))
           {
             printf("%s[WARN] Increased the Barier at station %d\n%s", KYEL, robotlocation, NONE);
-            robotRegister_sent[0]=8;
+            robotRegister_sent[1]=1;
           }
-          else if ((station5Register_received[3] == 1) && (robotRegister_sent[0] != 9))
+          else if ((station5control2 == 1) && (robotRegister_sent[1] != 0))
           {
             printf("%s[WARN] Decreased the Barier\n%s", KGRN, NONE);
-            robotRegister_sent[0]=9;
+            robotRegister_sent[1]=0;
           }
           if((station5request == 0) && station5request != -1)
           {
-            if(robotRegister_sent[0] == 8)
+            if(robotRegister_sent[1] == 1)
             {
               printf("%s\r[ERROR] Please DECREASE the Barier firstly%s", KRED, NONE);
             }
@@ -914,6 +954,7 @@ void *userInterface(void *vargp)
 
           }
         }
+        sleep(1);
         station5Register_sent[0]=0;
         robotRegister_sent[0]=4;
         station5_processed = 0;
