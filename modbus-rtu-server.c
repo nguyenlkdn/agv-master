@@ -254,7 +254,7 @@ void *stationThread(void *vargp)
     //printf("%s %s\n", __FUNCTION__, "Processing Station
     int rc;
     //modbus_flush(modbus_rtu_station_ctx);
-    if(STATION1_ENABLE)
+    if(STATION1_ENABLE == 1)
     {
       stationid=1;
       modbus_set_response_timeout(modbus_rtu_station_ctx, STATION_TIMEOUT_S, STATION_TIMEOUT_uS);
@@ -284,7 +284,7 @@ void *stationThread(void *vargp)
       usleep(500000);
     }
 
-    if(STATION2_ENABLE)
+    if(STATION2_ENABLE == 1)
     {
       stationid=2;
       modbus_set_response_timeout(modbus_rtu_station_ctx, STATION_TIMEOUT_S, STATION_TIMEOUT_uS);
@@ -313,7 +313,7 @@ void *stationThread(void *vargp)
       }
       usleep(500000);
     }
-    if(STATION3_ENABLE)
+    if(STATION3_ENABLE == 1)
     {
       stationid=3;
       modbus_set_response_timeout(modbus_rtu_station_ctx, STATION_TIMEOUT_S, STATION_TIMEOUT_uS);
@@ -321,13 +321,18 @@ void *stationThread(void *vargp)
       rc = modbus_read_registers(modbus_rtu_station_ctx, 1, 5, station3Register_received);
       if(rc == -1)
       {
+        printf("Reading from Station 3: TIMEOUT\n");
         memset(station3Register_received, -1, sizeof(station3Register_received));
         station3_read_err++;
         //printf("[ERROR] Cannot read from station: %d\n", stationid);
       }
+      else
+      {
+        STATION3_WRITING = 1;
+      }
       usleep(500000);
     }
-    if(STATION4_ENABLE)
+    if(STATION4_ENABLE == 1)
     {
       stationid=4;
       modbus_set_response_timeout(modbus_rtu_station_ctx, STATION_TIMEOUT_S, STATION_TIMEOUT_uS);
@@ -353,7 +358,7 @@ void *stationThread(void *vargp)
       usleep(500000);
 
     }
-    if(STATION5_ENABLE)
+    if(STATION5_ENABLE == 1)
     {
       stationid=5;
       modbus_set_response_timeout(modbus_rtu_station_ctx, STATION_TIMEOUT_S, STATION_TIMEOUT_uS);
@@ -624,6 +629,7 @@ void *userInterface(void *vargp)
   int16_t station5control1;
   int16_t station5control2;
 
+  uint8_t mode = 0;
   while(1)
   {
     hascalling = 0;
