@@ -50,11 +50,11 @@ enum CALLING_STA{
 #define STATION_MAX         5
 #define ROBOT_MAX           1
 
-#define STATION1_ENABLE     1
-#define STATION2_ENABLE     1
-#define STATION3_ENABLE     1
-#define STATION4_ENABLE     1
-#define STATION5_ENABLE     1
+uint16_t STATION1_ENABLE   =  1;
+uint16_t STATION2_ENABLE   =  1;
+uint16_t STATION3_ENABLE   =  1;
+uint16_t STATION4_ENABLE   =  1;
+uint16_t STATION5_ENABLE   =  1;
 uint16_t STATION1_WRITING  =  0;
 uint16_t STATION2_WRITING  =  0;
 uint16_t STATION3_WRITING  =  0;
@@ -175,9 +175,9 @@ int main(int argc, char *argv[])
   pthread_t stationThread_id, userThread_id, robotThread_id, userInterface_id;
   pthread_create(&userThread_id, NULL, userThread, NULL);
   pthread_create(&userInterface_id, NULL, userInterface, NULL);
-  //pthread_create(&robotThread_id, NULL, robotThread, NULL);
+  pthread_create(&robotThread_id, NULL, robotThread, NULL);
   pthread_create(&stationThread_id, NULL, stationThread, NULL);
-  //pthread_join(robotThread_id, NULL);
+  pthread_join(robotThread_id, NULL);
   pthread_join(userInterface_id, NULL);
   pthread_join(userThread_id, NULL);
   pthread_join(stationThread_id, NULL);
@@ -203,6 +203,42 @@ void *userThread()
       int id=0;
       scanf("%d", &id);
       robotRegister_sent[0] = (uint16_t)id;
+    }
+    else if(strcmp(button, "send")==0)
+    {
+      printf("Type station [2, 3, 4, 5] will be processed: ");
+      uint16_t error=0;
+      while(++error < 5)
+      {
+        char key;
+        scanf("%c" , &key) ;
+
+        switch(key)
+        {
+          case '1':
+            printf("[SUCCESS] Robot was being sent to Station 1!\n");
+          break;
+          case '2':
+            printf("[SUCCESS] Robot was being sent to Station 2!\n");
+          break;
+          case '3':
+            printf("[SUCCESS] Robot was being sent to Station 3!\n");
+          break;
+          case '4':
+            printf("[SUCCESS] Robot was being sent to Station 4!\n");
+          break;
+          case '5':
+            printf("[SUCCESS] Robot was being sent to Station 5!\n");
+          break;
+          default:
+            printf("\nInvalid command[2, 3, 4, 5]\n");
+          break;
+        }
+      }
+    }
+    else
+    {
+      printf("Unknow Command, please type only the (call/send) commands\n");
     }
     usleep(1000000);
   }
@@ -510,7 +546,7 @@ void *robotThread(void *vargp)
         //|| (robotRegister_sent_previous[2] != robotRegister_sent[2])
       )
     {
-      printf("Write to robot\n");
+      //printf("Write to robot\n");
       //position = robotRegister_sent[0];
       memcpy(robotRegister_sent_previous, robotRegister_sent, sizeof(robotRegister_sent_previous));
       modbus_flush(modbus_rtu_robot_ctx);
@@ -591,7 +627,7 @@ void *userInterface(void *vargp)
   while(1)
   {
     hascalling = 0;
-    if(STATION1_ENABLE)
+    if(STATION1_ENABLE == 1)
     {
       station1request = station1Register_received[0];
       if(station1request != -1)
@@ -612,14 +648,14 @@ void *userInterface(void *vargp)
           {
             station1Register_sent[0]=0;
             station1_processed = 0;
-            robotRegister_sent[0]=6;
+            robotRegister_sent[0]=0;
             printf("[OK] Station 1 has canceled requests at => %s", getTime());
           }
         }
       }
     }
 
-    if(STATION2_ENABLE)
+    if(STATION2_ENABLE == 1)
     {
       station2request = station2Register_received[0];
 
@@ -646,7 +682,7 @@ void *userInterface(void *vargp)
 
     }
     
-    if(STATION3_ENABLE)
+    if(STATION3_ENABLE == 1)
     {
       station3request = station3Register_received[0];
 
@@ -657,7 +693,6 @@ void *userInterface(void *vargp)
           hascalling = 3;
           if((robotRegister_sent[0] != 3))
           {
-            printf("%d\n", robotRegister_sent[0]);
             printf("[OK] [%6d] Station 3 requests robot at => %s", ++station3_counter, getTime());
             robotRegister_sent[0] = 3;
             station3_processed = 1;
@@ -676,7 +711,7 @@ void *userInterface(void *vargp)
       }
     }
     
-    if(STATION4_ENABLE)
+    if(STATION4_ENABLE == 1)
     {
       station4request = station4Register_received[0];
       if(station4request != -1)
@@ -704,7 +739,7 @@ void *userInterface(void *vargp)
       }
     }
     
-    if(STATION5_ENABLE)
+    if(STATION5_ENABLE == 1)
     {
       station5request = station5Register_received[0];
       if(station5request != -1)
@@ -719,7 +754,6 @@ void *userInterface(void *vargp)
             station5_processed = 1;
             //station5Register_sent[0]=5;
           }
-
         }
         else
         {
