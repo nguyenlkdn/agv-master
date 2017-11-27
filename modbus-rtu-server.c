@@ -1167,7 +1167,7 @@ char* getTime()
  */
 void button_was_clicked (GtkWidget *widget, gpointer gdata)
 {
-  if(!strcmp(gdata, "Call Robot"))
+  if(!strcmp(gdata, "ReCall Robot"))
   {
     gtk_container_foreach (GTK_CONTAINER (widget), 
                            (GtkCallback) callback1, gdata);
