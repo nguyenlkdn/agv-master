@@ -1298,10 +1298,11 @@ void GUIInit(int argc, char *argv[])
 
   actstation1 = gtk_button_new_with_label("Station 1");
   gtk_widget_set_size_request(actstation1, 100, 100);
-  gtk_table_attach(GTK_TABLE(table), actstation1, 10, 12, 3, 4, 
+  gtk_table_attach(GTK_TABLE(table), actstation1, 10, 12, 3, 11, 
           GTK_FILL, GTK_FILL, 0, 0);
   g_signal_connect (GTK_OBJECT(actstation1), "clicked",
           G_CALLBACK (button_was_clicked), (gpointer) "Station 1");
+
   halign2 = gtk_alignment_new(0, 1, 0, 0);
   hlpBtn = gtk_button_new_with_label("Help");
   gtk_container_add(GTK_CONTAINER(halign2), hlpBtn);
