@@ -1215,7 +1215,7 @@ void GUIInit(int argc, char *argv[])
 
   window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER);
-  gtk_widget_set_size_request (window, 720, 480);
+  //gtk_widget_set_size_request (window, 720, 480);
   if(isfullscreen == 1)
   {
     gtk_window_fullscreen(GTK_WINDOW(window));
@@ -1234,7 +1234,7 @@ void GUIInit(int argc, char *argv[])
       GTK_FILL, GTK_FILL, 0, 0);
 
   wins = gtk_text_view_new();
-  gtk_widget_set_size_request(wins, 500, 500);
+  gtk_widget_set_size_request(wins, 400, 400);
 
   consoletxt = gtk_text_view_get_buffer(GTK_TEXT_VIEW(wins));
   gtk_text_buffer_create_tag(consoletxt, "gap",
