@@ -1238,6 +1238,9 @@ void GUIInit(int argc, char *argv[])
   //gdk_window_set_cursor((window),Cursor);
   gtk_container_set_border_width(GTK_CONTAINER(window), 50);
 
+  GdkCursor* cursor_blank = gdk_cursor_new(GDK_BLANK_CURSOR);
+  gdk_window_set_cursor(gtk_widget_get_window(window), cursor_blank);
+
   table = gtk_table_new(12, 6, FALSE);
   gtk_table_set_col_spacings(GTK_TABLE(table), 10);
   gtk_table_set_row_spacing(GTK_TABLE(table), 0, 10);
