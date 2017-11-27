@@ -1230,7 +1230,7 @@ void GUIInit(int argc, char *argv[])
   window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER);
   //gtk_widget_set_size_request (window, 800, 480);
-  gtk_window_fullscreen(window);
+  gtk_window_fullscreen(GTK_WINDOW(window));
   //gtk_widget_realize (window);
   //GdkCursor* Cursor = gdk_cursor_new(GDK_BLANK_CURSOR);
   //gdk_window_set_cursor(window, GDK_BLANK_CURSOR);
@@ -1239,7 +1239,7 @@ void GUIInit(int argc, char *argv[])
   gtk_container_set_border_width(GTK_CONTAINER(window), 50);
 
   GdkCursor* cursor_blank = gdk_cursor_new(GDK_BLANK_CURSOR);
-  gdk_window_set_cursor(gtk_widget_get_window(window), cursor_blank);
+  gdk_window_set_cursor(GTK_WINDOW(window), cursor_blank);
 
   table = gtk_table_new(12, 6, FALSE);
   gtk_table_set_col_spacings(GTK_TABLE(table), 10);
