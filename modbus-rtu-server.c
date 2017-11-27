@@ -241,29 +241,6 @@ void *userThread()
           printf("\nInvalid command [2, 3, 4, 5]\n");
           robot_control = 0;
         }
-
-        //scanf("%c" , &key);
-        // switch(key)
-        // {
-        //   case '1':
-        //     printf("[SUCCESS] Robot was being sent to Station 1!\n");
-        //   break;
-        //   case '2':
-        //     printf("[SUCCESS] Robot was being sent to Station 2!\n");
-        //   break;
-        //   case '3':
-        //     printf("[SUCCESS] Robot was being sent to Station 3!\n");
-        //   break;
-        //   case '4':
-        //     printf("[SUCCESS] Robot was being sent to Station 4!\n");
-        //   break;
-        //   case '5':
-        //     printf("[SUCCESS] Robot was being sent to Station 5!\n");
-        //   break;
-        //   default:
-        //     printf("\nInvalid command[2, 3, 4, 5]\n");
-        //   break;
-        // }
       }
     }
     else
@@ -1167,7 +1144,7 @@ char* getTime()
  */
 void button_was_clicked (GtkWidget *widget, gpointer gdata)
 {
-  if(!strcmp(gdata, "Station 1"))
+  if(!strcmp(gdata, "Recall Robot"))
   {
     gtk_container_foreach (GTK_CONTAINER (widget), 
                            (GtkCallback) callback1, gdata);
@@ -1291,12 +1268,12 @@ void GUIInit(int argc, char *argv[])
   g_signal_connect (GTK_OBJECT(actstation5), "clicked",
           G_CALLBACK (button_was_clicked), (gpointer) "Station 5");
 
-  actstation1 = gtk_button_new_with_label("Station 1");
+  actstation1 = gtk_button_new_with_label("Recall Robot");
   gtk_widget_set_size_request(actstation1, 100, 100);
   gtk_table_attach(GTK_TABLE(table), actstation1, 10, 12, 3, 11, 
           GTK_FILL, GTK_FILL, 0, 0);
   g_signal_connect (GTK_OBJECT(actstation1), "clicked",
-          G_CALLBACK (button_was_clicked), (gpointer) "Station 1");
+          G_CALLBACK (button_was_clicked), (gpointer) "Recall Robot");
 
   halign2 = gtk_alignment_new(0, 1, 0, 0);
   hlpBtn = gtk_button_new_with_label("Help");
@@ -1329,7 +1306,7 @@ static void callback1( GtkWidget *widget,
   {
     robotRegister_sent[0] = 0;
     robot_control = 0;
-    gtk_label_set (GTK_LABEL(widget), "Station 1");
+    gtk_label_set (GTK_LABEL(widget), "Recall Robot");
   }
   else
   {
