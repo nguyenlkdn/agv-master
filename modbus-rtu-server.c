@@ -1268,40 +1268,40 @@ void GUIInit(int argc, char *argv[])
   // gtk_table_attach(GTK_TABLE(table), actBtn, 3, 4, 1, 2, 
   //     GTK_FILL, GTK_SHRINK, 1, 1);
 
-  actstation1 = gtk_button_new_with_label("Station 1");
-  gtk_widget_set_size_request(actstation1, 70, 70);
-  //gtk_table_attach_defaults(GTK_TABLE(table), actstation1, 5, 6, 1, 3);
-  gtk_table_attach(GTK_TABLE(table), actstation1, 10, 11, 1, 2, 
-          GTK_FILL, GTK_FILL, 0, 0);
-  g_signal_connect (GTK_OBJECT(actstation1), "clicked",
-          G_CALLBACK (button_was_clicked), (gpointer) "Station 1");
-
   actstation2 = gtk_button_new_with_label("Station 2");
-  //gtk_widget_set_size_request(actstation2, 70, 30);
-  gtk_table_attach(GTK_TABLE(table), actstation2, 11, 12, 1, 2, 
+  gtk_widget_set_size_request(actstation2, 100, 100);
+  gtk_table_attach(GTK_TABLE(table), actstation2, 10, 11, 1, 2, 
           GTK_FILL, GTK_FILL, 0, 0);
   g_signal_connect (GTK_OBJECT(actstation2), "clicked",
-          G_CALLBACK (button_was_clicked), (gpointer) "Station 2");
-
-  actstation3 = gtk_button_new_with_label("Station 3");
-  gtk_widget_set_size_request(actstation3, 70, 30);
-  //gtk_table_attach_defaults(GTK_TABLE(table), actstation3, 7, 8, 1, 2);
-  g_signal_connect (GTK_OBJECT(actstation3), "clicked",
           G_CALLBACK (button_was_clicked), (gpointer) "Station 3");
 
+  actstation3 = gtk_button_new_with_label("Station 3");
+  gtk_widget_set_size_request(actstation3, 100, 100);
+  gtk_table_attach(GTK_TABLE(table), actstation3, 11, 12, 1, 2, 
+          GTK_FILL, GTK_FILL, 0, 0);
+  g_signal_connect (GTK_OBJECT(actstation3), "clicked",
+          G_CALLBACK (button_was_clicked), (gpointer) "Station 4");
+
   actstation4 = gtk_button_new_with_label("Station 4");
-  gtk_widget_set_size_request(actstation4, 70, 30);
-  //gtk_table_attach(GTK_TABLE(table), actstation5, 0, 1, 3, 4, 
-  //        GTK_FILL, GTK_FILL, 0, 0);
+  gtk_widget_set_size_request(actstation4, 100, 100);
+  gtk_table_attach(GTK_TABLE(table), actstation4, 10, 11, 2, 3, 
+          GTK_FILL, GTK_FILL, 0, 0);
   g_signal_connect (GTK_OBJECT(actstation4), "clicked",
           G_CALLBACK (button_was_clicked), (gpointer) "Station 4");
 
   actstation5 = gtk_button_new_with_label("Station 5");
-  // gtk_table_attach(GTK_TABLE(table), actstation5, 0, 1, 3, 4, 
-  //         GTK_FILL, GTK_FILL, 0, 0);
+  gtk_widget_set_size_request(actstation5, 100, 100);
+  gtk_table_attach(GTK_TABLE(table), actstation5, 11, 12, 2, 3, 
+          GTK_FILL, GTK_FILL, 0, 0);
   g_signal_connect (GTK_OBJECT(actstation5), "clicked",
           G_CALLBACK (button_was_clicked), (gpointer) "Station 5");
 
+  actstation1 = gtk_button_new_with_label("Station 1");
+  gtk_widget_set_size_request(actstation1, 100, 100);
+  gtk_table_attach(GTK_TABLE(table), actstation1, 10, 12, 3, 4, 
+          GTK_FILL, GTK_FILL, 0, 0);
+  g_signal_connect (GTK_OBJECT(actstation1), "clicked",
+          G_CALLBACK (button_was_clicked), (gpointer) "Station 1");
   halign2 = gtk_alignment_new(0, 1, 0, 0);
   hlpBtn = gtk_button_new_with_label("Help");
   gtk_container_add(GTK_CONTAINER(halign2), hlpBtn);
