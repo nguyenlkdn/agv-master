@@ -1269,7 +1269,7 @@ void GUIInit(int argc, char *argv[])
   //     GTK_FILL, GTK_SHRINK, 1, 1);
 
   actstation1 = gtk_button_new_with_label("Station 1");
-  gtk_widget_set_size_request(actstation1, 70, 50);
+  gtk_widget_set_size_request(actstation1, 70, 70);
   //gtk_table_attach_defaults(GTK_TABLE(table), actstation1, 5, 6, 1, 3);
   gtk_table_attach(GTK_TABLE(table), actstation1, 10, 11, 1, 2, 
           GTK_FILL, GTK_FILL, 0, 0);
