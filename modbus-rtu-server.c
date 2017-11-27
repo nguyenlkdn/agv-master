@@ -134,6 +134,7 @@ uint16_t station2_confimation=0;
 uint16_t station3_confimation=0;
 uint16_t station4_confimation=0;
 uint16_t station5_confimation=0;
+char TEXT[255];
 /*
 
 */
@@ -153,7 +154,7 @@ void initThread();
 void robotInit();
 void stationInit();
 char *getTime();
-
+void printtoconsole(char* text);
 /*
 
 */
@@ -651,147 +652,160 @@ void *userInterface(void *vargp)
   int16_t station5control2;
 
   uint8_t mode = 0;
+  hascalling = 0;
   while(1)
   {
     if(robot_control == 0)
     {
-      hascalling = 0;
-      if(STATION1_ENABLE == 1)
+      if(hascalling == 0)
       {
-        station1request = station1Register_received[0];
-        if(station1request != -1)
+        if(STATION1_ENABLE == 1)
         {
-          if((station1request == 1))
+          station1request = station1Register_received[0];
+          if(station1request != -1)
           {
-            hascalling = 1;
-            if((robotRegister_sent[0] != 1))
+            if((station1request == 1))
             {
-              printf("[OK] [%6d] Station 1 requests robot at => %s", ++station1_counter, getTime());
-              robotRegister_sent[0] = 1;
-              station1_processed = 1;
+              hascalling = 1;
+              if((robotRegister_sent[0] != 1))
+              {
+                printf("[OK] [%6d] Station 1 requests robot at => %s", ++station1_counter, getTime());
+                robotRegister_sent[0] = 1;
+                station1_processed = 1;
+              }
             }
-          }
-          else
-          {
-            if((robotRegister_sent[0] == 1) && (station1_processed == 1))
+            else
             {
-              station1Register_sent[0]=0;
-              station1_processed = 0;
-              robotRegister_sent[0]=0;
-              printf("[OK] Station 1 has canceled requests at => %s", getTime());
+              if((robotRegister_sent[0] == 1) && (station1_processed == 1))
+              {
+                station1Register_sent[0]=0;
+                station1_processed = 0;
+                robotRegister_sent[0]=0;
+                printf("[OK] Station 1 has canceled requests at => %s", getTime());
+              }
             }
           }
         }
       }
-
-      if(STATION2_ENABLE == 1)
+      if(hascalling == 0)
       {
-        station2request = station2Register_received[0];
-
-        if((station2request == 1))
+        if(STATION2_ENABLE == 1)
         {
-          hascalling = 2;
-          if((robotRegister_sent[0] != 2))
-          {
-            printf("[OK] [%6d] Station 2 requests robot at => %s", ++station2_counter, getTime());
-            robotRegister_sent[0] = 2; 
-            station2_processed=1;
-          }
-        }
-        else
-        {
-          if((robotRegister_sent[0] == 2) && (station2_processed == 1))
-          {
-            printf("[OK] Station 2 has canceled requests at => %s", getTime());
-            robotRegister_sent[0]=4;
-            station2Register_sent[0]=0;
-            station2_processed=0;
-          }
-        }
+          station2request = station2Register_received[0];
 
-      }
-      
-      if(STATION3_ENABLE == 1)
-      {
-        station3request = station3Register_received[0];
-
-        if(station3request != -1)
-        {
-          if((station3Register_received[0] == 1))
+          if((station2request == 1))
           {
-            hascalling = 3;
-            if((robotRegister_sent[0] != 3))
+            hascalling = 2;
+            if((robotRegister_sent[0] != 2))
             {
-              printf("[OK] [%6d] Station 3 requests robot at => %s", ++station3_counter, getTime());
-              robotRegister_sent[0] = 3;
-              station3_processed = 1;
+              printf("[OK] [%6d] Station 2 requests robot at => %s", ++station2_counter, getTime());
+              robotRegister_sent[0] = 2; 
+              station2_processed=1;
             }
           }
           else
           {
-            if((robotRegister_sent[0] == 3) && (station3_processed == 1))
+            if((robotRegister_sent[0] == 2) && (station2_processed == 1))
             {
-              station3Register_sent[0]=0;
-              station3_processed = 0;
-              robotRegister_sent[0] = 4;
-              printf("[OK] Station 3 has canceled requests at => %s", getTime());
-            }
-          }
-        }
-      }
-      
-      if(STATION4_ENABLE == 1)
-      {
-        station4request = station4Register_received[0];
-        if(station4request != -1)
-        {
-          if((station4request == 1))
-          {
-            hascalling = 1;
-            if((robotRegister_sent[0] != 4))
-            {
-              printf("[OK] [%6d] Station 4 requests robot at => %s", ++station4_counter, getTime());
-              robotRegister_sent[0] = 4;
-              station4_processed = 1;
-            }
-          }
-          else
-          {
-            if((robotRegister_sent[0] == 4) && (station4_processed == 1))
-            {
-              station4Register_sent[0]=0;
-              station4_processed = 0;
-              robotRegister_sent[0]=1;
-              printf("[OK] Station 4 has canceled requests at => %s", getTime());
-            }
-          }
-        }
-      }
-      
-      if(STATION5_ENABLE == 1)
-      {
-        station5request = station5Register_received[0];
-        if(station5request != -1)
-        {
-          if((station5request == 1))
-          {
-            hascalling = 5;
-            if((robotRegister_sent[0] != 5))
-            {
-              printf("[OK] [%6d] Station 5 requests robot at => %s", ++station1_counter, getTime());
-              robotRegister_sent[0] = 5;
-              station5_processed = 1;
-              //station5Register_sent[0]=5;
-            }
-          }
-          else
-          {
-            if((robotRegister_sent[0] == 5) && (station5_processed == 1))
-            {
-              station5Register_sent[0]=0;
-              station5_processed = 0;
+              printf("[OK] Station 2 has canceled requests at => %s", getTime());
               robotRegister_sent[0]=4;
-              printf("[OK] Station 5 has canceled requests at => %s", getTime());
+              station2Register_sent[0]=0;
+              station2_processed=0;
+            }
+          }
+
+        }
+      }
+
+      if(hascalling == 0)
+      {
+        if(STATION3_ENABLE == 1)
+        {
+          station3request = station3Register_received[0];
+
+          if(station3request != -1)
+          {
+            if((station3Register_received[0] == 1))
+            {
+              hascalling = 3;
+              if((robotRegister_sent[0] != 3))
+              {
+                printf("[OK] [%6d] Station 3 requests robot at => %s", ++station3_counter, getTime());
+                robotRegister_sent[0] = 3;
+                station3_processed = 1;
+              }
+            }
+            else
+            {
+              if((robotRegister_sent[0] == 3) && (station3_processed == 1))
+              {
+                station3Register_sent[0]=0;
+                station3_processed = 0;
+                robotRegister_sent[0] = 4;
+                printf("[OK] Station 3 has canceled requests at => %s", getTime());
+              }
+            }
+          }
+        }
+      }
+
+      if(hascalling == 0)
+      {
+        if(STATION4_ENABLE == 1)
+        {
+          station4request = station4Register_received[0];
+          if(station4request != -1)
+          {
+            if((station4request == 1))
+            {
+              hascalling = 1;
+              if((robotRegister_sent[0] != 4))
+              {
+                printf("[OK] [%6d] Station 4 requests robot at => %s", ++station4_counter, getTime());
+                robotRegister_sent[0] = 4;
+                station4_processed = 1;
+              }
+            }
+            else
+            {
+              if((robotRegister_sent[0] == 4) && (station4_processed == 1))
+              {
+                station4Register_sent[0]=0;
+                station4_processed = 0;
+                robotRegister_sent[0]=1;
+                printf("[OK] Station 4 has canceled requests at => %s", getTime());
+              }
+            }
+          }
+        }
+      }
+
+      if(hascalling == 0)
+      {
+        if(STATION5_ENABLE == 1)
+        {
+          station5request = station5Register_received[0];
+          if(station5request != -1)
+          {
+            if((station5request == 1))
+            {
+              hascalling = 5;
+              if((robotRegister_sent[0] != 5))
+              {
+                printf("[OK] [%6d] Station 5 requests robot at => %s", ++station1_counter, getTime());
+                robotRegister_sent[0] = 5;
+                station5_processed = 1;
+              }
+            }
+            else
+            {
+              if((robotRegister_sent[0] == 5) && (station5_processed == 1))
+              {
+                station5Register_sent[0]=0;
+                station5_processed = 0;
+                robotRegister_sent[0]=4;
+                printf("[OK] Station 5 has canceled requests at => %s", getTime());
+              }
             }
           }
         }
@@ -800,6 +814,7 @@ void *userInterface(void *vargp)
     else
     {
       printf("Robot in Manual Mode under control of the Station 1\n");
+      uint16_t stored_robot_location = robotRegister_received[0];
       while(robot_control != robotRegister_received[0] && (robot_control != 0))
       {
         printf("Robot is going to station %d under control of Station 1\n", robot_control);
@@ -809,13 +824,14 @@ void *userInterface(void *vargp)
       if(robot_control == 0)
       {
         printf("Canceled Requesting\n");
+        robotRegister_received[0] = stored_robot_location;
       }
       else
       {
         printf("Robot in Auto Mode at station: %d\n", robot_control);
+        robot_control = 0;
+        robotRegister_sent[0] = 0;
       }
-      robot_control = 0;
-      robotRegister_sent[0] = 0;
     }
 
     int16_t robotlocation = robotRegister_received[0];
@@ -823,6 +839,7 @@ void *userInterface(void *vargp)
     {
       robot_status = robotlocation;
     }
+
     switch(robotlocation)
     {
       case 1:
@@ -863,6 +880,8 @@ void *userInterface(void *vargp)
               }
             }
           }
+          sleep(1);
+          hascalling = 0;
           station1Register_sent[0]=0;
           robotRegister_sent[0]=4;
           station1_processed = 0;
@@ -906,6 +925,7 @@ void *userInterface(void *vargp)
             }
           }
           sleep(1);
+          hascalling = 0;
           station2Register_sent[0]=0;
           robotRegister_sent[0]=4;
           station2_processed = 0;
@@ -950,6 +970,7 @@ void *userInterface(void *vargp)
             }
           }
           sleep(1);
+          hascalling = 0;
           station3Register_sent[0]=0;
           robotRegister_sent[0]=4;
           station3_processed = 0;
@@ -994,6 +1015,7 @@ void *userInterface(void *vargp)
             }
           }
           sleep(1);
+          hascalling = 0;
           station4Register_sent[0]=0;
           robotRegister_sent[0]=1;
           station4_processed = 0;
@@ -1039,6 +1061,7 @@ void *userInterface(void *vargp)
           }
         }
         sleep(1);
+        hascalling = 0;
         station5Register_sent[0]=0;
         robotRegister_sent[0]=4;
         station5_processed = 0;
@@ -1179,13 +1202,6 @@ void button_was_clicked (GtkWidget *widget, gpointer gdata)
     gtk_container_foreach (GTK_CONTAINER (widget), 
                            (GtkCallback) callback5, gdata);
   }
-  else
-  {
-    printf("Unknow button");
-  }
-  GtkTextIter end;
-  gtk_text_buffer_get_end_iter(consoletxt, &end);
-    gtk_text_view_scroll_to_iter(GTK_TEXT_VIEW(wins), &end, 0.0, FALSE, 0.0,0.0);
   // switch(data)
   // {
 
@@ -1334,7 +1350,8 @@ static void callback1( GtkWidget *widget,
   else
   {
     gtk_label_set (GTK_LABEL(widget), "Calling");
-    gtk_text_buffer_insert(consoletxt, &iter, "Robot is going to station 1\n", -1);
+    snprintf (TEXT, sizeof(TEXT), "%d is calling robot\n", 1);
+    printtoconsole(TEXT);
     robotRegister_sent[0] = 1;
     robot_control = 1;
   }
@@ -1446,4 +1463,12 @@ quick_message (GtkWindow *parent, gchar *message)
 
  gtk_container_add (GTK_CONTAINER (content_area), label);
  gtk_widget_show_all (dialog);
+}
+
+void printtoconsole(char* text)
+{
+  gtk_text_buffer_insert(consoletxt, &iter, text, -1);
+  GtkTextIter end;
+  gtk_text_buffer_get_end_iter(consoletxt, &end);
+  gtk_text_view_scroll_to_iter(GTK_TEXT_VIEW(wins), &end, 0.0, FALSE, 0.0,0.0);
 }
