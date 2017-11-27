@@ -171,14 +171,14 @@ int main(int argc, char *argv[])
   GUIInit(argc, argv);
   int rc;
   int i;
-  //pthread_t stationThread_id, userThread_id, robotThread_id, userInterface_id;
-  //pthread_create(&userThread_id, NULL, userThread, NULL);
-  //pthread_create(&userInterface_id, NULL, userInterface, NULL);
+  pthread_t stationThread_id, userThread_id, robotThread_id, userInterface_id;
+  pthread_create(&userThread_id, NULL, userThread, NULL);
+  pthread_create(&userInterface_id, NULL, userInterface, NULL);
   //pthread_create(&robotThread_id, NULL, robotThread, NULL);
   //pthread_create(&stationThread_id, NULL, stationThread, NULL);
   //pthread_join(robotThread_id, NULL);
-  //pthread_join(userInterface_id, NULL);
-  //pthread_join(userThread_id, NULL);
+  pthread_join(userInterface_id, NULL);
+  pthread_join(userThread_id, NULL);
   //pthread_join(stationThread_id, NULL);
 
   while (1)
