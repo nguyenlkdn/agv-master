@@ -1167,7 +1167,7 @@ char* getTime()
  */
 void button_was_clicked (GtkWidget *widget, gpointer gdata)
 {
-  if(!strcmp(gdata, "ReCall Robot"))
+  if(!strcmp(gdata, "Recall"))
   {
     gtk_container_foreach (GTK_CONTAINER (widget), 
                            (GtkCallback) callback1, gdata);
@@ -1263,11 +1263,11 @@ void GUIInit(int argc, char *argv[])
   // gtk_table_attach(GTK_TABLE(table), actBtn, 3, 4, 1, 2, 
   //     GTK_FILL, GTK_SHRINK, 1, 1);
 
-  actstation1 = gtk_button_new_with_label("ReCall Robot");
-  gtk_widget_set_size_request(actstation1, 70, 30);
+  actstation1 = gtk_button_new_with_label("ReCall");
+  gtk_widget_set_size_request(actstation1, 70, 50);
   gtk_table_attach_defaults(GTK_TABLE(table), actstation1, 5, 6, 1, 2);
   g_signal_connect (GTK_OBJECT(actstation1), "clicked",
-          G_CALLBACK (button_was_clicked), (gpointer) "ReCall Robot");
+          G_CALLBACK (button_was_clicked), (gpointer) "Recall");
 
   actstation2 = gtk_button_new_with_label("Station 2");
   gtk_widget_set_size_request(actstation2, 70, 30);
@@ -1348,7 +1348,7 @@ static void callback1( GtkWidget *widget,
   {
     robotRegister_sent[0] = 0;
     robot_control = 0;
-    gtk_label_set (GTK_LABEL(widget), "ReCall Robot");
+    gtk_label_set (GTK_LABEL(widget), "Recall");
   }
   else
   {
