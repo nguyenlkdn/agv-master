@@ -1245,7 +1245,7 @@ void GUIInit(int argc, char *argv[])
 
   pixmap = gdk_bitmap_create_from_data(NULL, bits, 1, 1);
   cursor = gdk_cursor_new_from_pixmap(pixmap, pixmap, &color, &color, 0, 0);
-  gdk_window_set_cursor(GTK_WINDOW(window), cursor);
+  gdk_window_set_cursor(window->window, cursor);
 
   table = gtk_table_new(12, 6, FALSE);
   gtk_table_set_col_spacings(GTK_TABLE(table), 10);
