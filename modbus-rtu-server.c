@@ -1167,7 +1167,7 @@ char* getTime()
  */
 void button_was_clicked (GtkWidget *widget, gpointer gdata)
 {
-  if(!strcmp(gdata, "Recall"))
+  if(!strcmp(gdata, "Station 1"))
   {
     gtk_container_foreach (GTK_CONTAINER (widget), 
                            (GtkCallback) callback1, gdata);
@@ -1229,8 +1229,8 @@ void GUIInit(int argc, char *argv[])
 
   window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER);
-  //gtk_widget_set_size_request (window, 800, 480);
-  gtk_window_fullscreen(GTK_WINDOW(window));
+  gtk_widget_set_size_request (window, 800, 480);
+  //gtk_window_fullscreen(GTK_WINDOW(window));
   //gtk_widget_realize (window);
   //GdkCursor* Cursor = gdk_cursor_new(GDK_BLANK_CURSOR);
   //gdk_window_set_cursor(window, GDK_BLANK_CURSOR);
@@ -1238,33 +1238,29 @@ void GUIInit(int argc, char *argv[])
   //gdk_window_set_cursor((window),Cursor);
   gtk_container_set_border_width(GTK_CONTAINER(window), 50);
 
-  gchar bits[] = { 0 };
-  GdkColor color = { 0, 0, 0, 0 };
-  GdkPixmap *pixmap;
-  GdkCursor *cursor;
+  // gchar bits[] = { 0 };
+  // GdkColor color = { 0, 0, 0, 0 };
+  // GdkPixmap *pixmap;
+  // GdkCursor *cursor;
 
-  pixmap = gdk_bitmap_create_from_data(NULL, bits, 1, 1);
-  cursor = gdk_cursor_new_from_pixmap(pixmap, pixmap, &color, &color, 0, 0);
-  gdk_window_set_cursor(window->window, cursor);
+  // pixmap = gdk_bitmap_create_from_data(NULL, bits, 1, 1);
+  // cursor = gdk_cursor_new_from_pixmap(pixmap, pixmap, &color, &color, 0, 0);
+  //gdk_window_set_cursor(window->window, cursor);
 
-  table = gtk_table_new(12, 6, FALSE);
-  gtk_table_set_col_spacings(GTK_TABLE(table), 10);
-  gtk_table_set_row_spacing(GTK_TABLE(table), 0, 10);
+  table = gtk_table_new(16, 16, FALSE);
+  gtk_table_set_col_spacings(GTK_TABLE(table), 2);
+  gtk_table_set_row_spacing(GTK_TABLE(table), 0, 2);
 
   title = gtk_label_new("Console: ");
   halign = gtk_alignment_new(0, 0, 0, 0);
   gtk_container_add(GTK_CONTAINER(halign), title);
-  gtk_table_attach(GTK_TABLE(table), halign, 0, 1, 0, 1, 
+  gtk_table_attach(GTK_TABLE(table), halign, 0, 4, 0, 1, 
       GTK_FILL, GTK_FILL, 0, 0);
 
   wins = gtk_text_view_new();
-  GtkTextBuffer *consoletext = gtk_text_buffer_new (NULL);
-  //gtk_text_buffer_insert_at_cursor (consoletext, "Truong Dinh Nguyen", sizeof("Truong Dinh Nguyen"));
-  wins = gtk_text_view_new_with_buffer (consoletext);
-
   gtk_text_view_set_editable(GTK_TEXT_VIEW(wins), FALSE);
-  gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(wins), TRUE);
-  gtk_table_attach(GTK_TABLE(table), wins,  0, 2, 1, 3, 
+  gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(wins), FALSE);
+  gtk_table_attach(GTK_TABLE(table), wins,  0, 10, 1, 11, 
       GTK_FILL | GTK_EXPAND, GTK_FILL | GTK_EXPAND, 1, 1);
 
   // actBtn = gtk_button_new_with_label("Activate");
@@ -1272,40 +1268,46 @@ void GUIInit(int argc, char *argv[])
   // gtk_table_attach(GTK_TABLE(table), actBtn, 3, 4, 1, 2, 
   //     GTK_FILL, GTK_SHRINK, 1, 1);
 
-  actstation1 = gtk_button_new_with_label("ReCall");
+  actstation1 = gtk_button_new_with_label("Station 1");
   gtk_widget_set_size_request(actstation1, 70, 50);
-  gtk_table_attach_defaults(GTK_TABLE(table), actstation1, 5, 6, 1, 2);
+  //gtk_table_attach_defaults(GTK_TABLE(table), actstation1, 5, 6, 1, 3);
+  gtk_table_attach(GTK_TABLE(table), actstation1, 10, 11, 1, 2, 
+          GTK_FILL, GTK_FILL, 0, 0);
   g_signal_connect (GTK_OBJECT(actstation1), "clicked",
-          G_CALLBACK (button_was_clicked), (gpointer) "Recall");
+          G_CALLBACK (button_was_clicked), (gpointer) "Station 1");
 
   actstation2 = gtk_button_new_with_label("Station 2");
-  gtk_widget_set_size_request(actstation2, 70, 30);
-  gtk_table_attach_defaults(GTK_TABLE(table), actstation2, 6, 7, 1, 2);
+  //gtk_widget_set_size_request(actstation2, 70, 30);
+  gtk_table_attach(GTK_TABLE(table), actstation2, 11, 12, 1, 2, 
+          GTK_FILL, GTK_FILL, 0, 0);
   g_signal_connect (GTK_OBJECT(actstation2), "clicked",
           G_CALLBACK (button_was_clicked), (gpointer) "Station 2");
 
   actstation3 = gtk_button_new_with_label("Station 3");
   gtk_widget_set_size_request(actstation3, 70, 30);
-  gtk_table_attach_defaults(GTK_TABLE(table), actstation3, 7, 8, 1, 2);
+  //gtk_table_attach_defaults(GTK_TABLE(table), actstation3, 7, 8, 1, 2);
   g_signal_connect (GTK_OBJECT(actstation3), "clicked",
           G_CALLBACK (button_was_clicked), (gpointer) "Station 3");
 
   actstation4 = gtk_button_new_with_label("Station 4");
   gtk_widget_set_size_request(actstation4, 70, 30);
-  gtk_table_attach_defaults(GTK_TABLE(table), actstation4, 8, 9, 1, 2);
+  //gtk_table_attach(GTK_TABLE(table), actstation5, 0, 1, 3, 4, 
+  //        GTK_FILL, GTK_FILL, 0, 0);
   g_signal_connect (GTK_OBJECT(actstation4), "clicked",
           G_CALLBACK (button_was_clicked), (gpointer) "Station 4");
 
   actstation5 = gtk_button_new_with_label("Station 5");
-  gtk_table_attach_defaults(GTK_TABLE(table), actstation5, 9, 10, 1, 2);
+  // gtk_table_attach(GTK_TABLE(table), actstation5, 0, 1, 3, 4, 
+  //         GTK_FILL, GTK_FILL, 0, 0);
   g_signal_connect (GTK_OBJECT(actstation5), "clicked",
           G_CALLBACK (button_was_clicked), (gpointer) "Station 5");
+
   halign2 = gtk_alignment_new(0, 1, 0, 0);
   hlpBtn = gtk_button_new_with_label("Help");
   gtk_container_add(GTK_CONTAINER(halign2), hlpBtn);
   gtk_widget_set_size_request(hlpBtn, 70, 30);
   gtk_table_set_row_spacing(GTK_TABLE(table), 3, 5);
-  gtk_table_attach(GTK_TABLE(table), halign2, 0, 1, 4, 5, 
+  gtk_table_attach(GTK_TABLE(table), halign2, 0, 1, 15, 16, 
       GTK_FILL, GTK_FILL, 0, 0);
 
   // okBtn = gtk_button_new_with_label("OK");
@@ -1331,7 +1333,7 @@ static void callback1( GtkWidget *widget,
   {
     robotRegister_sent[0] = 0;
     robot_control = 0;
-    gtk_label_set (GTK_LABEL(widget), "Recall");
+    gtk_label_set (GTK_LABEL(widget), "Station 1");
   }
   else
   {
