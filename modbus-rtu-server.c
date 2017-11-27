@@ -147,6 +147,7 @@ char *getTime();
 /*
 
 */
+static void callback1( GtkWidget *widget, gpointer data);
 static void callback2( GtkWidget *widget, gpointer data);
 static void callback3( GtkWidget *widget, gpointer data);
 static void callback4( GtkWidget *widget, gpointer data);
@@ -812,12 +813,20 @@ void *userInterface(void *vargp)
     else
     {
       printf("Robot in Manual Mode under control of the Station 1\n");
-      while(robot_control != robotRegister_received[0])
+      while(robot_control != robotRegister_received[0] && (robot_control != 0))
       {
         printf("Robot is going to station %d under control of Station 1\n", robot_control);
         sleep(1);
       }
-      printf("Robot in Auto Mode at station: %d\n", robot_control);
+
+      if(robot_control == 0)
+      {
+        printf("Canceled Requesting\n");
+      }
+      else
+      {
+        printf("Robot in Auto Mode at station: %d\n", robot_control);
+      }
       robot_control = 0;
       robotRegister_sent[0] = 0;
     }
@@ -1158,8 +1167,42 @@ char* getTime()
  */
 void button_was_clicked (GtkWidget *widget, gpointer gdata)
 {
+  if(!strcmp(gdata, "Call Robot"))
+  {
     gtk_container_foreach (GTK_CONTAINER (widget), 
-                           (GtkCallback) callback2, NULL);
+                           (GtkCallback) callback1, gdata);
+  }
+  else if (!strcmp(gdata, "Station 2"))
+  {
+    gtk_container_foreach (GTK_CONTAINER (widget), 
+                           (GtkCallback) callback2, gdata);
+  }
+  else if (!strcmp(gdata, "Station 3"))
+  {
+    gtk_container_foreach (GTK_CONTAINER (widget), 
+                           (GtkCallback) callback3, gdata);
+  }
+  else if (!strcmp(gdata, "Station 4"))
+  {
+    gtk_container_foreach (GTK_CONTAINER (widget), 
+                           (GtkCallback) callback4, gdata);
+  }
+  else if (!strcmp(gdata, "Station 5"))
+  {
+    gtk_container_foreach (GTK_CONTAINER (widget), 
+                           (GtkCallback) callback5, gdata);
+  }
+  else
+  {
+    printf("Unknow button");
+  }
+
+  // switch(data)
+  // {
+
+  //   gtk_container_foreach (GTK_CONTAINER (widget), 
+  //                          (GtkCallback) callback2, gdata);
+  // }
 }
 void GUIInit(int argc, char *argv[])
 {
@@ -1186,9 +1229,9 @@ void GUIInit(int argc, char *argv[])
 
   window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER);
-  //gtk_widget_set_size_request (window, 800, 480);
-  gtk_window_fullscreen(window);
-  //gtk_widget_realize (window);
+  gtk_widget_set_size_request (window, 800, 480);
+  //gtk_window_fullscreen(window);
+  gtk_widget_realize (window);
   //GdkCursor* Cursor = gdk_cursor_new(GDK_BLANK_CURSOR);
   //gdk_window_set_cursor(window, GDK_BLANK_CURSOR);
   gtk_window_set_title(GTK_WINDOW(window), "AGV Robot Controller");
@@ -1220,43 +1263,34 @@ void GUIInit(int argc, char *argv[])
   // gtk_table_attach(GTK_TABLE(table), actBtn, 3, 4, 1, 2, 
   //     GTK_FILL, GTK_SHRINK, 1, 1);
 
+  actstation1 = gtk_button_new_with_label("Call Robot");
+  gtk_widget_set_size_request(actstation1, 70, 30);
+  gtk_table_attach_defaults(GTK_TABLE(table), actstation1, 5, 6, 1, 2);
+  g_signal_connect (GTK_OBJECT(actstation1), "clicked",
+          G_CALLBACK (button_was_clicked), (gpointer) "ReCall Robot");
+
   actstation2 = gtk_button_new_with_label("Station 2");
   gtk_widget_set_size_request(actstation2, 70, 30);
   gtk_table_attach_defaults(GTK_TABLE(table), actstation2, 6, 7, 1, 2);
-  /* Connect the "clicked" signal of the button to our callback */
   g_signal_connect (GTK_OBJECT(actstation2), "clicked",
           G_CALLBACK (button_was_clicked), (gpointer) "Station 2");
-  // gtk_signal_connect (GTK_OBJECT (actstation2), 
-  //                         "clicked", 
-  //                         GTK_SIGNAL_FUNC (callback2), 
-  //                         "clicked");
-  // GtkWidget *button = gtk_button_new_with_label ("Click me!");
-  // gtk_table_attach_defaults(GTK_TABLE(table), button, 6, 7, 1, 2);
-
-    /* --- Give the button an event handler - it'll call the function
-     *     button_was_clicked when the button is clicked.
-     */
-  // gtk_signal_connect (GTK_OBJECT (button), 
-  //                           "clicked", 
-  //                           GTK_SIGNAL_FUNC (button_was_clicked), 
-  //                           "clicked");
 
   actstation3 = gtk_button_new_with_label("Station 3");
   gtk_widget_set_size_request(actstation3, 70, 30);
   gtk_table_attach_defaults(GTK_TABLE(table), actstation3, 7, 8, 1, 2);
-  g_signal_connect (actstation3, "clicked",
-          G_CALLBACK (callback3), (gpointer) "Station 3");
+  g_signal_connect (GTK_OBJECT(actstation3), "clicked",
+          G_CALLBACK (button_was_clicked), (gpointer) "Station 3");
 
   actstation4 = gtk_button_new_with_label("Station 4");
   gtk_widget_set_size_request(actstation4, 70, 30);
   gtk_table_attach_defaults(GTK_TABLE(table), actstation4, 8, 9, 1, 2);
-  g_signal_connect (actstation4, "clicked",
-          G_CALLBACK (callback4), (gpointer) "Station 4");
+  g_signal_connect (GTK_OBJECT(actstation4), "clicked",
+          G_CALLBACK (button_was_clicked), (gpointer) "Station 4");
 
   actstation5 = gtk_button_new_with_label("Station 5");
   gtk_table_attach_defaults(GTK_TABLE(table), actstation5, 9, 10, 1, 2);
-    g_signal_connect (actstation5, "clicked",
-          G_CALLBACK (callback5), (gpointer) "Station 5");
+  g_signal_connect (GTK_OBJECT(actstation5), "clicked",
+          G_CALLBACK (button_was_clicked), (gpointer) "Station 5");
 
   // actstation1 = gtk_button_new_with_label("Station 1");
   // gtk_widget_set_size_request(actstation1, 70, 30);
@@ -1306,37 +1340,99 @@ void GUIInit(int argc, char *argv[])
 }
 
 /* Our usual callback function */
+static void callback1( GtkWidget *widget,
+                      gpointer   data )
+{
+  const char* button_label = gtk_label_get_label(GTK_LABEL(widget));
+  if(strcmp(button_label, "Calling") == 0)
+  {
+    robotRegister_sent[0] = 0;
+    robot_control = 0;
+    gtk_label_set (GTK_LABEL(widget), "Call Robot");
+  }
+  else
+  {
+    gtk_label_set (GTK_LABEL(widget), "Calling");
+    robotRegister_sent[0] = 1;
+    robot_control = 1;
+  }
+  //gtk_label_get(GTK_LABEL(widget), button_label);
+  g_print ("%s was pressed, %s\n", (char *) data, (char*) button_label);
+
+}
+
+/* Our usual callback function */
 static void callback2( GtkWidget *widget,
                       gpointer   data )
 {
-  g_print ("%s was pressed\n", (char *) data);
-  gtk_label_set (GTK_LABEL(widget), "Calling");
-  robotRegister_sent[0] = 2;
-  robot_control = 2;
+  const char* button_label = gtk_label_get_label(GTK_LABEL(widget));
+  if(strcmp(button_label, "Calling") == 0)
+  {
+    robotRegister_sent[0] = 0;
+    robot_control = 0;
+    gtk_label_set (GTK_LABEL(widget), "Station 2");
+  }
+  else
+  {
+    gtk_label_set (GTK_LABEL(widget), "Calling");
+    robotRegister_sent[0] = 2;
+    robot_control = 2;
+  }
 }
 
 /* Our usual callback function */
 static void callback3( GtkWidget *widget,
                       gpointer   data )
 {
-    g_print ("%s was pressed\n", (char *) data);
+  const char* button_label = gtk_label_get_label(GTK_LABEL(widget));
+  if(strcmp(button_label, "Calling") == 0)
+  {
+    robotRegister_sent[0] = 0;
+    robot_control = 0;
+    gtk_label_set (GTK_LABEL(widget), "Station 3");
+  }
+  else
+  {
+    gtk_label_set (GTK_LABEL(widget), "Calling");
     robotRegister_sent[0] = 3;
     robot_control = 3;
+  }
 }
+
 /* Our usual callback function */
 static void callback4( GtkWidget *widget,
                       gpointer   data )
 {
-    g_print ("%s was pressed\n", (char *) data);
+  const char* button_label = gtk_label_get_label(GTK_LABEL(widget));
+  if(strcmp(button_label, "Calling") == 0)
+  {
+    robotRegister_sent[0] = 0;
+    robot_control = 0;
+    gtk_label_set (GTK_LABEL(widget), "Station 4");
+  }
+  else
+  {
+    gtk_label_set (GTK_LABEL(widget), "Calling");
     robotRegister_sent[0] = 4;
     robot_control = 4;
+  }
 }
 /* Our usual callback function */
 static void callback5( GtkWidget *widget,
                       gpointer   data )
 {
-    g_print ("%s was pressed\n", (char *) data);
+  const char* button_label = gtk_label_get_label(GTK_LABEL(widget));
+  if(strcmp(button_label, "Calling") == 0)
+  {
+    robotRegister_sent[0] = 0;
+    robot_control = 0;
+    gtk_label_set (GTK_LABEL(widget), "Station 5");
+  }
+  else
+  {
+    gtk_label_set (GTK_LABEL(widget), "Calling");
     robotRegister_sent[0] = 5;
     robot_control = 5;
+  }
 }
 
