@@ -134,6 +134,15 @@ uint16_t station2_confimation=0;
 uint16_t station3_confimation=0;
 uint16_t station4_confimation=0;
 uint16_t station5_confimation=0;
+/*
+
+*/
+GtkTextBuffer *consoletxt;
+GtkTextIter iter;
+
+/*
+
+*/
 void GUIInit(int argc, char *argv[]);
 void *stationThread(void *vargp);
 void *robotThread(void *vargp);
@@ -1235,6 +1244,28 @@ void GUIInit(int argc, char *argv[])
       GTK_FILL, GTK_FILL, 0, 0);
 
   wins = gtk_text_view_new();
+  gtk_widget_set_size_request(wins, 500, 500);
+
+  consoletxt = gtk_text_view_get_buffer(GTK_TEXT_VIEW(wins));
+  gtk_text_buffer_create_tag(consoletxt, "gap",
+        "pixels_above_lines", 30, NULL);
+  gtk_text_buffer_create_tag(consoletxt, "lmarg", 
+      "left_margin", 5, NULL);
+  gtk_text_buffer_create_tag(consoletxt, "blue_fg", 
+      "foreground", "blue", NULL); 
+  gtk_text_buffer_create_tag(consoletxt, "gray_bg", 
+      "background", "gray", NULL); 
+  gtk_text_buffer_create_tag(consoletxt, "italic", 
+      "style", PANGO_STYLE_ITALIC, NULL);
+  gtk_text_buffer_create_tag(consoletxt, "bold", 
+      "weight", PANGO_WEIGHT_BOLD, NULL);
+  gtk_text_buffer_get_iter_at_offset(consoletxt, &iter, 0);
+
+  // gtk_text_buffer_insert(consoletxt, &iter, "Plain text\n", -1);
+  // gtk_text_buffer_insert(consoletxt, &iter, "Plain text\n", -1);
+  // gtk_text_buffer_insert(consoletxt, &iter, "Plain text\n", -1);
+  // gtk_text_buffer_insert(consoletxt, &iter, "Plain text\n", -1);
+
   gtk_text_view_set_editable(GTK_TEXT_VIEW(wins), FALSE);
   gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(wins), FALSE);
   gtk_table_attach(GTK_TABLE(table), wins,  0, 10, 1, 11, 
@@ -1311,6 +1342,7 @@ static void callback1( GtkWidget *widget,
   else
   {
     gtk_label_set (GTK_LABEL(widget), "Calling");
+    gtk_text_buffer_insert(consoletxt, &iter, "Robot is going to station 1\n", -1);
     robotRegister_sent[0] = 1;
     robot_control = 1;
   }
