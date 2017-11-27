@@ -629,6 +629,10 @@ void *robotThread(void *vargp)
       // printf("\n");
       //usleep(200000);
     }
+    else
+    {
+      printf("[Error] Read from robot Timeout!\n");
+    }
     //printf("Robot Location: %d\n", robot_status);
     if(robotRegister_received[0] == 0)
     {
