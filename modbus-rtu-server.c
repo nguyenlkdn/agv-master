@@ -1251,7 +1251,7 @@ void GUIInit(int argc, char *argv[])
   gtk_table_set_col_spacings(GTK_TABLE(table), 2);
   gtk_table_set_row_spacing(GTK_TABLE(table), 0, 2);
 
-  title = gtk_label_new("Console: ");
+  title = gtk_label_new("Logs: ");
   halign = gtk_alignment_new(0, 0, 0, 0);
   gtk_container_add(GTK_CONTAINER(halign), title);
   gtk_table_attach(GTK_TABLE(table), halign, 0, 4, 0, 1, 
@@ -1263,24 +1263,19 @@ void GUIInit(int argc, char *argv[])
   gtk_table_attach(GTK_TABLE(table), wins,  0, 10, 1, 11, 
       GTK_FILL | GTK_EXPAND, GTK_FILL | GTK_EXPAND, 1, 1);
 
-  // actBtn = gtk_button_new_with_label("Activate");
-  // gtk_widget_set_size_request(actBtn, 70, 30);
-  // gtk_table_attach(GTK_TABLE(table), actBtn, 3, 4, 1, 2, 
-  //     GTK_FILL, GTK_SHRINK, 1, 1);
-
   actstation2 = gtk_button_new_with_label("Station 2");
   gtk_widget_set_size_request(actstation2, 100, 100);
   gtk_table_attach(GTK_TABLE(table), actstation2, 10, 11, 1, 2, 
           GTK_FILL, GTK_FILL, 0, 0);
   g_signal_connect (GTK_OBJECT(actstation2), "clicked",
-          G_CALLBACK (button_was_clicked), (gpointer) "Station 3");
+          G_CALLBACK (button_was_clicked), (gpointer) "Station 2");
 
   actstation3 = gtk_button_new_with_label("Station 3");
   gtk_widget_set_size_request(actstation3, 100, 100);
   gtk_table_attach(GTK_TABLE(table), actstation3, 11, 12, 1, 2, 
           GTK_FILL, GTK_FILL, 0, 0);
   g_signal_connect (GTK_OBJECT(actstation3), "clicked",
-          G_CALLBACK (button_was_clicked), (gpointer) "Station 4");
+          G_CALLBACK (button_was_clicked), (gpointer) "Station 3");
 
   actstation4 = gtk_button_new_with_label("Station 4");
   gtk_widget_set_size_request(actstation4, 100, 100);
@@ -1422,3 +1417,32 @@ static void callback5( GtkWidget *widget,
   }
 }
 
+void
+quick_message (GtkWindow *parent, gchar *message)
+{
+ GtkWidget *dialog, *label, *content_area;
+ GtkDialogFlags flags;
+
+ // Create the widgets
+ flags = GTK_DIALOG_DESTROY_WITH_PARENT;
+ dialog = gtk_dialog_new_with_buttons ("Message",
+                                       parent,
+                                       flags,
+                                       ("_OK"),
+                                       GTK_RESPONSE_NONE,
+                                       NULL);
+ content_area = gtk_dialog_get_content_area (GTK_DIALOG (dialog));
+ label = gtk_label_new (message);
+
+ // Ensure that the dialog box is destroyed when the user responds
+
+ g_signal_connect_swapped (dialog,
+                           "response",
+                           G_CALLBACK (gtk_widget_destroy),
+                           dialog);
+
+ // Add the label, and show everything we’ve added
+
+ gtk_container_add (GTK_CONTAINER (content_area), label);
+ gtk_widget_show_all (dialog);
+}
