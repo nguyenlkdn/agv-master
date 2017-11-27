@@ -177,12 +177,12 @@ int main(int argc, char *argv[])
   pthread_t stationThread_id, userThread_id, robotThread_id, userInterface_id;
   pthread_create(&userThread_id, NULL, userThread, NULL);
   pthread_create(&userInterface_id, NULL, userInterface, NULL);
-  pthread_create(&robotThread_id, NULL, robotThread, NULL);
-  pthread_create(&stationThread_id, NULL, stationThread, NULL);
-  pthread_join(robotThread_id, NULL);
+  //pthread_create(&robotThread_id, NULL, robotThread, NULL);
+  //pthread_create(&stationThread_id, NULL, stationThread, NULL);
+  //pthread_join(robotThread_id, NULL);
   pthread_join(userInterface_id, NULL);
   pthread_join(userThread_id, NULL);
-  pthread_join(stationThread_id, NULL);
+  //pthread_join(stationThread_id, NULL);
   return 0;
 }
 
@@ -1151,7 +1151,16 @@ char* getTime()
   }
   return c_time_string;
 }
-
+/*
+ * button_was_clicked
+ * 
+ * event handler called when the button is clicked.
+ */
+void button_was_clicked (GtkWidget *widget, gpointer gdata)
+{
+    gtk_container_foreach (GTK_CONTAINER (widget), 
+                           (GtkCallback) callback2, NULL);
+}
 void GUIInit(int argc, char *argv[])
 {
   GtkWidget *window;
@@ -1215,8 +1224,22 @@ void GUIInit(int argc, char *argv[])
   gtk_widget_set_size_request(actstation2, 70, 30);
   gtk_table_attach_defaults(GTK_TABLE(table), actstation2, 6, 7, 1, 2);
   /* Connect the "clicked" signal of the button to our callback */
-  g_signal_connect (actstation2, "clicked",
-          G_CALLBACK (callback2), (gpointer) "Station 2");
+  g_signal_connect (GTK_OBJECT(actstation2), "clicked",
+          G_CALLBACK (button_was_clicked), (gpointer) "Station 2");
+  // gtk_signal_connect (GTK_OBJECT (actstation2), 
+  //                         "clicked", 
+  //                         GTK_SIGNAL_FUNC (callback2), 
+  //                         "clicked");
+  // GtkWidget *button = gtk_button_new_with_label ("Click me!");
+  // gtk_table_attach_defaults(GTK_TABLE(table), button, 6, 7, 1, 2);
+
+    /* --- Give the button an event handler - it'll call the function
+     *     button_was_clicked when the button is clicked.
+     */
+  // gtk_signal_connect (GTK_OBJECT (button), 
+  //                           "clicked", 
+  //                           GTK_SIGNAL_FUNC (button_was_clicked), 
+  //                           "clicked");
 
   actstation3 = gtk_button_new_with_label("Station 3");
   gtk_widget_set_size_request(actstation3, 70, 30);
@@ -1287,6 +1310,7 @@ static void callback2( GtkWidget *widget,
                       gpointer   data )
 {
   g_print ("%s was pressed\n", (char *) data);
+  gtk_label_set (GTK_LABEL(widget), "Calling");
   robotRegister_sent[0] = 2;
   robot_control = 2;
 }
@@ -1316,7 +1340,3 @@ static void callback5( GtkWidget *widget,
     robot_control = 5;
 }
 
-void gtkmain()
-{
-
-}
