@@ -1183,8 +1183,9 @@ void GUIInit(int argc, char *argv[])
   //gtk_widget_set_size_request (window, 800, 480);
   gtk_window_fullscreen(window);
   gtk_widget_realize (window);
+  GdkCursor* Cursor = gdk_cursor_new(GDK_BLANK_CURSOR);
   gtk_window_set_title(GTK_WINDOW(window), "AGV Robot Controller");
-
+  gdk_window_set_cursor((window),Cursor);
   gtk_container_set_border_width(GTK_CONTAINER(window), 50);
 
   table = gtk_table_new(12, 6, FALSE);
