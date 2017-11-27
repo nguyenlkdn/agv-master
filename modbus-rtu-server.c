@@ -1263,7 +1263,7 @@ void GUIInit(int argc, char *argv[])
   // gtk_table_attach(GTK_TABLE(table), actBtn, 3, 4, 1, 2, 
   //     GTK_FILL, GTK_SHRINK, 1, 1);
 
-  actstation1 = gtk_button_new_with_label("Call Robot");
+  actstation1 = gtk_button_new_with_label("ReCall Robot");
   gtk_widget_set_size_request(actstation1, 70, 30);
   gtk_table_attach_defaults(GTK_TABLE(table), actstation1, 5, 6, 1, 2);
   g_signal_connect (GTK_OBJECT(actstation1), "clicked",
@@ -1348,7 +1348,7 @@ static void callback1( GtkWidget *widget,
   {
     robotRegister_sent[0] = 0;
     robot_control = 0;
-    gtk_label_set (GTK_LABEL(widget), "Call Robot");
+    gtk_label_set (GTK_LABEL(widget), "ReCall Robot");
   }
   else
   {
