@@ -171,7 +171,6 @@ uint16_t robot_control = 0;
 */
 int main(int argc, char *argv[])
 {
-  GUIInit(argc, argv);
   initThread();
   robotInit();
   stationInit();
@@ -189,6 +188,7 @@ int main(int argc, char *argv[])
 
 void *userThread()
 {
+  GUIInit(0, NULL);
   char button[50];
   while (1)
   {
