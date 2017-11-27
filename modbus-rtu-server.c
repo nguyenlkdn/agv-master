@@ -172,7 +172,18 @@ uint16_t robot_control = 0;
 int main(int argc, char *argv[])
 {
   GUIInit(argc, argv);
-
+  initThread();
+  robotInit();
+  stationInit();
+  pthread_t stationThread_id, userThread_id, robotThread_id, userInterface_id;
+  pthread_create(&userThread_id, NULL, userThread, NULL);
+  pthread_create(&userInterface_id, NULL, userInterface, NULL);
+  pthread_create(&robotThread_id, NULL, robotThread, NULL);
+  pthread_create(&stationThread_id, NULL, stationThread, NULL);
+  pthread_join(robotThread_id, NULL);
+  pthread_join(userInterface_id, NULL);
+  pthread_join(userThread_id, NULL);
+  pthread_join(stationThread_id, NULL);
   return 0;
 }
 
@@ -1263,23 +1274,8 @@ void GUIInit(int argc, char *argv[])
         G_CALLBACK(gtk_main_quit), G_OBJECT(window));
 
   gtk_widget_show_all(window);
-
-  initThread();
-  robotInit();
-  stationInit();
-  pthread_t stationThread_id, userThread_id, robotThread_id, userInterface_id;
-  pthread_create(&userThread_id, NULL, userThread, NULL);
-  pthread_create(&userInterface_id, NULL, userInterface, NULL);
-  pthread_create(&robotThread_id, NULL, robotThread, NULL);
-  pthread_create(&stationThread_id, NULL, stationThread, NULL);
-  pthread_join(robotThread_id, NULL);
-  pthread_join(userInterface_id, NULL);
-  pthread_join(userThread_id, NULL);
-  pthread_join(stationThread_id, NULL);
-
   gtk_main();
-  //gtk_main_level ();
-  //gtk_main_quit ();
+
 }
 
 /* Our usual callback function */
@@ -1314,4 +1310,9 @@ static void callback5( GtkWidget *widget,
     g_print ("%s was pressed\n", (char *) data);
     robotRegister_sent[0] = 2;
     robot_control = 2;
+}
+
+void gtkmain()
+{
+
 }
