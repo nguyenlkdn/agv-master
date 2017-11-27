@@ -1215,23 +1215,13 @@ void GUIInit(int argc, char *argv[])
 
   window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER);
-  gtk_widget_set_size_request (window, 800, 480);
-  //gtk_window_fullscreen(GTK_WINDOW(window));
-  //gtk_widget_realize (window);
-  //GdkCursor* Cursor = gdk_cursor_new(GDK_BLANK_CURSOR);
-  //gdk_window_set_cursor(window, GDK_BLANK_CURSOR);
+  gtk_widget_set_size_request (window, 720, 480);
+  if(isfullscreen == 1)
+  {
+    gtk_window_fullscreen(GTK_WINDOW(window));
+  }
   gtk_window_set_title(GTK_WINDOW(window), "AGV Robot Controller");
-  //gdk_window_set_cursor((window),Cursor);
   gtk_container_set_border_width(GTK_CONTAINER(window), 50);
-
-  // gchar bits[] = { 0 };
-  // GdkColor color = { 0, 0, 0, 0 };
-  // GdkPixmap *pixmap;
-  // GdkCursor *cursor;
-
-  // pixmap = gdk_bitmap_create_from_data(NULL, bits, 1, 1);
-  // cursor = gdk_cursor_new_from_pixmap(pixmap, pixmap, &color, &color, 0, 0);
-  //gdk_window_set_cursor(window->window, cursor);
 
   table = gtk_table_new(16, 16, FALSE);
   gtk_table_set_col_spacings(GTK_TABLE(table), 2);
