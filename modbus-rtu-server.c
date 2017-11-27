@@ -1312,8 +1312,8 @@ static void callback5( GtkWidget *widget,
                       gpointer   data )
 {
     g_print ("%s was pressed\n", (char *) data);
-    robotRegister_sent[0] = 2;
-    robot_control = 2;
+    robotRegister_sent[0] = 5;
+    robot_control = 5;
 }
 
 void gtkmain()
