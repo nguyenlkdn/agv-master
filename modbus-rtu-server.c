@@ -47,11 +47,6 @@ enum {TCP, RTU};
 #define STATION_MAX         5
 #define ROBOT_MAX           1
 
-uint16_t STATION1_ENABLE   =  1;
-uint16_t STATION2_ENABLE   =  1;
-uint16_t STATION3_ENABLE   =  1;
-uint16_t STATION4_ENABLE   =  1;
-uint16_t STATION5_ENABLE   =  1;
 uint16_t STATION1_WRITING  =  0;
 uint16_t STATION2_WRITING  =  0;
 uint16_t STATION3_WRITING  =  0;
@@ -1185,8 +1180,8 @@ void GUIInit(int argc, char *argv[])
 
   window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER);
-  gtk_widget_set_size_request (window, 800, 480);
-  
+  //gtk_widget_set_size_request (window, 800, 480);
+  gtk_window_fullscreen(window);
   gtk_window_set_title(GTK_WINDOW(window), "AGV Robot Controller");
 
   gtk_container_set_border_width(GTK_CONTAINER(window), 50);
