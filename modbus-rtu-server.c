@@ -1238,8 +1238,14 @@ void GUIInit(int argc, char *argv[])
   //gdk_window_set_cursor((window),Cursor);
   gtk_container_set_border_width(GTK_CONTAINER(window), 50);
 
-  GdkCursor* cursor_blank = gdk_cursor_new(GDK_BLANK_CURSOR);
-  gdk_window_set_cursor(GTK_WINDOW(window), cursor_blank);
+  gchar bits[] = { 0 };
+  GdkColor color = { 0, 0, 0, 0 };
+  GdkPixmap *pixmap;
+  GdkCursor *cursor;
+
+  pixmap = gdk_bitmap_create_from_data(NULL, bits, 1, 1);
+  cursor = gdk_cursor_new_from_pixmap(pixmap, pixmap, &color, &color, 0, 0);
+  gdk_window_set_cursor(GTK_WINDOW(window), cursor);
 
   table = gtk_table_new(12, 6, FALSE);
   gtk_table_set_col_spacings(GTK_TABLE(table), 10);
@@ -1294,31 +1300,6 @@ void GUIInit(int argc, char *argv[])
   gtk_table_attach_defaults(GTK_TABLE(table), actstation5, 9, 10, 1, 2);
   g_signal_connect (GTK_OBJECT(actstation5), "clicked",
           G_CALLBACK (button_was_clicked), (gpointer) "Station 5");
-
-  // actstation1 = gtk_button_new_with_label("Station 1");
-  // gtk_widget_set_size_request(actstation1, 70, 30);
-  // gtk_table_attach(GTK_TABLE(table), actstation1, 2, 3, 0, 1, 
-  //     GTK_FILL, GTK_SHRINK, 1, 1);
-
-  // actstation2 = gtk_button_new_with_label("Station 2");
-  // gtk_widget_set_size_request(actstation2, 70, 30);
-  // gtk_table_attach(GTK_TABLE(table), actstation2, 2, 3, 0, 2, 
-  //     GTK_FILL, GTK_SHRINK, 1, 1);
-
-  // actstation3 = gtk_button_new_with_label("Station 3");
-  // gtk_widget_set_size_request(actstation3, 70, 30);
-  // gtk_table_attach(GTK_TABLE(table), actstation3, 2, 3, 1, 6, 
-  //     GTK_FILL, GTK_SHRINK, 1, 1);
-
-  // valign = gtk_alignment_new(0, 0, 0, 0);
-  // clsBtn = gtk_button_new_with_label("Close");
-  
-  // gtk_widget_set_size_request(clsBtn, 50, 30);
-  // gtk_container_add(GTK_CONTAINER(valign), clsBtn);
-  // gtk_table_set_row_spacing(GTK_TABLE(table), 1, 3);
-  // gtk_table_attach(GTK_TABLE(table), valign, 3, 4, 2, 3, 
-  //     GTK_FILL, GTK_FILL | GTK_EXPAND, 1, 1);
-
   halign2 = gtk_alignment_new(0, 1, 0, 0);
   hlpBtn = gtk_button_new_with_label("Help");
   gtk_container_add(GTK_CONTAINER(halign2), hlpBtn);
@@ -1339,7 +1320,6 @@ void GUIInit(int argc, char *argv[])
 
   gtk_widget_show_all(window);
   gtk_main();
-
 }
 
 /* Our usual callback function */
