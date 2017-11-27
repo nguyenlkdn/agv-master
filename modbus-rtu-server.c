@@ -139,6 +139,7 @@ uint16_t station5_confimation=0;
 */
 GtkTextBuffer *consoletxt;
 GtkTextIter iter;
+GtkWidget *wins;
 
 /*
 
@@ -1182,7 +1183,9 @@ void button_was_clicked (GtkWidget *widget, gpointer gdata)
   {
     printf("Unknow button");
   }
-
+  GtkTextIter end;
+  gtk_text_buffer_get_end_iter(consoletxt, &end);
+    gtk_text_view_scroll_to_iter(GTK_TEXT_VIEW(wins), &end, 0.0, FALSE, 0.0,0.0);
   // switch(data)
   // {
 
@@ -1195,7 +1198,6 @@ void GUIInit(int argc, char *argv[])
   GtkWidget *window;
   GtkWidget *table;
   GtkWidget *title;
-  GtkWidget *wins;
   
   GtkWidget *halign;
   GtkWidget *halign2;
@@ -1234,7 +1236,7 @@ void GUIInit(int argc, char *argv[])
       GTK_FILL, GTK_FILL, 0, 0);
 
   wins = gtk_text_view_new();
-  gtk_widget_set_size_request(wins, 400, 400);
+  gtk_widget_set_size_request(wins, 200, 200);
 
   consoletxt = gtk_text_view_get_buffer(GTK_TEXT_VIEW(wins));
   gtk_text_buffer_create_tag(consoletxt, "gap",
