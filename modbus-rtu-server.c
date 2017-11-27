@@ -148,6 +148,17 @@ void initThread();
 void robotInit();
 void stationInit();
 char *getTime();
+
+/*
+
+*/
+static void callback2( GtkWidget *widget, gpointer data);
+static void callback3( GtkWidget *widget, gpointer data);
+static void callback4( GtkWidget *widget, gpointer data);
+static void callback5( GtkWidget *widget, gpointer data);
+/*
+
+*/
 modbus_t *ctx;
 modbus_t *modbus_rtu_robot_ctx;
 modbus_t *modbus_rtu_station_ctx;
@@ -1208,17 +1219,27 @@ void GUIInit(int argc, char *argv[])
   actstation2 = gtk_button_new_with_label("Station 2");
   gtk_widget_set_size_request(actstation2, 70, 30);
   gtk_table_attach_defaults(GTK_TABLE(table), actstation2, 6, 7, 1, 2);
+  /* Connect the "clicked" signal of the button to our callback */
+  g_signal_connect (actstation2, "clicked",
+          G_CALLBACK (callback2), (gpointer) "Station 2");
 
   actstation3 = gtk_button_new_with_label("Station 3");
   gtk_widget_set_size_request(actstation3, 70, 30);
   gtk_table_attach_defaults(GTK_TABLE(table), actstation3, 7, 8, 1, 2);
+  g_signal_connect (actstation3, "clicked",
+          G_CALLBACK (callback3), (gpointer) "Station 3");
 
   actstation4 = gtk_button_new_with_label("Station 4");
   gtk_widget_set_size_request(actstation4, 70, 30);
   gtk_table_attach_defaults(GTK_TABLE(table), actstation4, 8, 9, 1, 2);
+  g_signal_connect (actstation4, "clicked",
+          G_CALLBACK (callback4), (gpointer) "Station 4");
 
   actstation5 = gtk_button_new_with_label("Station 5");
   gtk_table_attach_defaults(GTK_TABLE(table), actstation5, 9, 10, 1, 2);
+    g_signal_connect (actstation5, "clicked",
+          G_CALLBACK (callback5), (gpointer) "Station 5");
+
   // actstation1 = gtk_button_new_with_label("Station 1");
   // gtk_widget_set_size_request(actstation1, 70, 30);
   // gtk_table_attach(GTK_TABLE(table), actstation1, 2, 3, 0, 1, 
@@ -1263,4 +1284,38 @@ void GUIInit(int argc, char *argv[])
 
   gtk_widget_show_all(window);
   gtk_main();
+}
+
+/* Our usual callback function */
+static void callback2( GtkWidget *widget,
+                      gpointer   data )
+{
+  g_print ("%s was pressed\n", (char *) data);
+  robotRegister_sent[0] = 2;
+  robot_control = 2;
+}
+
+/* Our usual callback function */
+static void callback3( GtkWidget *widget,
+                      gpointer   data )
+{
+    g_print ("%s was pressed\n", (char *) data);
+    robotRegister_sent[0] = 3;
+    robot_control = 3;
+}
+/* Our usual callback function */
+static void callback4( GtkWidget *widget,
+                      gpointer   data )
+{
+    g_print ("%s was pressed\n", (char *) data);
+    robotRegister_sent[0] = 4;
+    robot_control = 4;
+}
+/* Our usual callback function */
+static void callback5( GtkWidget *widget,
+                      gpointer   data )
+{
+    g_print ("%s was pressed\n", (char *) data);
+    robotRegister_sent[0] = 2;
+    robot_control = 2;
 }
