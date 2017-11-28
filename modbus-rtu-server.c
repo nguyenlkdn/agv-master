@@ -670,6 +670,8 @@ void *userInterface(void *vargp)
               if((robotRegister_sent[0] != 1))
               {
                 printf("[OK] [%6d] Station 1 requests robot at => %s", ++station1_counter, getTime());
+                snprintf(TEXT, sizeof(TEXT), "[OK] [%6d] Station 1 requests robot at => %s", ++station1_counter, getTime());
+                printtoconsole(TEXT);
                 robotRegister_sent[0] = 1;
                 station1_processed = 1;
               }
