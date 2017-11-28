@@ -1417,13 +1417,13 @@ static void callback2( GtkWidget *widget,
     robotRegister_sent[0] = 0;
     robot_control = 0;
     gtk_label_set (GTK_LABEL(widget), "Station 2");
-    snprintf (TEXT, sizeof(TEXT), "ROBOT was being sent to STATION 2\n");
+    snprintf (TEXT, sizeof(TEXT), "CANCELED the requesting ROBOT to STATION 2\n");
     printtoconsole(TEXT);
   }
   else
   {
     gtk_label_set (GTK_LABEL(widget), "Calling");
-    snprintf (TEXT, sizeof(TEXT), "CANCELED the requesting ROBOT to STATION 2\n");
+    snprintf (TEXT, sizeof(TEXT), "ROBOT was being sent to STATION 2\n");
     printtoconsole(TEXT);
     robotRegister_sent[0] = 2;
     robot_control = 2;
