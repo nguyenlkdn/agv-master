@@ -128,7 +128,7 @@ uint16_t station2Register_sent_previous[MODBUS_TCP_MAX_ADU_LENGTH];
 uint16_t station3Register_sent_previous[MODBUS_TCP_MAX_ADU_LENGTH];
 uint16_t station4Register_sent_previous[MODBUS_TCP_MAX_ADU_LENGTH];
 uint16_t station5Register_sent_previous[MODBUS_TCP_MAX_ADU_LENGTH];
-uint16_t robotworking = 1;
+uint16_t robotworking = 0;
 uint16_t station1_confimation=0;
 uint16_t station2_confimation=0;
 uint16_t station3_confimation=0;
@@ -871,6 +871,7 @@ void *userInterface(void *vargp)
       case 1:
         if(station1_processed == 1)
         {
+          robotworking = 1;
           station1Register_sent[0]=robotlocation;
           station2Register_sent[0]=0;
           station3Register_sent[0]=0;
@@ -879,7 +880,6 @@ void *userInterface(void *vargp)
           printf("[OK] Robot come to Station %d at %s", robotlocation, getTime());
           while(1)
           {
-            robotworking = 1;
             station1request = station1Register_received[0];
             station1control1 = station1Register_received[2];
             station1control2 = station1Register_received[3];
@@ -908,6 +908,7 @@ void *userInterface(void *vargp)
             }
           }
           sleep(1);
+          robotworking = 0;
           hascalling = 0;
           station1Register_sent[0]=0;
           robotRegister_sent[0]=4;
@@ -953,6 +954,7 @@ void *userInterface(void *vargp)
             }
           }
           sleep(1);
+          robotworking = 0;
           hascalling = 0;
           station2Register_sent[0]=0;
           robotRegister_sent[0]=4;
@@ -999,6 +1001,7 @@ void *userInterface(void *vargp)
             }
           }
           sleep(1);
+          robotworking = 0;
           hascalling = 0;
           station3Register_sent[0]=0;
           robotRegister_sent[0]=4;
@@ -1045,6 +1048,7 @@ void *userInterface(void *vargp)
             }
           }
           sleep(1);
+          robotworking = 0;
           hascalling = 0;
           station4Register_sent[0]=0;
           robotRegister_sent[0]=1;
@@ -1092,6 +1096,7 @@ void *userInterface(void *vargp)
           }
         }
         sleep(1);
+        robotworking = 0;
         hascalling = 0;
         station5Register_sent[0]=0;
         robotRegister_sent[0]=4;
