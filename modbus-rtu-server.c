@@ -684,6 +684,7 @@ void *userInterface(void *vargp)
                 station1Register_sent[0]=0;
                 station1_processed = 0;
                 robotRegister_sent[0]=0;
+                hascalling = 0;
                 printf("[OK] Station 1 has canceled requests at => %s", getTime());
                 snprintf(TEXT, sizeof(TEXT), "[OK] Station 1 has canceled requests at => %s", getTime());
                 printtoconsole(TEXT);
@@ -692,7 +693,7 @@ void *userInterface(void *vargp)
           }
         }
       }
-      if(hascalling == 0)
+      if((hascalling == 0) || (station2_processed == 1))
       {
         if(STATION2_ENABLE == 1)
         {
@@ -718,7 +719,7 @@ void *userInterface(void *vargp)
               printf("[OK] Station 2 has canceled requests at => %s", getTime());
               snprintf(TEXT, sizeof(TEXT), "[OK] Station 2 has canceled requests at => %s", getTime());
               printtoconsole(TEXT);
-
+              hascalling = 0;
               robotRegister_sent[0]=4;
               station2Register_sent[0]=0;
               station2_processed=0;
@@ -728,7 +729,7 @@ void *userInterface(void *vargp)
         }
       }
 
-      if(hascalling == 0)
+      if((hascalling == 0) || (station3_processed == 1))
       {
         if(STATION3_ENABLE == 1)
         {
@@ -764,7 +765,7 @@ void *userInterface(void *vargp)
         }
       }
 
-      if(hascalling == 0)
+      if((hascalling == 0) || (station4_processed == 1))
       {
         if(STATION4_ENABLE == 1)
         {
@@ -790,6 +791,7 @@ void *userInterface(void *vargp)
                 station4Register_sent[0]=0;
                 station4_processed = 0;
                 robotRegister_sent[0]=1;
+                hascalling=0;
                 printf("[OK] Station 4 has canceled requests at => %s", getTime());
                 snprintf(TEXT, sizeof(TEXT), "[OK] Station 4 has canceled requests at => %s", getTime());
                 printtoconsole(TEXT);
@@ -799,7 +801,7 @@ void *userInterface(void *vargp)
         }
       }
 
-      if(hascalling == 0)
+      if((hascalling == 0) ||(station5_processed == 1))
       {
         if(STATION5_ENABLE == 1)
         {
@@ -825,6 +827,7 @@ void *userInterface(void *vargp)
                 station5Register_sent[0]=0;
                 station5_processed = 0;
                 robotRegister_sent[0]=4;
+                hascalling = 0;
                 printf("[OK] Station 5 has canceled requests at => %s", getTime());
                 snprintf(TEXT, sizeof(TEXT), "[OK] Station 5 has canceled requests at => %s", getTime());
                 printtoconsole(TEXT);
