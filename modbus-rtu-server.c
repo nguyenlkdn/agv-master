@@ -128,7 +128,7 @@ uint16_t station2Register_sent_previous[MODBUS_TCP_MAX_ADU_LENGTH];
 uint16_t station3Register_sent_previous[MODBUS_TCP_MAX_ADU_LENGTH];
 uint16_t station4Register_sent_previous[MODBUS_TCP_MAX_ADU_LENGTH];
 uint16_t station5Register_sent_previous[MODBUS_TCP_MAX_ADU_LENGTH];
-
+uint16_t robotworking = 1;
 uint16_t station1_confimation=0;
 uint16_t station2_confimation=0;
 uint16_t station3_confimation=0;
@@ -850,7 +850,7 @@ void *userInterface(void *vargp)
       if(robot_control == 0)
       {
         printf("Canceled Requesting\n");
-        robotRegister_received[0] = stored_robot_location;
+        robotRegister_received[0] = 0;
       }
       else
       {
@@ -879,6 +879,7 @@ void *userInterface(void *vargp)
           printf("[OK] Robot come to Station %d at %s", robotlocation, getTime());
           while(1)
           {
+            robotworking = 1;
             station1request = station1Register_received[0];
             station1control1 = station1Register_received[2];
             station1control2 = station1Register_received[3];
@@ -916,6 +917,7 @@ void *userInterface(void *vargp)
       case 2:
         if(station2_processed == 1)
         {
+          robotworking = 2;
           station1Register_sent[0]=0;
           station2Register_sent[0]=robotlocation;
           station3Register_sent[0]=0;
@@ -960,6 +962,7 @@ void *userInterface(void *vargp)
       case 3:
         if(station3_processed == 1)
         {
+          robotworking = 3;
           station1Register_sent[0]=0;
           station2Register_sent[0]=0;
           station3Register_sent[0]=robotlocation;
@@ -1005,6 +1008,7 @@ void *userInterface(void *vargp)
       case 4:
         if(station4_processed == 1)
         {
+          robotworking = 4;
           station1Register_sent[0]=0;
           station2Register_sent[0]=0;
           station3Register_sent[0]=0;
@@ -1050,6 +1054,7 @@ void *userInterface(void *vargp)
       case 5:
       if(station5_processed == 1)
       {
+        robotworking = 5;
         station1Register_sent[0]=0;
         station2Register_sent[0]=0;
         station3Register_sent[0]=0;
@@ -1204,6 +1209,12 @@ char* getTime()
 void button_was_clicked (GtkWidget *widget, gpointer gdata)
 {
   stored_request = robotRegister_sent[0];
+  if(robotworking>0)
+  {
+    snprintf(TEXT, sizeof(TEXT), "Robot is BUSY at station %d, please wait a while!\n");
+    printtoconsole(TEXT);
+    return;
+  }
   if(!strcmp(gdata, "Recall Robot"))
   {
     gtk_container_foreach (GTK_CONTAINER (widget), 
@@ -1401,6 +1412,8 @@ static void callback2( GtkWidget *widget,
     robotRegister_sent[0] = 0;
     robot_control = 0;
     gtk_label_set (GTK_LABEL(widget), "Station 2");
+    snprintf (TEXT, sizeof(TEXT), "ROBOT was being sent to STATION 2\n");
+    printtoconsole(TEXT);
   }
   else
   {
