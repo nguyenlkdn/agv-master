@@ -135,6 +135,7 @@ uint16_t station3_confimation=0;
 uint16_t station4_confimation=0;
 uint16_t station5_confimation=0;
 char TEXT[255];
+uint16_t stored_request=0;
 /*
 
 */
@@ -657,7 +658,7 @@ void *userInterface(void *vargp)
   {
     if(robot_control == 0)
     {
-      if(hascalling == 0)
+      if((hascalling == 0) || (station1_processed == 1))
       {
         if(STATION1_ENABLE == 1)
         {
@@ -1199,6 +1200,7 @@ char* getTime()
  */
 void button_was_clicked (GtkWidget *widget, gpointer gdata)
 {
+  stored_request = robotRegister_sent[0];
   if(!strcmp(gdata, "Recall Robot"))
   {
     gtk_container_foreach (GTK_CONTAINER (widget), 
@@ -1223,6 +1225,10 @@ void button_was_clicked (GtkWidget *widget, gpointer gdata)
   {
     gtk_container_foreach (GTK_CONTAINER (widget), 
                            (GtkCallback) callback5, gdata);
+  }
+  else
+  {
+    
   }
   // switch(data)
   // {
