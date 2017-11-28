@@ -669,9 +669,9 @@ void *userInterface(void *vargp)
               hascalling = 1;
               if((robotRegister_sent[0] != 1))
               {
-                printf("[OK] [%6d] Station 1 requests robot at => %s", ++station1_counter, getTime());
                 snprintf(TEXT, sizeof(TEXT), "[OK] [%6d] Station 1 requests robot at => %s", ++station1_counter, getTime());
                 printtoconsole(TEXT);
+                printf("[OK] [%6d] Station 1 requests robot at => %s", station1_counter, getTime());
                 robotRegister_sent[0] = 1;
                 station1_processed = 1;
               }
@@ -684,6 +684,8 @@ void *userInterface(void *vargp)
                 station1_processed = 0;
                 robotRegister_sent[0]=0;
                 printf("[OK] Station 1 has canceled requests at => %s", getTime());
+                snprintf(TEXT, sizeof(TEXT), "[OK] Station 1 has canceled requests at => %s", getTime());
+                printtoconsole(TEXT);
               }
             }
           }
@@ -700,7 +702,10 @@ void *userInterface(void *vargp)
             hascalling = 2;
             if((robotRegister_sent[0] != 2))
             {
-              printf("[OK] [%6d] Station 2 requests robot at => %s", ++station2_counter, getTime());
+              snprintf(TEXT, sizeof(TEXT), "[OK] [%6d] Station 2 requests robot at => %s", ++station2_counter, getTime());
+              printtoconsole(TEXT);
+              printf("[OK] [%6d] Station 2 requests robot at => %s", station2_counter, getTime());
+
               robotRegister_sent[0] = 2; 
               station2_processed=1;
             }
@@ -710,6 +715,9 @@ void *userInterface(void *vargp)
             if((robotRegister_sent[0] == 2) && (station2_processed == 1))
             {
               printf("[OK] Station 2 has canceled requests at => %s", getTime());
+              snprintf(TEXT, sizeof(TEXT), "[OK] Station 2 has canceled requests at => %s", getTime());
+              printtoconsole(TEXT);
+
               robotRegister_sent[0]=4;
               station2Register_sent[0]=0;
               station2_processed=0;
@@ -732,7 +740,9 @@ void *userInterface(void *vargp)
               hascalling = 3;
               if((robotRegister_sent[0] != 3))
               {
-                printf("[OK] [%6d] Station 3 requests robot at => %s", ++station3_counter, getTime());
+                snprintf(TEXT, sizeof(TEXT), "[OK] [%6d] Station 3 requests robot at => %s", ++station3_counter, getTime());
+                printtoconsole(TEXT);
+                printf("[OK] [%6d] Station 3 requests robot at => %s", station3_counter, getTime());
                 robotRegister_sent[0] = 3;
                 station3_processed = 1;
               }
@@ -745,6 +755,8 @@ void *userInterface(void *vargp)
                 station3_processed = 0;
                 robotRegister_sent[0] = 4;
                 printf("[OK] Station 3 has canceled requests at => %s", getTime());
+                snprintf(TEXT, sizeof(TEXT), "[OK] Station 3 has canceled requests at => %s", getTime());
+                printtoconsole(TEXT);
               }
             }
           }
@@ -763,7 +775,9 @@ void *userInterface(void *vargp)
               hascalling = 1;
               if((robotRegister_sent[0] != 4))
               {
-                printf("[OK] [%6d] Station 4 requests robot at => %s", ++station4_counter, getTime());
+                snprintf(TEXT, sizeof(TEXT), "[OK] [%6d] Station 4 requests robot at => %s", ++station4_counter, getTime());
+                printtoconsole(TEXT);
+                printf("[OK] [%6d] Station 4 requests robot at => %s", station4_counter, getTime());
                 robotRegister_sent[0] = 4;
                 station4_processed = 1;
               }
@@ -776,6 +790,8 @@ void *userInterface(void *vargp)
                 station4_processed = 0;
                 robotRegister_sent[0]=1;
                 printf("[OK] Station 4 has canceled requests at => %s", getTime());
+                snprintf(TEXT, sizeof(TEXT), "[OK] Station 4 has canceled requests at => %s", getTime());
+                printtoconsole(TEXT);
               }
             }
           }
@@ -794,7 +810,9 @@ void *userInterface(void *vargp)
               hascalling = 5;
               if((robotRegister_sent[0] != 5))
               {
-                printf("[OK] [%6d] Station 5 requests robot at => %s", ++station1_counter, getTime());
+                snprintf(TEXT, sizeof(TEXT), "[OK] [%6d] Station 5 requests robot at => %s", ++station5_counter, getTime());
+                printtoconsole(TEXT);
+                printf("[OK] [%6d] Station 5 requests robot at => %s", station5_counter, getTime());
                 robotRegister_sent[0] = 5;
                 station5_processed = 1;
               }
@@ -807,6 +825,8 @@ void *userInterface(void *vargp)
                 station5_processed = 0;
                 robotRegister_sent[0]=4;
                 printf("[OK] Station 5 has canceled requests at => %s", getTime());
+                snprintf(TEXT, sizeof(TEXT), "[OK] Station 5 has canceled requests at => %s", getTime());
+                printtoconsole(TEXT);
               }
             }
           }
@@ -1352,7 +1372,7 @@ static void callback1( GtkWidget *widget,
   else
   {
     gtk_label_set (GTK_LABEL(widget), "Calling");
-    snprintf (TEXT, sizeof(TEXT), "%d is calling robot\n", 1);
+    snprintf (TEXT, sizeof(TEXT), "Re-called ROBOT to STATION 1\n");
     printtoconsole(TEXT);
     robotRegister_sent[0] = 1;
     robot_control = 1;
@@ -1376,6 +1396,8 @@ static void callback2( GtkWidget *widget,
   else
   {
     gtk_label_set (GTK_LABEL(widget), "Calling");
+    snprintf (TEXT, sizeof(TEXT), "ROBOT was being sent to STATION 2\n");
+    printtoconsole(TEXT);
     robotRegister_sent[0] = 2;
     robot_control = 2;
   }
@@ -1395,6 +1417,8 @@ static void callback3( GtkWidget *widget,
   else
   {
     gtk_label_set (GTK_LABEL(widget), "Calling");
+    snprintf (TEXT, sizeof(TEXT), "ROBOT was being sent to STATION 3\n");
+    printtoconsole(TEXT);
     robotRegister_sent[0] = 3;
     robot_control = 3;
   }
@@ -1414,6 +1438,8 @@ static void callback4( GtkWidget *widget,
   else
   {
     gtk_label_set (GTK_LABEL(widget), "Calling");
+    snprintf (TEXT, sizeof(TEXT), "ROBOT was being sent to STATION 4\n");
+    printtoconsole(TEXT);
     robotRegister_sent[0] = 4;
     robot_control = 4;
   }
@@ -1432,6 +1458,8 @@ static void callback5( GtkWidget *widget,
   else
   {
     gtk_label_set (GTK_LABEL(widget), "Calling");
+    snprintf (TEXT, sizeof(TEXT), "ROBOT was being sent to STATION 5\n");
+    printtoconsole(TEXT);
     robotRegister_sent[0] = 5;
     robot_control = 5;
   }
