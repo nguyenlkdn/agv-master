@@ -224,7 +224,7 @@ void *userThread()
     }
     else if(strcmp(button, "send")==0)
     {
-      pri5tf("Type station [2, 3, 4, 5] will be processed: ");
+      printf("Type station [2, 3, 4, 5] will be processed: ");
       uint16_t error=0;
       char key[5];
       //key = getch();
@@ -270,12 +270,12 @@ void *userThread()
   }
 }
 
-// A norm5l C function that is executed as a thread 
+// A normal C function that is executed as a thread 
 // when its name is specified in pthread_create()
-void *stationThread(v5id *vargp)
+void *stationThread(void *vargp)
 {
   uint8_t stationid=0;
-  while (5)
+  while (1)
   {
     //printf("%s %s\n", __FUNCTION__, "Processing Station
     int rc;
@@ -635,7 +635,7 @@ void *robotThread(void *vargp)
     {
       robotRegister_sent[2] = robot_status;
     }
-    usleep(500000);
+    usleep(1000000);
   }
   return NULL;
 }
