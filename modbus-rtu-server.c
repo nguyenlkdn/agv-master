@@ -974,6 +974,11 @@ void *userInterface(void *vargp)
             }
           }
           sleep(1);
+          STATION1_ENABLE   =  1;
+          STATION2_ENABLE   =  1;
+          STATION3_ENABLE   =  1;
+          STATION4_ENABLE   =  1;
+          STATION5_ENABLE   =  1;
           robotworking = 0;
           hascalling = 0;
           station1Register_sent[0]=0;
@@ -1020,6 +1025,11 @@ void *userInterface(void *vargp)
             }
           }
           sleep(1);
+          STATION1_ENABLE   =  1;
+          STATION2_ENABLE   =  1;
+          STATION3_ENABLE   =  1;
+          STATION4_ENABLE   =  1;
+          STATION5_ENABLE   =  1;
           robotworking = 0;
           hascalling = 0;
           station2Register_sent[0]=0;
@@ -1067,6 +1077,11 @@ void *userInterface(void *vargp)
             }
           }
           sleep(1);
+          STATION1_ENABLE   =  1;
+          STATION2_ENABLE   =  1;
+          STATION3_ENABLE   =  1;
+          STATION4_ENABLE   =  1;
+          STATION5_ENABLE   =  1;
           robotworking = 0;
           hascalling = 0;
           station3Register_sent[0]=0;
@@ -1114,6 +1129,11 @@ void *userInterface(void *vargp)
             }
           }
           sleep(1);
+          STATION1_ENABLE   =  1;
+          STATION2_ENABLE   =  1;
+          STATION3_ENABLE   =  1;
+          STATION4_ENABLE   =  1;
+          STATION5_ENABLE   =  1;
           robotworking = 0;
           hascalling = 0;
           station4Register_sent[0]=0;
@@ -1162,6 +1182,11 @@ void *userInterface(void *vargp)
           }
         }
         sleep(1);
+        STATION1_ENABLE   =  1;
+        STATION2_ENABLE   =  1;
+        STATION3_ENABLE   =  1;
+        STATION4_ENABLE   =  1;
+        STATION5_ENABLE   =  1;
         robotworking = 0;
         hascalling = 0;
         station5Register_sent[0]=0;
