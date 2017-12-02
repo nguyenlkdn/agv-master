@@ -297,7 +297,7 @@ void *stationThread(void *vargp)
       }
       else
       {
-        usleep(500000);
+        usleep(1000000);
         STATION1_WRITING = 1;
         printf("Reading from Station 1: OK\n");
         // printf("Reading from Station 1: ");
@@ -524,7 +524,12 @@ void *stationThread(void *vargp)
         printf("Writing to Station 4\n");
         modbus_set_response_timeout(modbus_rtu_station_ctx, STATION_WRITE_TIMEOUT_S, STATION_WRITE_TIMEOUT_uS);
         modbus_set_slave(modbus_rtu_station_ctx, 4);
-        modbus_write_registers(modbus_rtu_station_ctx, 20, 10, station4Register_sent);
+        rc = modbus_write_registers(modbus_rtu_station_ctx, 20, 10, station4Register_sent);
+        if(rc == 10)
+        {
+          rc = -1;
+          usleep(50000);
+        }
         for(i=0;i<10;i++)
         {
           station4Register_sent_previous[i] = station4Register_sent[i];
