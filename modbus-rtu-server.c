@@ -593,7 +593,7 @@ void *robotThread(void *vargp)
       else
       {
         //printf("[OK] Sending succesffuly!!\n");
-        //usleep(200000);
+        usleep(200000);
         rewrite = 0;
       }
     }
@@ -624,7 +624,7 @@ void *robotThread(void *vargp)
       //   printf("%3d", robotRegister_received[i]);
       // }
       // printf("\n");
-      //usleep(200000);
+      usleep(200000);
     }
     else
     {
