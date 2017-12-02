@@ -713,34 +713,35 @@ void *userInterface(void *vargp)
         if(STATION2_ENABLE == 1)
         {
           station2request = station2Register_received[0];
-
-          if((station2request == 1))
+          if(station2request != -1)
           {
-            hascalling = 2;
-            if((robotRegister_sent[0] != 2))
+            if((station2request == 1))
             {
-              snprintf(TEXT, sizeof(TEXT), "[OK] [%6d] Station 2 requests robot at => %s", ++station2_counter, getTime());
-              printtoconsole(TEXT);
-              printf("[OK] [%6d] Station 2 requests robot at => %s", station2_counter, getTime());
+              hascalling = 2;
+              if((robotRegister_sent[0] != 2))
+              {
+                snprintf(TEXT, sizeof(TEXT), "[OK] [%6d] Station 2 requests robot at => %s", ++station2_counter, getTime());
+                printtoconsole(TEXT);
+                printf("[OK] [%6d] Station 2 requests robot at => %s", station2_counter, getTime());
 
-              robotRegister_sent[0] = 2; 
-              station2_processed=1;
+                robotRegister_sent[0] = 2; 
+                station2_processed=1;
+              }
+            }
+            else
+            {
+              if((robotRegister_sent[0] == 2) && (station2_processed == 1))
+              {
+                printf("[OK] Station 2 has canceled requests at => %s", getTime());
+                snprintf(TEXT, sizeof(TEXT), "[OK] Station 2 has canceled requests at => %s", getTime());
+                printtoconsole(TEXT);
+                hascalling = 0;
+                robotRegister_sent[0]=4;
+                station2Register_sent[0]=0;
+                station2_processed=0;
+              }
             }
           }
-          else
-          {
-            if((robotRegister_sent[0] == 2) && (station2_processed == 1))
-            {
-              printf("[OK] Station 2 has canceled requests at => %s", getTime());
-              snprintf(TEXT, sizeof(TEXT), "[OK] Station 2 has canceled requests at => %s", getTime());
-              printtoconsole(TEXT);
-              hascalling = 0;
-              robotRegister_sent[0]=4;
-              station2Register_sent[0]=0;
-              station2_processed=0;
-            }
-          }
-
         }
       }
 
