@@ -53,8 +53,8 @@ uint16_t STATION3_WRITING  =  0;
 uint16_t STATION4_WRITING  =  0;
 uint16_t STATION5_WRITING  =  0;
 
-#define STATION_TIMEOUT_uS        100000
-#define STATION_TIMEOUT_S         0
+#define STATION_TIMEOUT_uS        0
+#define STATION_TIMEOUT_S         1
 #define STATION_WRITE_TIMEOUT_uS  0
 #define STATION_WRITE_TIMEOUT_S   1
 #define ROBOT_WRITE_TIMEOUT_S     1
