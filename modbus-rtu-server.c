@@ -299,6 +299,7 @@ void *stationThread(void *vargp)
       {
         usleep(500000);
         STATION1_WRITING = 1;
+        printf("Reading from Station 1: OK\n");
         // printf("Reading from Station 1: ");
         // int i;
         // for(i=0;i<rc;i++)
@@ -307,7 +308,6 @@ void *stationThread(void *vargp)
         // }
         // printf("\n");
       }
-      usleep(500000);
     }
 
     if(STATION2_ENABLE == 1)
@@ -328,6 +328,7 @@ void *stationThread(void *vargp)
       else
       {
         usleep(500000);
+        printf("Reading from Station 2: OK\n");
         STATION2_WRITING = 1;
         // printf("Reading from Station 1: ");
         // int i;
@@ -337,7 +338,6 @@ void *stationThread(void *vargp)
         // }
         // printf("\n");
       }
-      usleep(500000);
     }
     if(STATION3_ENABLE == 1)
     {
@@ -355,8 +355,9 @@ void *stationThread(void *vargp)
       else
       {
         STATION3_WRITING = 1;
+        printf("Reading from Station 3: OK\n");
+        usleep(500000);
       }
-      usleep(500000);
     }
     if(STATION4_ENABLE == 1)
     {
@@ -373,6 +374,8 @@ void *stationThread(void *vargp)
       else
       {
         STATION4_WRITING = 1;
+        printf("Reading from Station 4: OK\n");
+        usleep(500000);
         // printf("Reading from Station 4: ");
         // int i;
         // for(i=0;i<rc;i++)
@@ -381,7 +384,6 @@ void *stationThread(void *vargp)
         // }
         // printf("\n");
       }
-      usleep(500000);
 
     }
     if(STATION5_ENABLE == 1)
@@ -402,6 +404,7 @@ void *stationThread(void *vargp)
       else
       {
         STATION5_WRITING=1;
+        printf("Reading from Station 5: OK\n");
         usleep(500000);
         // printf("Reading from Station 5: ");
         // int i;
