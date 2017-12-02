@@ -678,7 +678,7 @@ void *userInterface(void *vargp)
         if(STATION1_ENABLE == 1)
         {
           station1request = station1Register_received[0];
-          if((station1request != -1) && (robotRegister_received[0] != 1))
+          if((station1request != -1)) //&& (robotRegister_received[0] != 1)
           {
             if((station1request == 1))
             {
@@ -723,7 +723,7 @@ void *userInterface(void *vargp)
         if(STATION2_ENABLE == 1)
         {
           station2request = station2Register_received[0];
-          if((station2request != -1) && (robotRegister_received[0] != 2))
+          if((station2request != -1)) //&& (robotRegister_received[0] != 2)
           {
             if((station2request == 1))
             {
@@ -771,7 +771,7 @@ void *userInterface(void *vargp)
         {
           station3request = station3Register_received[0];
 
-          if((station3request != -1) && (robotRegister_received[0] != 3))
+          if((station3request != -1)) // && (robotRegister_received[0] != 3)
           {
             if((station3Register_received[0] == 1))
             {
@@ -816,7 +816,7 @@ void *userInterface(void *vargp)
         if(STATION4_ENABLE == 1)
         {
           station4request = station4Register_received[0];
-          if((station4request != -1) && (robotRegister_received[0] != 4))
+          if((station4request != -1)) //&& (robotRegister_received[0] != 4)
           {
             if((station4request == 1))
             {
@@ -862,7 +862,7 @@ void *userInterface(void *vargp)
         if(STATION5_ENABLE == 1)
         {
           station5request = station5Register_received[0];
-          if((station5request != -1) && (robotRegister_received[0] != 5) )
+          if((station5request != -1)) //&& (robotRegister_received[0] != 5) 
           {
             if((station5request == 1))
             {
