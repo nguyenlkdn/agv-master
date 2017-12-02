@@ -298,7 +298,7 @@ void *stationThread(void *vargp)
       else
       {
         usleep(1000000);
-        STATION1_WRITING = 1;
+        //STATION1_WRITING = 1;
         printf("Reading from Station 1: OK\n");
         // printf("Reading from Station 1: ");
         // int i;
@@ -329,7 +329,7 @@ void *stationThread(void *vargp)
       {
         usleep(500000);
         printf("Reading from Station 2: OK\n");
-        STATION2_WRITING = 1;
+        //STATION2_WRITING = 1;
         // printf("Reading from Station 1: ");
         // int i;
         // for(i=0;i<rc;i++)
@@ -354,7 +354,7 @@ void *stationThread(void *vargp)
       }
       else
       {
-        STATION3_WRITING = 1;
+        //STATION3_WRITING = 1;
         printf("Reading from Station 3: OK\n");
         usleep(500000);
       }
@@ -373,7 +373,7 @@ void *stationThread(void *vargp)
       }
       else
       {
-        STATION4_WRITING = 1;
+        //STATION4_WRITING = 1;
         printf("Reading from Station 4: OK\n");
         usleep(500000);
         // printf("Reading from Station 4: ");
@@ -403,7 +403,7 @@ void *stationThread(void *vargp)
       }
       else
       {
-        STATION5_WRITING=1;
+        //STATION5_WRITING=1;
         printf("Reading from Station 5: OK\n");
         usleep(500000);
         // printf("Reading from Station 5: ");
