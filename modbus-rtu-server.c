@@ -685,6 +685,11 @@ void *userInterface(void *vargp)
               hascalling = 1;
               if((robotRegister_sent[0] != 1))
               {
+                STATION1_ENABLE   =  1;
+                STATION2_ENABLE   =  0;
+                STATION3_ENABLE   =  0;
+                STATION4_ENABLE   =  0;
+                STATION5_ENABLE   =  0;
                 snprintf(TEXT, sizeof(TEXT), "[OK] [%6d] Station 1 requests robot at => %s", ++station1_counter, getTime());
                 printtoconsole(TEXT);
                 printf("[OK] [%6d] Station 1 requests robot at => %s", station1_counter, getTime());
@@ -700,6 +705,11 @@ void *userInterface(void *vargp)
                 station1_processed = 0;
                 robotRegister_sent[0]=0;
                 hascalling = 0;
+                STATION1_ENABLE   =  1;
+                STATION2_ENABLE   =  1;
+                STATION3_ENABLE   =  1;
+                STATION4_ENABLE   =  1;
+                STATION5_ENABLE   =  1;
                 printf("[OK] Station 1 has canceled requests at => %s", getTime());
                 snprintf(TEXT, sizeof(TEXT), "[OK] Station 1 has canceled requests at => %s", getTime());
                 printtoconsole(TEXT);
@@ -718,6 +728,11 @@ void *userInterface(void *vargp)
             if((station2request == 1))
             {
               hascalling = 2;
+              STATION1_ENABLE   =  0;
+              STATION2_ENABLE   =  1;
+              STATION3_ENABLE   =  0;
+              STATION4_ENABLE   =  0;
+              STATION5_ENABLE   =  0;
               if((robotRegister_sent[0] != 2))
               {
                 snprintf(TEXT, sizeof(TEXT), "[OK] [%6d] Station 2 requests robot at => %s", ++station2_counter, getTime());
@@ -735,6 +750,11 @@ void *userInterface(void *vargp)
                 printf("[OK] Station 2 has canceled requests at => %s", getTime());
                 snprintf(TEXT, sizeof(TEXT), "[OK] Station 2 has canceled requests at => %s", getTime());
                 printtoconsole(TEXT);
+                STATION1_ENABLE   =  1;
+                STATION2_ENABLE   =  1;
+                STATION3_ENABLE   =  1;
+                STATION4_ENABLE   =  1;
+                STATION5_ENABLE   =  1;
                 hascalling = 0;
                 robotRegister_sent[0]=4;
                 station2Register_sent[0]=0;
@@ -756,6 +776,11 @@ void *userInterface(void *vargp)
             if((station3Register_received[0] == 1))
             {
               hascalling = 3;
+              STATION1_ENABLE   =  0;
+              STATION2_ENABLE   =  0;
+              STATION3_ENABLE   =  1;
+              STATION4_ENABLE   =  0;
+              STATION5_ENABLE   =  0;
               if((robotRegister_sent[0] != 3))
               {
                 snprintf(TEXT, sizeof(TEXT), "[OK] [%6d] Station 3 requests robot at => %s", ++station3_counter, getTime());
@@ -772,6 +797,11 @@ void *userInterface(void *vargp)
                 station3Register_sent[0]=0;
                 station3_processed = 0;
                 robotRegister_sent[0] = 4;
+                STATION1_ENABLE   =  1;
+                STATION2_ENABLE   =  1;
+                STATION3_ENABLE   =  1;
+                STATION4_ENABLE   =  1;
+                STATION5_ENABLE   =  1;
                 printf("[OK] Station 3 has canceled requests at => %s", getTime());
                 snprintf(TEXT, sizeof(TEXT), "[OK] Station 3 has canceled requests at => %s", getTime());
                 printtoconsole(TEXT);
@@ -790,7 +820,12 @@ void *userInterface(void *vargp)
           {
             if((station4request == 1))
             {
-              hascalling = 1;
+              STATION1_ENABLE   =  0;
+              STATION2_ENABLE   =  0;
+              STATION3_ENABLE   =  0;
+              STATION4_ENABLE   =  1;
+              STATION5_ENABLE   =  0;
+              hascalling = 4;
               if((robotRegister_sent[0] != 4))
               {
                 snprintf(TEXT, sizeof(TEXT), "[OK] [%6d] Station 4 requests robot at => %s", ++station4_counter, getTime());
@@ -808,6 +843,11 @@ void *userInterface(void *vargp)
                 station4_processed = 0;
                 robotRegister_sent[0]=1;
                 hascalling=0;
+                STATION1_ENABLE   =  1;
+                STATION2_ENABLE   =  1;
+                STATION3_ENABLE   =  1;
+                STATION4_ENABLE   =  1;
+                STATION5_ENABLE   =  1;
                 printf("[OK] Station 4 has canceled requests at => %s", getTime());
                 snprintf(TEXT, sizeof(TEXT), "[OK] Station 4 has canceled requests at => %s", getTime());
                 printtoconsole(TEXT);
@@ -827,6 +867,11 @@ void *userInterface(void *vargp)
             if((station5request == 1))
             {
               hascalling = 5;
+              STATION1_ENABLE   =  0;
+              STATION2_ENABLE   =  0;
+              STATION3_ENABLE   =  0;
+              STATION4_ENABLE   =  0;
+              STATION5_ENABLE   =  1;
               if((robotRegister_sent[0] != 5))
               {
                 snprintf(TEXT, sizeof(TEXT), "[OK] [%6d] Station 5 requests robot at => %s", ++station5_counter, getTime());
@@ -844,6 +889,11 @@ void *userInterface(void *vargp)
                 station5_processed = 0;
                 robotRegister_sent[0]=4;
                 hascalling = 0;
+                STATION1_ENABLE   =  1;
+                STATION2_ENABLE   =  1;
+                STATION3_ENABLE   =  1;
+                STATION4_ENABLE   =  1;
+                STATION5_ENABLE   =  1;
                 printf("[OK] Station 5 has canceled requests at => %s", getTime());
                 snprintf(TEXT, sizeof(TEXT), "[OK] Station 5 has canceled requests at => %s", getTime());
                 printtoconsole(TEXT);
