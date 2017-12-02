@@ -272,7 +272,7 @@ void *userThread()
 
 // A norm5l C function that is executed as a thread 
 // when its name is specified in pthread_create()
-void *stationThread(v5id *vargp)
+void *stationThread(void *vargp)
 {
   uint8_t stationid=0;
   while (5)
