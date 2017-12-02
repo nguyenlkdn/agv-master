@@ -421,7 +421,7 @@ void *stationThread(void *vargp)
 */
     if(STATION1_WRITING)
     {
-      int issend=0;
+      int issend=1;
       int i;
       for(i=0;i<10;i++)
       {
@@ -459,7 +459,7 @@ void *stationThread(void *vargp)
 
     if(STATION2_WRITING)
     {
-      int issend=0;
+      int issend=1;
       int i;
       for(i=0;i<10;i++)
       {
@@ -484,7 +484,7 @@ void *stationThread(void *vargp)
 
     if(STATION3_WRITING)
     {
-      int issend=0;
+      int issend=1;
       int i;
       for(i=0;i<10;i++)
       {
@@ -509,7 +509,7 @@ void *stationThread(void *vargp)
 
     if(STATION4_WRITING)
     {
-      int issend=0;
+      int issend=1;
       int i;
       for(i=0;i<10;i++)
       {
@@ -540,7 +540,7 @@ void *stationThread(void *vargp)
 
     if(STATION5_WRITING)
     {
-      int issend=0;
+      int issend=1;
       int i;
       for(i=0;i<10;i++)
       {
