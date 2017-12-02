@@ -178,6 +178,13 @@ modbus_mapping_t *modbus_rtu_station2_mb_mapping;
 modbus_mapping_t *modbus_rtu_station3_mb_mapping;
 modbus_mapping_t *modbus_rtu_station4_mb_mapping;
 modbus_mapping_t *modbus_rtu_station5_mb_mapping;
+
+GtkWidget *actstation1;
+GtkWidget *actstation2;
+GtkWidget *actstation3;
+GtkWidget *actstation4;
+GtkWidget *actstation5;
+
 int16_t robot_status = 0;
 uint16_t robot_control = 0;
 /*
@@ -1216,7 +1223,7 @@ void button_was_clicked (GtkWidget *widget, gpointer gdata)
   stored_request = robotRegister_sent[0];
   if(robotworking>0)
   {
-    snprintf(TEXT, sizeof(TEXT), "Robot is BUSY at station %d, please wait a while!\n");
+    snprintf(TEXT, sizeof(TEXT), "Robot is BUSY at station %d, please wait a while!\n", robotworking);
     printtoconsole(TEXT);
     return;
   }
@@ -1270,11 +1277,6 @@ void GUIInit(int argc, char *argv[])
   GtkWidget *clsBtn;
   GtkWidget *hlpBtn;
   GtkWidget *okBtn;
-  GtkWidget *actstation1;
-  GtkWidget *actstation2;
-  GtkWidget *actstation3;
-  GtkWidget *actstation4;
-  GtkWidget *actstation5;
 
   gtk_init(&argc, &argv);
 
@@ -1315,11 +1317,6 @@ void GUIInit(int argc, char *argv[])
   gtk_text_buffer_create_tag(consoletxt, "bold", 
       "weight", PANGO_WEIGHT_BOLD, NULL);
   gtk_text_buffer_get_iter_at_offset(consoletxt, &iter, 0);
-
-  // gtk_text_buffer_insert(consoletxt, &iter, "Plain text\n", -1);
-  // gtk_text_buffer_insert(consoletxt, &iter, "Plain text\n", -1);
-  // gtk_text_buffer_insert(consoletxt, &iter, "Plain text\n", -1);
-  // gtk_text_buffer_insert(consoletxt, &iter, "Plain text\n", -1);
 
   gtk_text_view_set_editable(GTK_TEXT_VIEW(wins), FALSE);
   gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(wins), FALSE);
@@ -1368,11 +1365,6 @@ void GUIInit(int argc, char *argv[])
   gtk_table_set_row_spacing(GTK_TABLE(table), 3, 5);
   gtk_table_attach(GTK_TABLE(table), halign2, 0, 1, 15, 16, 
       GTK_FILL, GTK_FILL, 0, 0);
-
-  // okBtn = gtk_button_new_with_label("OK");
-  // gtk_widget_set_size_request(okBtn, 70, 30);
-  // gtk_table_attach(GTK_TABLE(table), okBtn, 3, 4, 4, 5, 
-  //     GTK_FILL, GTK_FILL, 0, 0);
 
   gtk_container_add(GTK_CONTAINER(window), table);
 
