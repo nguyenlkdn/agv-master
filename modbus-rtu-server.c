@@ -1246,7 +1246,7 @@ void *userInterface(void *vargp)
         //   robotworking = 4;
         // }
         printf("Robo sent: %d\n", robotRegister_sent[0]);
-        if(robotRegister_sent[0] == 4)
+        if(robotRegister_sent[0] == 0)
         {
           robotworking = 4;
         }
