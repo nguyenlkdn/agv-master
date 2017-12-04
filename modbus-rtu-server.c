@@ -1048,6 +1048,8 @@ void *userInterface(void *vargp)
               else
               {
                 printf("[OK] Robot finished at Station %d\n", robotlocation);
+                snprintf(TEXT, sizeof(TEXT), "[OK] Robot was finished at station %d at %s", robotlocation, getTime());
+                printtoconsole(TEXT);
                 break;
               }
             }
@@ -1101,6 +1103,8 @@ void *userInterface(void *vargp)
               else
               {
                 printf("[OK] Robot finished at Station %d\n", robotlocation);
+                snprintf(TEXT, sizeof(TEXT), "[OK] Robot was finished at station %d at %s", robotlocation, getTime());
+                printtoconsole(TEXT);
                 break;
               }
             }
@@ -1154,6 +1158,8 @@ void *userInterface(void *vargp)
               else
               {
                 printf("[OK] Robot finished at Station %d\n", robotlocation);
+                snprintf(TEXT, sizeof(TEXT), "[OK] Robot was finished at station %d at %s", robotlocation, getTime());
+                printtoconsole(TEXT);
                 break;
               }
 
@@ -1213,6 +1219,8 @@ void *userInterface(void *vargp)
               else
               {
                 printf("[OK] Robot finished at Station %d\n", robotlocation);
+                snprintf(TEXT, sizeof(TEXT), "[OK] Robot was finished at station %d at %s", robotlocation, getTime());
+                printtoconsole(TEXT);
                 break;
               }
 
@@ -1289,6 +1297,8 @@ void *userInterface(void *vargp)
             else
             {
               printf("[OK] Robot finished at Station %d\n", robotlocation);
+              snprintf(TEXT, sizeof(TEXT), "[OK] Robot was finished at station %d at %s", robotlocation, getTime());
+              printtoconsole(TEXT);
               break;
             }
 
