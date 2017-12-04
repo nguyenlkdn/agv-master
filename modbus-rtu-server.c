@@ -197,9 +197,9 @@ int main(int argc, char *argv[])
   pthread_t stationThread_id, userThread_id, robotThread_id, userInterface_id;
   pthread_create(&userThread_id, NULL, userThread, NULL);
   pthread_create(&userInterface_id, NULL, userInterface, NULL);
-  pthread_create(&robotThread_id, NULL, robotThread, NULL);
+  //pthread_create(&robotThread_id, NULL, robotThread, NULL);
   pthread_create(&stationThread_id, NULL, stationThread, NULL);
-  pthread_join(robotThread_id, NULL);
+  //pthread_join(robotThread_id, NULL);
   pthread_join(userInterface_id, NULL);
   pthread_join(userThread_id, NULL);
   pthread_join(stationThread_id, NULL);
@@ -286,19 +286,18 @@ void *stationThread(void *vargp)
       modbus_set_response_timeout(modbus_rtu_station_ctx, STATION_TIMEOUT_S, STATION_TIMEOUT_uS);
       modbus_set_slave(modbus_rtu_station_ctx, stationid);
       modbus_flush(modbus_rtu_station_ctx);
-      rc = modbus_read_registers(modbus_rtu_station_ctx, 1, 5, station1Register_received);
+      rc = modbus_read_registers(modbus_rtu_station_ctx, 0, 5, station1Register_received);
       if(rc == -1)
       {
         memset(station1Register_received, -1, sizeof(station1Register_received));
         station1_read_err++;
         printf("Reading from Station 1: TIMEOUT\n");
         STATION1_WRITING=0;
-        //printf("[ERROR] Cannot read from station: %d\n", stationid);
       }
       else
       {
-        usleep(1000000);
-        //STATION1_WRITING = 1;
+        usleep(100000);
+        STATION1_WRITING = 1;
         printf("Reading from Station 1: OK\n");
         // printf("Reading from Station 1: ");
         // int i;
@@ -316,7 +315,7 @@ void *stationThread(void *vargp)
       modbus_set_response_timeout(modbus_rtu_station_ctx, STATION_TIMEOUT_S, STATION_TIMEOUT_uS);
       modbus_set_slave(modbus_rtu_station_ctx, stationid);
       modbus_flush(modbus_rtu_station_ctx);
-      rc = modbus_read_registers(modbus_rtu_station_ctx, 1, 5, station2Register_received);
+      rc = modbus_read_registers(modbus_rtu_station_ctx, 0, 5, station2Register_received);
       if(rc == -1)
       {
         memset(station2Register_received, -1, sizeof(station2Register_received));
@@ -327,9 +326,9 @@ void *stationThread(void *vargp)
       }
       else
       {
-        usleep(500000);
+        usleep(100000);
         printf("Reading from Station 2: OK\n");
-        //STATION2_WRITING = 1;
+        STATION2_WRITING = 1;
         // printf("Reading from Station 1: ");
         // int i;
         // for(i=0;i<rc;i++)
@@ -344,38 +343,39 @@ void *stationThread(void *vargp)
       stationid=3;
       modbus_set_response_timeout(modbus_rtu_station_ctx, STATION_TIMEOUT_S, STATION_TIMEOUT_uS);
       modbus_set_slave(modbus_rtu_station_ctx, stationid);
-      rc = modbus_read_registers(modbus_rtu_station_ctx, 1, 5, station3Register_received);
+      rc = modbus_read_registers(modbus_rtu_station_ctx, 0, 5, station3Register_received);
       if(rc == -1)
       {
         printf("Reading from Station 3: TIMEOUT\n");
         memset(station3Register_received, -1, sizeof(station3Register_received));
         station3_read_err++;
-        //printf("[ERROR] Cannot read from station: %d\n", stationid);
       }
       else
       {
-        //STATION3_WRITING = 1;
+        STATION3_WRITING = 1;
         printf("Reading from Station 3: OK\n");
-        usleep(500000);
+        usleep(100000);
       }
     }
+
     if(STATION4_ENABLE == 1)
     {
       stationid=4;
       modbus_set_response_timeout(modbus_rtu_station_ctx, STATION_TIMEOUT_S, STATION_TIMEOUT_uS);
       modbus_set_slave(modbus_rtu_station_ctx, stationid);
-      rc = modbus_read_registers(modbus_rtu_station_ctx, 1, 5, station4Register_received);
+      rc = modbus_read_registers(modbus_rtu_station_ctx, 0, 5, station4Register_received);
       if(rc == -1)
       {
         memset(station4Register_received, -1, sizeof(station4Register_received));
         station4_read_err++;
+        STATION4_WRITING = 0;
         printf("Reading from Station 4: TIMEOUT\n");
       }
       else
       {
-        //STATION4_WRITING = 1;
+        STATION4_WRITING = 1;
         printf("Reading from Station 4: OK\n");
-        usleep(500000);
+        usleep(100000);
         // printf("Reading from Station 4: ");
         // int i;
         // for(i=0;i<rc;i++)
@@ -392,20 +392,19 @@ void *stationThread(void *vargp)
       modbus_set_response_timeout(modbus_rtu_station_ctx, STATION_TIMEOUT_S, STATION_TIMEOUT_uS);
       modbus_set_slave(modbus_rtu_station_ctx, stationid);
       modbus_flush(modbus_rtu_station_ctx);
-      rc = modbus_read_registers(modbus_rtu_station_ctx, 1, 5, station5Register_received);
+      rc = modbus_read_registers(modbus_rtu_station_ctx, 0, 5, station5Register_received);
       if(rc == -1)
       {
         memset(station5Register_received, -1, sizeof(station5Register_received));
         station5_read_err++;
         STATION5_WRITING=0;
         printf("Reading from Station 5: TIMEOUT\n");
-        //printf("[ERROR] Cannot read from station: %d\n", stationid);
       }
       else
       {
-        //STATION5_WRITING=1;
+        STATION5_WRITING=1;
         printf("Reading from Station 5: OK\n");
-        usleep(500000);
+        usleep(100000);
         // printf("Reading from Station 5: ");
         // int i;
         // for(i=0;i<rc;i++)
@@ -421,7 +420,7 @@ void *stationThread(void *vargp)
 */
     if(STATION1_WRITING)
     {
-      int issend=1;
+      int issend=0;
       int i;
       for(i=0;i<10;i++)
       {
@@ -441,17 +440,23 @@ void *stationThread(void *vargp)
         // }
         // printf("\n");
         modbus_set_response_timeout(modbus_rtu_station_ctx, STATION_WRITE_TIMEOUT_S, STATION_WRITE_TIMEOUT_uS);
-        modbus_set_debug(modbus_rtu_station_ctx, TRUE);
+        //modbus_set_debug(modbus_rtu_station_ctx, TRUE);
         modbus_set_slave(modbus_rtu_station_ctx, 1);
-        modbus_set_debug(modbus_rtu_station_ctx, FALSE);
-        rc = modbus_write_registers(modbus_rtu_station_ctx, 20, 10, station1Register_sent);
-        if(rc != -1)
+        rc = modbus_write_registers(modbus_rtu_station_ctx, 0, 5, station1Register_sent);
+        if(rc == 5)
         {
           for(i=0;i<10;i++)
           {
             station1Register_sent_previous[i] = station1Register_sent[i];
             STATION1_WRITING=0;
           }
+          printf("Station 1 Writing OK\n");
+          issend = 0;
+          usleep(100000);
+        }
+        else
+        {
+          printf("Station 1 Writing FAILED\n");
         }
 
       }
@@ -459,9 +464,9 @@ void *stationThread(void *vargp)
 
     if(STATION2_WRITING)
     {
-      int issend=1;
+      int issend=0;
       int i;
-      for(i=0;i<10;i++)
+      for(i=0;i<5;i++)
       {
         if(station2Register_sent[i] != station2Register_sent_previous[i])
         {
@@ -471,22 +476,33 @@ void *stationThread(void *vargp)
       }
       if(issend == 1)
       {
-        printf("Writing to Station 2\n");
         modbus_set_response_timeout(modbus_rtu_station_ctx, STATION_WRITE_TIMEOUT_S, STATION_WRITE_TIMEOUT_uS);
         modbus_set_slave(modbus_rtu_station_ctx, 2);
-        modbus_write_registers(modbus_rtu_station_ctx, 20, 10, station2Register_sent);
-        for(i=0;i<10;i++)
+        rc = modbus_write_registers(modbus_rtu_station_ctx, 0, 5, station2Register_sent);
+        
+        if(rc == 5)
         {
-          station2Register_sent_previous[i] = station2Register_sent[i];
+          for(i=0;i<5;i++)
+          {
+            station2Register_sent_previous[i] = station2Register_sent[i];
+          }
+          issend = 0;
+          printf("Station 2 Writing: OK\n");
+          usleep(100000);
         }
+        else
+        {
+          printf("Station 2 Writing: FAILED\n");
+        }
+
       }
     }
 
     if(STATION3_WRITING)
     {
-      int issend=1;
+      int issend=0;
       int i;
-      for(i=0;i<10;i++)
+      for(i=0;i<5;i++)
       {
         if(station3Register_sent[i] != station3Register_sent_previous[i])
         {
@@ -496,22 +512,32 @@ void *stationThread(void *vargp)
       }
       if(issend == 1)
       {
-        printf("Writing to Station 3\n");
+        //printf("Writing to Station 3\n");
         modbus_set_response_timeout(modbus_rtu_station_ctx, STATION_WRITE_TIMEOUT_S, STATION_WRITE_TIMEOUT_uS);
         modbus_set_slave(modbus_rtu_station_ctx, 3);
-        modbus_write_registers(modbus_rtu_station_ctx, 20, 10, station3Register_sent);
-        for(i=0;i<10;i++)
+        rc = modbus_write_registers(modbus_rtu_station_ctx, 0, 5, station3Register_sent);
+        if(rc == 5)
         {
-          station3Register_sent_previous[i] = station3Register_sent[i];
+          for(i=0;i<10;i++)
+          {
+            station3Register_sent_previous[i] = station3Register_sent[i];
+          }
+          issend = 0;
+          printf("Station 3 Writing: OK\n");
+          usleep(100000);
+        }
+        else
+        {
+          printf("Station 3 Writing: FAILED\n");
         }
       }
     }
 
     if(STATION4_WRITING)
     {
-      int issend=1;
+      int issend=0;
       int i;
-      for(i=0;i<10;i++)
+      for(i=0;i<5;i++)
       {
         if(station4Register_sent[i] != station4Register_sent_previous[i])
         {
@@ -521,26 +547,31 @@ void *stationThread(void *vargp)
       }
       if(issend == 1)
       {
-        printf("Writing to Station 4\n");
         modbus_set_response_timeout(modbus_rtu_station_ctx, STATION_WRITE_TIMEOUT_S, STATION_WRITE_TIMEOUT_uS);
         modbus_set_slave(modbus_rtu_station_ctx, 4);
-        rc = modbus_write_registers(modbus_rtu_station_ctx, 20, 10, station4Register_sent);
-        if(rc == 10)
+        usleep(1);
+        rc = modbus_write_registers(modbus_rtu_station_ctx, 0, 5, station4Register_sent);
+        if(rc == 5)
         {
-          rc = -1;
-          usleep(500000);
+          issend = 0;
+          for(i=0;i<5;i++)
+          {
+            station4Register_sent_previous[i] = station4Register_sent[i];
+          }
+          printf("Station 4 Writing: OK\n");
+          usleep(100000);
         }
-        for(i=0;i<10;i++)
+        else
         {
-          station4Register_sent_previous[i] = station4Register_sent[i];
+          printf("Station 4 Writing: FAILED\n");
         }
-        STATION4_WRITING = 0;
+
       }
     }
 
     if(STATION5_WRITING)
     {
-      int issend=1;
+      int issend=0;
       int i;
       for(i=0;i<10;i++)
       {
@@ -561,7 +592,17 @@ void *stationThread(void *vargp)
         // printf("\n");
         modbus_set_response_timeout(modbus_rtu_station_ctx, STATION_WRITE_TIMEOUT_S, STATION_WRITE_TIMEOUT_uS);
         modbus_set_slave(modbus_rtu_station_ctx, 5);
-        modbus_write_registers(modbus_rtu_station_ctx, 20, 10, station5Register_sent);
+        rc = modbus_write_registers(modbus_rtu_station_ctx, 0, 5, station5Register_sent);
+        if(rc == 5)
+        {
+          issend = 0;
+          printf("Station 5 Writing: OK\n");
+          usleep(100000);
+        }
+        else
+        {
+          printf("Station 5 Reading: FAILED\n");
+        }
       }
     }
   }
@@ -693,6 +734,7 @@ void *userInterface(void *vargp)
                 snprintf(TEXT, sizeof(TEXT), "[OK] [%6d] Station 1 requests robot at => %s", ++station1_counter, getTime());
                 printtoconsole(TEXT);
                 printf("[OK] [%6d] Station 1 requests robot at => %s", station1_counter, getTime());
+                station1Register_sent[2] = 1;
                 robotRegister_sent[0] = 1;
                 station1_processed = 1;
               }
@@ -702,14 +744,15 @@ void *userInterface(void *vargp)
               if((robotRegister_sent[0] == 1) && (station1_processed == 1))
               {
                 station1Register_sent[0]=0;
+                station1Register_sent[2]=0;
                 station1_processed = 0;
                 robotRegister_sent[0]=0;
                 hascalling = 0;
-                STATION1_ENABLE   =  0;
-                STATION2_ENABLE   =  1;
-                STATION3_ENABLE   =  1;
-                STATION4_ENABLE   =  1;
-                STATION5_ENABLE   =  1;
+                STATION1_ENABLE   =  1;
+                STATION2_ENABLE   =  0;
+                STATION3_ENABLE   =  0;
+                STATION4_ENABLE   =  0;
+                STATION5_ENABLE   =  0;
                 printf("[OK] Station 1 has canceled requests at => %s", getTime());
                 snprintf(TEXT, sizeof(TEXT), "[OK] Station 1 has canceled requests at => %s", getTime());
                 printtoconsole(TEXT);
@@ -738,8 +781,8 @@ void *userInterface(void *vargp)
                 snprintf(TEXT, sizeof(TEXT), "[OK] [%6d] Station 2 requests robot at => %s", ++station2_counter, getTime());
                 printtoconsole(TEXT);
                 printf("[OK] [%6d] Station 2 requests robot at => %s", station2_counter, getTime());
-
                 robotRegister_sent[0] = 2; 
+                station2Register_sent[2]=2;
                 station2_processed=1;
               }
             }
@@ -758,6 +801,7 @@ void *userInterface(void *vargp)
                 hascalling = 0;
                 robotRegister_sent[0]=4;
                 station2Register_sent[0]=0;
+                station2Register_sent[2]=0;
                 station2_processed=0;
               }
             }
@@ -771,9 +815,9 @@ void *userInterface(void *vargp)
         {
           station3request = station3Register_received[0];
 
-          if((station3request != -1)) // && (robotRegister_received[0] != 3)
+          if((station3request != -1))
           {
-            if((station3Register_received[0] == 1))
+            if((station3request == 1))
             {
               hascalling = 3;
               STATION1_ENABLE   =  0;
@@ -787,6 +831,7 @@ void *userInterface(void *vargp)
                 printtoconsole(TEXT);
                 printf("[OK] [%6d] Station 3 requests robot at => %s", station3_counter, getTime());
                 robotRegister_sent[0] = 3;
+                station3Register_sent[2] = 3;
                 station3_processed = 1;
               }
             }
@@ -795,9 +840,11 @@ void *userInterface(void *vargp)
               if((robotRegister_sent[0] == 3) && (station3_processed == 1))
               {
                 station3Register_sent[0]=0;
+                station3Register_sent[2] = 0;
                 station3_processed = 0;
                 robotRegister_sent[0] = 4;
-                STATION1_ENABLE   =  0;
+                hascalling = 0;
+                STATION1_ENABLE   =  1;
                 STATION2_ENABLE   =  1;
                 STATION3_ENABLE   =  1;
                 STATION4_ENABLE   =  1;
@@ -833,6 +880,7 @@ void *userInterface(void *vargp)
                 printf("[OK] [%6d] Station 4 requests robot at => %s", station4_counter, getTime());
                 robotRegister_sent[0] = 4;
                 station4_processed = 1;
+                station4Register_sent[2]=4;
               }
             }
             else
@@ -840,6 +888,7 @@ void *userInterface(void *vargp)
               if((robotRegister_sent[0] == 4) && (station4_processed == 1))
               {
                 station4Register_sent[0]=0;
+                station4Register_sent[2]=0;
                 station4_processed = 0;
                 robotRegister_sent[0]=1;
                 hascalling=0;
@@ -874,11 +923,12 @@ void *userInterface(void *vargp)
               STATION5_ENABLE   =  1;
               if((robotRegister_sent[0] != 5))
               {
+                robotRegister_sent[0] = 5;
+                station5_processed = 1;
+                station5Register_sent[2] = 5;
                 snprintf(TEXT, sizeof(TEXT), "[OK] [%6d] Station 5 requests robot at => %s", ++station5_counter, getTime());
                 printtoconsole(TEXT);
                 printf("[OK] [%6d] Station 5 requests robot at => %s", station5_counter, getTime());
-                robotRegister_sent[0] = 5;
-                station5_processed = 1;
               }
             }
             else
@@ -888,8 +938,9 @@ void *userInterface(void *vargp)
                 station5Register_sent[0]=0;
                 station5_processed = 0;
                 robotRegister_sent[0]=4;
+                station5Register_sent[2] = 0;
                 hascalling = 0;
-                STATION1_ENABLE   =  0;
+                STATION1_ENABLE   =  1;
                 STATION2_ENABLE   =  1;
                 STATION3_ENABLE   =  1;
                 STATION4_ENABLE   =  1;
@@ -909,6 +960,7 @@ void *userInterface(void *vargp)
       uint16_t stored_robot_location = robotRegister_received[0];
       while(robot_control != robotRegister_received[0] && (robot_control != 0))
       {
+        //robotRegister_received[0] = 2;
         printf("Robot is going to station %d under control of Station 1\n", robot_control);
         sleep(1);
       }
@@ -921,12 +973,33 @@ void *userInterface(void *vargp)
       else
       {
         printf("Robot in Auto Mode at station: %d\n", robot_control);
+        if(robot_control == 1)
+        {
+          //gtk_button_set_label(GTK_BUTTON(actstation1), "Recall Robot");
+        }
+        else if (robot_control == 2)
+        {
+          //gtk_button_set_label(GTK_BUTTON(actstation2), "Station 2");
+        }
+        else if (robot_control == 3)
+        {
+
+        }
+        else if (robot_control == 4)
+        {
+
+        }
+        else if (robot_control == 5)
+        {
+
+        }
         robot_control = 0;
         robotRegister_sent[0] = 0;
       }
     }
 
     int16_t robotlocation = robotRegister_received[0];
+    robotlocation = 1;
     if(robotlocation != 0)
     {
       robot_status = robotlocation;
@@ -982,6 +1055,7 @@ void *userInterface(void *vargp)
           robotworking = 0;
           hascalling = 0;
           station1Register_sent[0]=0;
+          station1Register_sent[2] = 0;
           robotRegister_sent[0]=4;
           station1_processed = 0;
         }
@@ -1033,6 +1107,7 @@ void *userInterface(void *vargp)
           robotworking = 0;
           hascalling = 0;
           station2Register_sent[0]=0;
+          station2Register_sent[2]=0;
           robotRegister_sent[0]=4;
           station2_processed = 0;
         }
@@ -1085,6 +1160,7 @@ void *userInterface(void *vargp)
           robotworking = 0;
           hascalling = 0;
           station3Register_sent[0]=0;
+          station3Register_sent[2]=0;
           robotRegister_sent[0]=4;
           station3_processed = 0;
         }
@@ -1137,6 +1213,7 @@ void *userInterface(void *vargp)
           robotworking = 0;
           hascalling = 0;
           station4Register_sent[0]=0;
+          station4Register_sent[2]=0;
           robotRegister_sent[0]=1;
           station4_processed = 0;
         }
@@ -1190,6 +1267,7 @@ void *userInterface(void *vargp)
         robotworking = 0;
         hascalling = 0;
         station5Register_sent[0]=0;
+        station5Register_sent[2]=0;
         robotRegister_sent[0]=4;
         station5_processed = 0;
       }
@@ -1225,11 +1303,11 @@ void initThread()
   memset(station4Register_received, 0, sizeof(station4Register_received));
   memset(station5Register_received, 0, sizeof(station5Register_received));
 
-  memset(station1Register_sent_previous, 0, sizeof(station1Register_sent_previous));
-  memset(station2Register_sent_previous, 0, sizeof(station2Register_sent_previous));
-  memset(station3Register_sent_previous, 0, sizeof(station3Register_sent_previous));
-  memset(station4Register_sent_previous, 0, sizeof(station4Register_sent_previous));
-  memset(station5Register_sent_previous, 0, sizeof(station5Register_sent_previous));
+  memset(station1Register_sent_previous, -1, sizeof(station1Register_sent_previous));
+  memset(station2Register_sent_previous, -1, sizeof(station2Register_sent_previous));
+  memset(station3Register_sent_previous, -1, sizeof(station3Register_sent_previous));
+  memset(station4Register_sent_previous, -1, sizeof(station4Register_sent_previous));
+  memset(station5Register_sent_previous, -1, sizeof(station5Register_sent_previous));
 }
 
 void robotInit()
@@ -1256,7 +1334,7 @@ void robotInit()
 
 void stationInit()
 {
-  modbus_rtu_station_ctx = modbus_new_rtu(STATION_DEVICE, 4800, 'E', 8, 1);
+  modbus_rtu_station_ctx = modbus_new_rtu(STATION_DEVICE, 38400, 'N', 8, 1);
   //modbus_set_debug(modbus_rtu_station_ctx, TRUE);
   //modbus_set_slave(modbus_rtu_station_ctx, 1);
   //modbus_set_response_timeout(modbus_rtu_station_ctx, 1, 500000);
@@ -1503,6 +1581,7 @@ static void callback2( GtkWidget *widget,
     printtoconsole(TEXT);
     robotRegister_sent[0] = 2;
     robot_control = 2;
+    station2Register_sent[1] = 2;
   }
 }
 
@@ -1526,6 +1605,7 @@ static void callback3( GtkWidget *widget,
     printtoconsole(TEXT);
     robotRegister_sent[0] = 3;
     robot_control = 3;
+    station3Register_sent[1] = 3;
   }
 }
 
@@ -1549,6 +1629,7 @@ static void callback4( GtkWidget *widget,
     printtoconsole(TEXT);
     robotRegister_sent[0] = 4;
     robot_control = 4;
+    station4Register_sent[1] = 4;
   }
 }
 /* Our usual callback function */
@@ -1571,6 +1652,8 @@ static void callback5( GtkWidget *widget,
     printtoconsole(TEXT);
     robotRegister_sent[0] = 5;
     robot_control = 5;
+    station5Register_sent[1] = 5;
+
   }
 }
 
