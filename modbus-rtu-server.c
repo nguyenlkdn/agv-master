@@ -10,6 +10,10 @@
 #include <gtk/gtk.h>
 
 #include "config.h"
+
+//#define RobotModbus_DEBUG
+//#define Station1Modbus_DEBUG
+
 #define KNRM  "\x1B[0m"
 #define KRED  "\x1B[31m"
 #define KGRN  "\x1B[32m"
@@ -198,7 +202,7 @@ int main(int argc, char *argv[])
   pthread_create(&userThread_id, NULL, userThread, NULL);
   pthread_create(&userInterface_id, NULL, userInterface, NULL);
   pthread_create(&robotThread_id, NULL, robotThread, NULL);
-  pthread_create(&stationThread_id, NULL, stationThread, NULL);
+  //pthread_create(&stationThread_id, NULL, stationThread, NULL);
   pthread_join(robotThread_id, NULL);
   pthread_join(userInterface_id, NULL);
   pthread_join(userThread_id, NULL);
@@ -291,21 +295,18 @@ void *stationThread(void *vargp)
       {
         memset(station1Register_received, -1, sizeof(station1Register_received));
         station1_read_err++;
-        printf("Reading from Station 1: TIMEOUT\n");
+        #ifdef Station1Modbus_DEBUG
+          printf("Station 1 Reading: TIMEOUT\n");
+        #endif
         STATION1_WRITING=0;
       }
       else
       {
         usleep(100000);
         STATION1_WRITING = 1;
-        printf("Reading from Station 1: OK\n");
-        // printf("Reading from Station 1: ");
-        // int i;
-        // for(i=0;i<rc;i++)
-        // {
-        //   printf("%3d", station1Register_received[i]);
-        // }
-        // printf("\n");
+        #ifdef Station1Modbus_DEBUG
+          printf("Station 1 Reading: OK\n");
+        #endif
       }
     }
 
@@ -319,23 +320,19 @@ void *stationThread(void *vargp)
       if(rc == -1)
       {
         memset(station2Register_received, -1, sizeof(station2Register_received));
-        station1_read_err++;
-        printf("Reading from Station 2: TIMEOUT\n");
+        station2_read_err++;
         STATION2_WRITING=0;
-        //printf("[ERROR] Cannot read from station: %d\n", stationid);
+        #ifdef Station2Modbus_DEBUG
+          printf("Station 2 Reading: TIMEOUT\n");
+        #endif
       }
       else
       {
         usleep(100000);
-        printf("Reading from Station 2: OK\n");
         STATION2_WRITING = 1;
-        // printf("Reading from Station 1: ");
-        // int i;
-        // for(i=0;i<rc;i++)
-        // {
-        //   printf("%3d", station1Register_received[i]);
-        // }
-        // printf("\n");
+        #ifdef Station2Modbus_DEBUG
+          printf("Station 2 Reading: OK\n");
+        #endif
       }
     }
     if(STATION3_ENABLE == 1)
@@ -346,15 +343,19 @@ void *stationThread(void *vargp)
       rc = modbus_read_registers(modbus_rtu_station_ctx, 0, 5, station3Register_received);
       if(rc == -1)
       {
-        printf("Reading from Station 3: TIMEOUT\n");
         memset(station3Register_received, -1, sizeof(station3Register_received));
         station3_read_err++;
+        #ifdef Station3Modbus_DEBUG
+          printf("Station 3 Reading: TIMEOUT\n");
+        #endif
       }
       else
       {
         STATION3_WRITING = 1;
-        printf("Reading from Station 3: OK\n");
         usleep(100000);
+        #ifdef Station3Modbus_DEBUG
+          printf("Station 3 Reading: OK\n");
+        #endif
       }
     }
 
@@ -369,13 +370,17 @@ void *stationThread(void *vargp)
         memset(station4Register_received, -1, sizeof(station4Register_received));
         station4_read_err++;
         STATION4_WRITING = 0;
-        printf("Reading from Station 4: TIMEOUT\n");
+        #ifdef Station4Modbus_DEBUG
+          printf("Station 4 Reading: TIMEOUT\n");
+        #endif      
       }
       else
       {
         STATION4_WRITING = 1;
-        printf("Reading from Station 4: OK\n");
         usleep(100000);
+        #ifdef Station4Modbus_DEBUG
+          printf("Station 4 Reading: OK\n");
+        #endif 
         // printf("Reading from Station 4: ");
         // int i;
         // for(i=0;i<rc;i++)
@@ -398,20 +403,17 @@ void *stationThread(void *vargp)
         memset(station5Register_received, -1, sizeof(station5Register_received));
         station5_read_err++;
         STATION5_WRITING=0;
-        printf("Reading from Station 5: TIMEOUT\n");
+        #ifdef Station5Modbus_DEBUG
+          printf("Station 5 Reading: TIMEOUT\n");
+        #endif       
       }
       else
       {
         STATION5_WRITING=1;
-        printf("Reading from Station 5: OK\n");
         usleep(100000);
-        // printf("Reading from Station 5: ");
-        // int i;
-        // for(i=0;i<rc;i++)
-        // {
-        //   printf("%3d", station5Register_received[i]);
-        // }
-        // printf("\n");
+        #ifdef Station5Modbus_DEBUG
+          printf("Station 5 Reading: OK\n");
+        #endif    
       }
     }
 
@@ -450,15 +452,18 @@ void *stationThread(void *vargp)
             station1Register_sent_previous[i] = station1Register_sent[i];
             STATION1_WRITING=0;
           }
-          printf("Station 1 Writing OK\n");
           issend = 0;
           usleep(100000);
+          #ifdef Station1Modbus_DEBUG
+            printf("Station 1 Writing: OK")
+          #endif
         }
         else
         {
-          printf("Station 1 Writing FAILED\n");
+          #ifdef Station1Modbus_DEBUG
+            printf("Station 1 Writing: TIMEOUT")
+          #endif        
         }
-
       }
     }
 
@@ -487,12 +492,16 @@ void *stationThread(void *vargp)
             station2Register_sent_previous[i] = station2Register_sent[i];
           }
           issend = 0;
-          printf("Station 2 Writing: OK\n");
           usleep(100000);
+          #ifdef Station2Modbus_DEBUG
+            printf("Station 2 Writing: OK\n");
+          #endif
         }
         else
         {
-          printf("Station 2 Writing: FAILED\n");
+          #ifdef Station2Modbus_DEBUG
+            printf("Station 2 Writing: TIMEOUT\n");
+          #endif
         }
 
       }
@@ -518,17 +527,21 @@ void *stationThread(void *vargp)
         rc = modbus_write_registers(modbus_rtu_station_ctx, 0, 5, station3Register_sent);
         if(rc == 5)
         {
+          issend = 0;
           for(i=0;i<10;i++)
           {
             station3Register_sent_previous[i] = station3Register_sent[i];
           }
-          issend = 0;
-          printf("Station 3 Writing: OK\n");
           usleep(100000);
+          #ifdef Station3Modbus_DEBUG
+            printf("Station 3 Writing: OK\n");
+          #endif
         }
         else
         {
-          printf("Station 3 Writing: FAILED\n");
+          #ifdef Station3Modbus_DEBUG
+            printf("Station 3 Writing: FAILD\n");
+          #endif        
         }
       }
     }
@@ -558,12 +571,16 @@ void *stationThread(void *vargp)
           {
             station4Register_sent_previous[i] = station4Register_sent[i];
           }
-          printf("Station 4 Writing: OK\n");
           usleep(100000);
+          #ifdef Station4Modbus_DEBUG
+            printf("Station 4 Writing: OK\n");
+          #endif
         }
         else
         {
-          printf("Station 4 Writing: FAILED\n");
+          #ifdef Station4Modbus_DEBUG
+            printf("Station 4 Writing: FAIL\n");
+          #endif
         }
 
       }
@@ -583,25 +600,22 @@ void *stationThread(void *vargp)
       }
       if(issend == 1)
       {
-        // printf("Writing to Station 5: ");
-        // int i;
-        // for(i=0;i<10;i++)
-        // {
-        //   printf("%3d", station5Register_sent[i]);
-        // }
-        // printf("\n");
         modbus_set_response_timeout(modbus_rtu_station_ctx, STATION_WRITE_TIMEOUT_S, STATION_WRITE_TIMEOUT_uS);
         modbus_set_slave(modbus_rtu_station_ctx, 5);
         rc = modbus_write_registers(modbus_rtu_station_ctx, 0, 5, station5Register_sent);
         if(rc == 5)
         {
           issend = 0;
-          printf("Station 5 Writing: OK\n");
           usleep(100000);
+          #ifdef Station5Modbus_DEBUG
+            printf("Station 5 Writing: OK\n");
+          #endif
         }
         else
         {
-          printf("Station 5 Reading: FAILED\n");
+          #ifdef Station5Modbus_DEBUG
+            printf("Station 5 Writing: FAIL\n");
+          #endif
         }
       }
     }
@@ -658,31 +672,17 @@ void *robotThread(void *vargp)
     //modbus_set_debug(modbus_rtu_robot_ctx, FALSE);
     if(rc != -1)
     {
+      #ifdef RobotModbus_DEBUG
       printf("Robot Reading: OK\n");
-      // if(robotRegister_received[0] == 0)
-      // {
-      //   robotRegister_sent[2] = robot_status;
-      // }
-      // else
-      // {
-      //   robot_status = robotRegister_sent[0];
-      // }
-      // printf("Stored Robot Location: %d\n", robotRegister_received[0]);
-
-      // int i;
-      // printf("Data: ");
-      // for(i=0;i<rc;i++)
-      // {
-      //   printf("%3d", robotRegister_received[i]);
-      // }
-      // printf("\n");
+      #endif
       usleep(200000);
     }
     else
     {
+      #ifdef RobotModbus_DEBUG
       printf("Robot Reading: Timeout %d\n", rc);
+      #endif
     }
-    //printf("Robot Location: %d\n", robot_status);
     if(robotRegister_received[0] == 0)
     {
       robotRegister_sent[2] = robot_status;
