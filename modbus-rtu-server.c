@@ -1736,11 +1736,11 @@ quick_message (GtkWindow *parent, gchar *message)
 
 void printtoconsole(char* text)
 {
-  gtk_text_buffer_insert(consoletxt, &iter, text, -1);
   GtkTextIter start;
   GtkTextIter end;
   gtk_text_buffer_get_end_iter(consoletxt, &end);
   gtk_text_buffer_get_bounds(consoletxt, &start, &end);
   gtk_text_buffer_delete(consoletxt, &start, &end);
+  gtk_text_buffer_insert(consoletxt, &iter, text, -1);
   gtk_text_view_scroll_to_iter(GTK_TEXT_VIEW(wins), &end, 0.0, FALSE, 0.0,0.0);
 }
