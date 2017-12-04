@@ -1229,7 +1229,7 @@ void *userInterface(void *vargp)
           robotRegister_sent[0]=1;
           station4_processed = 0;
         }
-        if((station4Register_received[2] == 1) && (station4Register_sent[1] == 2))
+        if((station4Register_received[2] == 1) && (station4Register_sent[1] == 2) && (robotRegister_sent[0] != 1))
         {
           robotRegister_sent[0] = 1;
           printf("Station 4 was confirmed\n");
