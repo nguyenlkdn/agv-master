@@ -615,7 +615,7 @@ void *robotThread(void *vargp)
   int rc;
   int rewrite = 1;
   int16_t robotRegister_sent_previous[5];
-  memset(robotRegister_sent_previous, 0, sizeof(robotRegister_sent_previous));
+  memset(robotRegister_sent_previous, -1, sizeof(robotRegister_sent_previous));
   uint8_t resend = 0;
   while (1)
   {
