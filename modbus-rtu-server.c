@@ -1745,6 +1745,7 @@ static void callback6( GtkWidget *widget,
                       gpointer   data )
 {
   snprintf(TEXT, sizeof(TEXT), "This function is being developed!!!\n");
+  printtoconsole(TEXT);
   // printf("Reset all stations\n");
   // memset(station1Register_received, 0, sizeof(station1Register_received));
   // memset(station2Register_received, 0, sizeof(station2Register_received));
