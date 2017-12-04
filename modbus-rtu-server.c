@@ -1744,30 +1744,31 @@ static void callback5( GtkWidget *widget,
 static void callback6( GtkWidget *widget,
                       gpointer   data )
 {
-  printf("Reset all stations\n");
-  memset(station1Register_received, 0, sizeof(station1Register_received));
-  memset(station2Register_received, 0, sizeof(station2Register_received));
-  memset(station3Register_received, 0, sizeof(station3Register_received));
-  memset(station4Register_received, 0, sizeof(station4Register_received));
-  memset(station5Register_received, 0, sizeof(station5Register_received));
+  snprintf(TEXT, sizeof(TEXT), "This function is being developed!!!\n");
+  // printf("Reset all stations\n");
+  // memset(station1Register_received, 0, sizeof(station1Register_received));
+  // memset(station2Register_received, 0, sizeof(station2Register_received));
+  // memset(station3Register_received, 0, sizeof(station3Register_received));
+  // memset(station4Register_received, 0, sizeof(station4Register_received));
+  // memset(station5Register_received, 0, sizeof(station5Register_received));
 
-  memset(station1Register_sent, 0, sizeof(station1Register_sent));
-  memset(station2Register_sent, 0, sizeof(station2Register_sent));
-  memset(station3Register_sent, 0, sizeof(station3Register_sent));
-  memset(station4Register_sent, 0, sizeof(station4Register_sent));
-  memset(station5Register_sent, 0, sizeof(station5Register_sent));
+  // memset(station1Register_sent, 0, sizeof(station1Register_sent));
+  // memset(station2Register_sent, 0, sizeof(station2Register_sent));
+  // memset(station3Register_sent, 0, sizeof(station3Register_sent));
+  // memset(station4Register_sent, 0, sizeof(station4Register_sent));
+  // memset(station5Register_sent, 0, sizeof(station5Register_sent));
 
-  station1Register_sent[4] = 1;
-  station2Register_sent[4] = 1;
-  station3Register_sent[4] = 1;
-  station4Register_sent[4] = 1;
-  station5Register_sent[4] = 1;
+  // station1Register_sent[4] = 1;
+  // station2Register_sent[4] = 1;
+  // station3Register_sent[4] = 1;
+  // station4Register_sent[4] = 1;
+  // station5Register_sent[4] = 1;
 
-  memset(station1Register_sent_previous, -1, sizeof(station1Register_sent_previous));
-  memset(station2Register_sent_previous, -1, sizeof(station2Register_sent_previous));
-  memset(station3Register_sent_previous, -1, sizeof(station3Register_sent_previous));
-  memset(station4Register_sent_previous, -1, sizeof(station4Register_sent_previous));
-  memset(station5Register_sent_previous, -1, sizeof(station5Register_sent_previous));
+  // memset(station1Register_sent_previous, -1, sizeof(station1Register_sent_previous));
+  // memset(station2Register_sent_previous, -1, sizeof(station2Register_sent_previous));
+  // memset(station3Register_sent_previous, -1, sizeof(station3Register_sent_previous));
+  // memset(station4Register_sent_previous, -1, sizeof(station4Register_sent_previous));
+  // memset(station5Register_sent_previous, -1, sizeof(station5Register_sent_previous));
 }
 
 void
