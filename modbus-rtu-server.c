@@ -1257,6 +1257,7 @@ void *userInterface(void *vargp)
           station4Register_sent[0] = 0;
           station4Register_sent[1] = 0;
           station4Register_sent[2] = 0;
+          robotworking = 0;
         }
         // if ((station4Register_received[2] == 1))
         // {
