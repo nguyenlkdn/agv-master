@@ -168,6 +168,7 @@ static void callback2( GtkWidget *widget, gpointer data);
 static void callback3( GtkWidget *widget, gpointer data);
 static void callback4( GtkWidget *widget, gpointer data);
 static void callback5( GtkWidget *widget, gpointer data);
+static void callback6( GtkWidget *widget, gpointer data);
 /*
 
 */
@@ -188,6 +189,7 @@ GtkWidget *actstation2;
 GtkWidget *actstation3;
 GtkWidget *actstation4;
 GtkWidget *actstation5;
+GtkWidget *actstation6;
 
 int16_t robot_status = 0;
 uint16_t robot_control = 0;
@@ -1481,9 +1483,14 @@ void button_was_clicked (GtkWidget *widget, gpointer gdata)
     gtk_container_foreach (GTK_CONTAINER (widget), 
                            (GtkCallback) callback5, gdata);
   }
+  else if(!strcmp(gdata, "Reset Stations"))
+  {
+    gtk_container_foreach (GTK_CONTAINER (widget), 
+                           (GtkCallback) callback6, gdata);
+  }
   else
   {
-    
+
   }
   // switch(data)
   // {
@@ -1594,6 +1601,13 @@ void GUIInit(int argc, char *argv[])
   gtk_table_set_row_spacing(GTK_TABLE(table), 3, 5);
   gtk_table_attach(GTK_TABLE(table), halign2, 0, 1, 15, 16, 
       GTK_FILL, GTK_FILL, 0, 0);
+
+  actstation6 = gtk_button_new_with_label("Reset Stations");
+  gtk_widget_set_size_request(actstation6, 70, 30);
+  gtk_table_attach(GTK_TABLE(table), actstation6, 0, 1, 15, 16, 
+          GTK_FILL, GTK_FILL, 0, 0);
+  g_signal_connect (GTK_OBJECT(actstation6), "clicked",
+          G_CALLBACK (button_was_clicked), (gpointer) "Reset Stations");
 
   gtk_container_add(GTK_CONTAINER(window), table);
 
@@ -1723,6 +1737,13 @@ static void callback5( GtkWidget *widget,
     station5Register_sent[1] = 1;
 
   }
+}
+
+/* Our usual callback function */
+static void callback6( GtkWidget *widget,
+                      gpointer   data )
+{
+  printf("Reset all stations\n");
 }
 
 void
