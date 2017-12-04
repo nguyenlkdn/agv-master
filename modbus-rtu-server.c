@@ -1008,6 +1008,9 @@ void *userInterface(void *vargp)
     {
       robotRegister_sent[0] = 1;
       printf("Station 4 was confirmed\n");
+      station4Register_sent[0] = 0;
+      station4Register_sent[1] = 0;
+      station4Register_sent[2] = 0;
     }
 
     int16_t robotlocation = robotRegister_received[0];
