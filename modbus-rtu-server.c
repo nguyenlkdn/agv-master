@@ -1559,6 +1559,7 @@ static void callback1( GtkWidget *widget,
     printtoconsole(TEXT);
     robotRegister_sent[0] = 1;
     robot_control = 1;
+    station1Register_sent[1] = 1;
   }
   //gtk_label_get(GTK_LABEL(widget), button_label);
   g_print ("%s was pressed, %s\n", (char *) data, (char*) button_label);
@@ -1585,7 +1586,7 @@ static void callback2( GtkWidget *widget,
     printtoconsole(TEXT);
     robotRegister_sent[0] = 2;
     robot_control = 2;
-    station2Register_sent[1] = 2;
+    station2Register_sent[1] = 1;
   }
 }
 
@@ -1609,7 +1610,7 @@ static void callback3( GtkWidget *widget,
     printtoconsole(TEXT);
     robotRegister_sent[0] = 3;
     robot_control = 3;
-    station3Register_sent[1] = 3;
+    station3Register_sent[1] = 1;
   }
 }
 
@@ -1633,7 +1634,7 @@ static void callback4( GtkWidget *widget,
     printtoconsole(TEXT);
     robotRegister_sent[0] = 4;
     robot_control = 4;
-    station4Register_sent[1] = 4;
+    station4Register_sent[1] = 1;
   }
 }
 /* Our usual callback function */
@@ -1656,7 +1657,7 @@ static void callback5( GtkWidget *widget,
     printtoconsole(TEXT);
     robotRegister_sent[0] = 5;
     robot_control = 5;
-    station5Register_sent[1] = 5;
+    station5Register_sent[1] = 1;
 
   }
 }
