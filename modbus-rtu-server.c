@@ -455,14 +455,12 @@ void *stationThread(void *vargp)
           issend = 0;
           usleep(100000);
           #ifdef Station1Modbus_DEBUG
-            printf("Station 1 Writing: OK")
+            printf("Station 1 Writing: OK");
           #endif
         }
         else
         {
-          #ifdef Station1Modbus_DEBUG
-            printf("Station 1 Writing: TIMEOUT")
-          #endif        
+          printf("Station 1 Writing: TIMEOUT");
         }
       }
     }
@@ -539,9 +537,7 @@ void *stationThread(void *vargp)
         }
         else
         {
-          #ifdef Station3Modbus_DEBUG
             printf("Station 3 Writing: FAILD\n");
-          #endif        
         }
       }
     }
@@ -578,9 +574,7 @@ void *stationThread(void *vargp)
         }
         else
         {
-          #ifdef Station4Modbus_DEBUG
-            printf("Station 4 Writing: FAIL\n");
-          #endif
+          printf("Station 4 Writing: FAIL\n");
         }
 
       }
