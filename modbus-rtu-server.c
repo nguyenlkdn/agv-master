@@ -1175,6 +1175,7 @@ void *userInterface(void *vargp)
         }
       break;
       case 4:
+        printf("[OK] Robot come to Station %d at %s", robotlocation, getTime());
         if(station4_processed == 1)
         {
           robotworking = 4;
@@ -1183,7 +1184,6 @@ void *userInterface(void *vargp)
           station3Register_sent[0]=0;
           station4Register_sent[0]=robotlocation;
           station5Register_sent[0]=0;
-          printf("[OK] Robot come to Station %d at %s", robotlocation, getTime());
           while(1)
           {
             station4request = station4Register_received[0];
@@ -1214,7 +1214,7 @@ void *userInterface(void *vargp)
             }
           }
           sleep(1);
-          STATION1_ENABLE   =  1;
+          STATION1_ENABLE   =  0;
           STATION2_ENABLE   =  1;
           STATION3_ENABLE   =  1;
           STATION4_ENABLE   =  1;
