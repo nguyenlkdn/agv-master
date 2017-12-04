@@ -1235,17 +1235,15 @@ void *userInterface(void *vargp)
           station4Register_sent[1] = 0;
           station4Register_sent[2] = 0;
         }
-        // else if((robotlocation == 4))
-        // {
-        //   if (station4Register_received[2] == 1)
-        //   {
-        //     printf("Station 4 was confirmed\n");
-        //     robotRegister_sent[0] = 1;
-        //     station4Register_sent[0] = 0;
-        //     station4Register_sent[1] = 0;
-        //     station4Register_sent[2] = 0;
-        //   }
-        // }
+        if (station4Register_received[2] == 1)
+        {
+          printf("Station 4 was confirmed\n");
+          robotRegister_sent[0] = 1;
+          station4Register_sent[0] = 0;
+          station4Register_sent[1] = 0;
+          station4Register_sent[2] = 0;
+        }
+
       break;
       case 5:
       if(station5_processed == 1)
