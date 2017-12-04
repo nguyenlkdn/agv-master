@@ -319,7 +319,7 @@ void *stationThread(void *vargp)
       {
         memset(station2Register_received, -1, sizeof(station2Register_received));
         station2_read_err++;
-        STATION2_WRITING=0;
+        //STATION2_WRITING=0;
         printf("Station 2 Reading: TIMEOUT\n");
       }
       else
@@ -341,7 +341,8 @@ void *stationThread(void *vargp)
       {
         memset(station3Register_received, -1, sizeof(station3Register_received));
         station3_read_err++;
-          printf("Station 3 Reading: TIMEOUT\n");
+        //STATION3_WRITING = 0;
+        printf("Station 3 Reading: TIMEOUT\n");
       }
       else
       {
@@ -363,7 +364,7 @@ void *stationThread(void *vargp)
       {
         memset(station4Register_received, -1, sizeof(station4Register_received));
         station4_read_err++;
-        STATION4_WRITING = 0;
+        //STATION4_WRITING = 0;
         printf("Station 4 Reading: TIMEOUT\n");
       }
       else
@@ -394,7 +395,7 @@ void *stationThread(void *vargp)
       {
         memset(station5Register_received, -1, sizeof(station5Register_received));
         station5_read_err++;
-        STATION5_WRITING=0;
+        //STATION5_WRITING=0;
         printf("Station 5 Reading: TIMEOUT\n");
       }
       else
