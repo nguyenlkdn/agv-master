@@ -653,11 +653,12 @@ void *robotThread(void *vargp)
     
     modbus_flush(modbus_rtu_robot_ctx);
     modbus_set_response_timeout(modbus_rtu_robot_ctx, ROBOT_READ_TIMEOUT_S, ROBOT_READ_TIMEOUT_uS);
-    modbus_set_debug(modbus_rtu_robot_ctx, TRUE);
+    //modbus_set_debug(modbus_rtu_robot_ctx, TRUE);
     rc = modbus_read_registers(modbus_rtu_robot_ctx, 0, 3, robotRegister_received);
-    modbus_set_debug(modbus_rtu_robot_ctx, FALSE);
+    //modbus_set_debug(modbus_rtu_robot_ctx, FALSE);
     if(rc != -1)
     {
+      printf("Robot Reading: OK\n");
       // if(robotRegister_received[0] == 0)
       // {
       //   robotRegister_sent[2] = robot_status;
@@ -679,7 +680,7 @@ void *robotThread(void *vargp)
     }
     else
     {
-      printf("[Error] Read from robot Timeout!\n");
+      printf("Robot Reading: Timeout\n");
     }
     //printf("Robot Location: %d\n", robot_status);
     if(robotRegister_received[0] == 0)
@@ -1315,7 +1316,6 @@ void initThread()
 void robotInit()
 {
   modbus_rtu_robot_ctx = modbus_new_rtu(ROBOT_DEVICE, 115200, 'N', 8, 1);
-  //modbus_set_debug(modbus_rtu_robot_ctx, TRUE);
   modbus_set_slave(modbus_rtu_robot_ctx, 1);
   modbus_set_response_timeout(modbus_rtu_robot_ctx, 1, 0);
   if(modbus_connect(modbus_rtu_robot_ctx) == -1)
