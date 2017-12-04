@@ -1,0 +1,10 @@
+Banned:
+	1) Station 4 confirmed => Don't have to recall robot if robot does not come to station1
+
+Fixed: 
+	1) All station will change  to "Reqesting mode" if Master move robot to that station
+	2) Master doesn't lock control of all stations
+	3) 
+
+Ristriction:
+	1) If robot was moved to the current station, that station must be called before make other operation.
