@@ -645,9 +645,9 @@ void *robotThread(void *vargp)
       memcpy(robotRegister_sent_previous, robotRegister_sent, sizeof(robotRegister_sent_previous));
       modbus_flush(modbus_rtu_robot_ctx);
       modbus_set_response_timeout(modbus_rtu_robot_ctx, ROBOT_WRITE_TIMEOUT_S, ROBOT_WRITE_TIMEOUT_uS);
-      modbus_set_debug(modbus_rtu_robot_ctx, TRUE);
+      //modbus_set_debug(modbus_rtu_robot_ctx, TRUE);
       rc = modbus_write_registers(modbus_rtu_robot_ctx, 0, 5, robotRegister_sent);
-      modbus_set_debug(modbus_rtu_robot_ctx, FALSE);
+      //modbus_set_debug(modbus_rtu_robot_ctx, FALSE);
       if(rc != 5)
       {
         rewrite = 1;
