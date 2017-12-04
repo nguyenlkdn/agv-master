@@ -966,22 +966,23 @@ void *userInterface(void *vargp)
         if(robot_control == 1)
         {
           //gtk_button_set_label(GTK_BUTTON(actstation1), "Recall Robot");
+          station1Register_sent[1] = 0;
         }
         else if (robot_control == 2)
         {
-          //gtk_button_set_label(GTK_BUTTON(actstation2), "Station 2");
+          station2Register_sent[1] = 0;
         }
         else if (robot_control == 3)
         {
-
+          station3Register_sent[1] = 0;
         }
         else if (robot_control == 4)
         {
-
+          station4Register_sent[1] = 0;
         }
         else if (robot_control == 5)
         {
-
+          station5Register_sent[1] = 0;
         }
         robot_control = 0;
         robotRegister_sent[0] = 0;
