@@ -202,7 +202,7 @@ int main(int argc, char *argv[])
   pthread_create(&userThread_id, NULL, userThread, NULL);
   pthread_create(&userInterface_id, NULL, userInterface, NULL);
   pthread_create(&robotThread_id, NULL, robotThread, NULL);
-  //pthread_create(&stationThread_id, NULL, stationThread, NULL);
+  pthread_create(&stationThread_id, NULL, stationThread, NULL);
   pthread_join(robotThread_id, NULL);
   pthread_join(userInterface_id, NULL);
   pthread_join(userThread_id, NULL);
@@ -651,20 +651,13 @@ void *robotThread(void *vargp)
       if(rc != 5)
       {
         rewrite = 1;
-        //printf("Rewrite to robot!!!\n");
       }
       else
       {
-        //printf("[OK] Sending succesffuly!!\n");
         usleep(200000);
         rewrite = 0;
       }
     }
-    else
-    {
-      //modbus_read_registers(modbus_rtu_robot_ctx, 0, 2, robotRegister_received);
-    }
-    
     modbus_flush(modbus_rtu_robot_ctx);
     modbus_set_response_timeout(modbus_rtu_robot_ctx, ROBOT_READ_TIMEOUT_S, ROBOT_READ_TIMEOUT_uS);
     //modbus_set_debug(modbus_rtu_robot_ctx, TRUE);
@@ -673,14 +666,14 @@ void *robotThread(void *vargp)
     if(rc != -1)
     {
       #ifdef RobotModbus_DEBUG
-      printf("Robot Reading: OK\n");
+        printf("Robot Reading: OK\n");
       #endif
       usleep(200000);
     }
     else
     {
       #ifdef RobotModbus_DEBUG
-      printf("Robot Reading: Timeout %d\n", rc);
+        printf("Robot Reading: Timeout %d\n", rc);
       #endif
     }
     if(robotRegister_received[0] == 0)
@@ -1002,7 +995,6 @@ void *userInterface(void *vargp)
     }
 
     int16_t robotlocation = robotRegister_received[0];
-    robotlocation = 1;
     if(robotlocation != 0)
     {
       robot_status = robotlocation;
