@@ -936,7 +936,7 @@ void *userInterface(void *vargp)
     else
     {
       printf("Robot in Manual Mode under control of the Station 1\n");
-      uint16_t stored_robot_location = robotRegister_received[0];
+      uint16_t stored_robot_location = robot_control;
       while(robot_control != robotRegister_received[0] && (robot_control != 0))
       {
         //robotRegister_received[0] = 2;
@@ -948,6 +948,27 @@ void *userInterface(void *vargp)
       {
         printf("Canceled Requesting\n");
         robotRegister_received[0] = 0;
+        if(stored_robot_location == 1)
+        {
+          //gtk_button_set_label(GTK_BUTTON(actstation1), "Recall Robot");
+          station1Register_sent[1] = 0;
+        }
+        else if (stored_robot_location == 2)
+        {
+          station2Register_sent[1] = 0;
+        }
+        else if (stored_robot_location == 3)
+        {
+          station3Register_sent[1] = 0;
+        }
+        else if (stored_robot_location == 4)
+        {
+          station4Register_sent[1] = 0;
+        }
+        else if (stored_robot_location == 5)
+        {
+          station5Register_sent[1] = 0;
+        }
       }
       else
       {
@@ -955,23 +976,23 @@ void *userInterface(void *vargp)
         if(robot_control == 1)
         {
           //gtk_button_set_label(GTK_BUTTON(actstation1), "Recall Robot");
-          station1Register_sent[1] = 0;
+          station1Register_sent[1] = 2;
         }
         else if (robot_control == 2)
         {
-          station2Register_sent[1] = 0;
+          station2Register_sent[1] = 2;
         }
         else if (robot_control == 3)
         {
-          station3Register_sent[1] = 0;
+          station3Register_sent[1] = 2;
         }
         else if (robot_control == 4)
         {
-          station4Register_sent[1] = 0;
+          station4Register_sent[1] = 2;
         }
         else if (robot_control == 5)
         {
-          station5Register_sent[1] = 0;
+          station5Register_sent[1] = 2;
         }
         robot_control = 0;
         robotRegister_sent[0] = 0;
