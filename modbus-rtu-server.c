@@ -295,9 +295,7 @@ void *stationThread(void *vargp)
       {
         memset(station1Register_received, -1, sizeof(station1Register_received));
         station1_read_err++;
-        #ifdef Station1Modbus_DEBUG
-          printf("Station 1 Reading: TIMEOUT\n");
-        #endif
+        printf("Station 1 Reading: TIMEOUT\n");
         STATION1_WRITING=0;
       }
       else
@@ -322,9 +320,7 @@ void *stationThread(void *vargp)
         memset(station2Register_received, -1, sizeof(station2Register_received));
         station2_read_err++;
         STATION2_WRITING=0;
-        #ifdef Station2Modbus_DEBUG
-          printf("Station 2 Reading: TIMEOUT\n");
-        #endif
+        printf("Station 2 Reading: TIMEOUT\n");
       }
       else
       {
@@ -345,9 +341,7 @@ void *stationThread(void *vargp)
       {
         memset(station3Register_received, -1, sizeof(station3Register_received));
         station3_read_err++;
-        #ifdef Station3Modbus_DEBUG
           printf("Station 3 Reading: TIMEOUT\n");
-        #endif
       }
       else
       {
@@ -370,9 +364,7 @@ void *stationThread(void *vargp)
         memset(station4Register_received, -1, sizeof(station4Register_received));
         station4_read_err++;
         STATION4_WRITING = 0;
-        #ifdef Station4Modbus_DEBUG
-          printf("Station 4 Reading: TIMEOUT\n");
-        #endif      
+        printf("Station 4 Reading: TIMEOUT\n");
       }
       else
       {
@@ -403,9 +395,7 @@ void *stationThread(void *vargp)
         memset(station5Register_received, -1, sizeof(station5Register_received));
         station5_read_err++;
         STATION5_WRITING=0;
-        #ifdef Station5Modbus_DEBUG
-          printf("Station 5 Reading: TIMEOUT\n");
-        #endif       
+        printf("Station 5 Reading: TIMEOUT\n");
       }
       else
       {
@@ -450,7 +440,6 @@ void *stationThread(void *vargp)
           for(i=0;i<10;i++)
           {
             station1Register_sent_previous[i] = station1Register_sent[i];
-            STATION1_WRITING=0;
           }
           issend = 0;
           usleep(100000);
