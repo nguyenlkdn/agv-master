@@ -653,7 +653,9 @@ void *robotThread(void *vargp)
     
     modbus_flush(modbus_rtu_robot_ctx);
     modbus_set_response_timeout(modbus_rtu_robot_ctx, ROBOT_READ_TIMEOUT_S, ROBOT_READ_TIMEOUT_uS);
+    modbus_set_debug(modbus_rtu_robot_ctx, TRUE);
     rc = modbus_read_registers(modbus_rtu_robot_ctx, 0, 3, robotRegister_received);
+    modbus_set_debug(modbus_rtu_robot_ctx, FALSE);
     if(rc != -1)
     {
       // if(robotRegister_received[0] == 0)
