@@ -1455,7 +1455,9 @@ void button_was_clicked (GtkWidget *widget, gpointer gdata)
   if(!strcmp(gdata, "Reset Stations"))
   {
     gtk_container_foreach (GTK_CONTAINER (widget), (GtkCallback) callback6, gdata);
+    return;
   }
+
   if(robotworking>0)
   {
     snprintf(TEXT, sizeof(TEXT), "Robot is BUSY at station %d, please wait a while!\n", robotworking);
