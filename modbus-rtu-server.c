@@ -1604,7 +1604,7 @@ void GUIInit(int argc, char *argv[])
 
   actstation6 = gtk_button_new_with_label("Reset Stations");
   gtk_widget_set_size_request(actstation6, 70, 30);
-  gtk_table_attach(GTK_TABLE(table), actstation6, 0, 1, 15, 16, 
+  gtk_table_attach(GTK_TABLE(table), actstation6, 1, 3, 15, 16, 
           GTK_FILL, GTK_FILL, 0, 0);
   g_signal_connect (GTK_OBJECT(actstation6), "clicked",
           G_CALLBACK (button_was_clicked), (gpointer) "Reset Stations");
