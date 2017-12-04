@@ -1044,6 +1044,7 @@ void *userInterface(void *vargp)
           robotworking = 0;
           hascalling = 0;
           station1Register_sent[0]=0;
+          station1Register_sent[1]=0;
           station1Register_sent[2] = 0;
           robotRegister_sent[0]=4;
           station1_processed = 0;
@@ -1204,6 +1205,7 @@ void *userInterface(void *vargp)
           robotworking = 0;
           hascalling = 0;
           station4Register_sent[0]=0;
+          station4Register_sent[1]=0;
           station4Register_sent[2]=0;
           robotRegister_sent[0]=1;
           station4_processed = 0;
@@ -1258,6 +1260,7 @@ void *userInterface(void *vargp)
         robotworking = 0;
         hascalling = 0;
         station5Register_sent[0]=0;
+        station5Register_sent[1]=0;
         station5Register_sent[2]=0;
         robotRegister_sent[0]=4;
         station5_processed = 0;
