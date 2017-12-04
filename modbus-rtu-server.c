@@ -680,7 +680,7 @@ void *robotThread(void *vargp)
     }
     else
     {
-      printf("Robot Reading: Timeout\n");
+      printf("Robot Reading: Timeout %d\n", rc);
     }
     //printf("Robot Location: %d\n", robot_status);
     if(robotRegister_received[0] == 0)
