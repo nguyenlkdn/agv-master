@@ -1452,6 +1452,10 @@ char* getTime()
 void button_was_clicked (GtkWidget *widget, gpointer gdata)
 {
   stored_request = robotRegister_sent[0];
+  if(!strcmp(gdata, "Reset Stations"))
+  {
+    gtk_container_foreach (GTK_CONTAINER (widget), (GtkCallback) callback6, gdata);
+  }
   if(robotworking>0)
   {
     snprintf(TEXT, sizeof(TEXT), "Robot is BUSY at station %d, please wait a while!\n", robotworking);
@@ -1482,11 +1486,6 @@ void button_was_clicked (GtkWidget *widget, gpointer gdata)
   {
     gtk_container_foreach (GTK_CONTAINER (widget), 
                            (GtkCallback) callback5, gdata);
-  }
-  else if(!strcmp(gdata, "Reset Stations"))
-  {
-    gtk_container_foreach (GTK_CONTAINER (widget), 
-                           (GtkCallback) callback6, gdata);
   }
   else
   {
