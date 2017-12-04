@@ -1235,7 +1235,7 @@ void *userInterface(void *vargp)
           station4Register_sent[1] = 0;
           station4Register_sent[2] = 0;
         }
-        if ((station4Register_received[2] == 1) && (robotRegister_sent[0] == 1))
+        if ((station4Register_received[2] == 1))
         {
           printf("Station 4 was confirmed\n");
           robotRegister_sent[0] = 1;
@@ -1245,7 +1245,7 @@ void *userInterface(void *vargp)
         }
         else
         {
-          printf("waiting for station4 confirm %d %d\n", station4Register_received[2], robotRegister_sent[0]);
+          printf("waiting for station4 confirm %d %d\n", station4Register_received[2], station4Register_received[3]);
         }
 
       break;
