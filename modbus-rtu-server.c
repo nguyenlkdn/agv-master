@@ -977,22 +977,27 @@ void *userInterface(void *vargp)
         {
           //gtk_button_set_label(GTK_BUTTON(actstation1), "Recall Robot");
           station1Register_sent[1] = 2;
+          station1Register_sent[0] = 1;
         }
         else if (robot_control == 2)
         {
           station2Register_sent[1] = 2;
+          station2Register_sent[0] = 2;
         }
         else if (robot_control == 3)
         {
           station3Register_sent[1] = 2;
+          station3Register_sent[0] = 3;
         }
         else if (robot_control == 4)
         {
           station4Register_sent[1] = 2;
+          station4Register_sent[0] = 4;
         }
         else if (robot_control == 5)
         {
           station5Register_sent[1] = 2;
+          station5Register_sent[0] = 5;
         }
         robot_control = 0;
         robotRegister_sent[0] = 0;
