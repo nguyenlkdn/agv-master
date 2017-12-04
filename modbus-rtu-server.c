@@ -1175,8 +1175,11 @@ void *userInterface(void *vargp)
         }
       break;
       case 4:
-        station4Register_sent[1] = 2;
-        station4Register_sent[0] = 4;
+        if(robotRegister_sent[0] != 1)
+        {
+          station4Register_sent[1] = 2;
+          station4Register_sent[0] = 4;
+        }
         if(station4_processed == 1)
         {
           printf("[OK] Robot come to Station %d at %s", robotlocation, getTime());
