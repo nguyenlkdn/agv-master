@@ -720,7 +720,7 @@ void *userInterface(void *vargp)
             if((station1request == 1))
             {
               hascalling = 1;
-              if((robotRegister_sent[0] != 1))
+              if((station1_processed == 0))
               {
                 STATION1_ENABLE   =  1;
                 STATION2_ENABLE   =  0;
@@ -737,7 +737,7 @@ void *userInterface(void *vargp)
             }
             else
             {
-              if((robotRegister_sent[0] == 1) && (station1_processed == 1))
+              if((station1_processed == 1))
               {
                 station1Register_sent[0]=0;
                 station1Register_sent[2]=0;
@@ -772,7 +772,7 @@ void *userInterface(void *vargp)
               STATION3_ENABLE   =  0;
               STATION4_ENABLE   =  0;
               STATION5_ENABLE   =  0;
-              if((robotRegister_sent[0] != 2))
+              if((station2_processed == 0))
               {
                 snprintf(TEXT, sizeof(TEXT), "[OK] [%6d] Station 2 requests robot at => %s", ++station2_counter, getTime());
                 printtoconsole(TEXT);
@@ -784,7 +784,7 @@ void *userInterface(void *vargp)
             }
             else
             {
-              if((robotRegister_sent[0] == 2) && (station2_processed == 1))
+              if((station2_processed == 1))
               {
                 printf("[OK] Station 2 has canceled requests at => %s", getTime());
                 snprintf(TEXT, sizeof(TEXT), "[OK] Station 2 has canceled requests at => %s", getTime());
@@ -821,7 +821,7 @@ void *userInterface(void *vargp)
               STATION3_ENABLE   =  1;
               STATION4_ENABLE   =  0;
               STATION5_ENABLE   =  0;
-              if((robotRegister_sent[0] != 3))
+              if((station3_processed == 0))
               {
                 snprintf(TEXT, sizeof(TEXT), "[OK] [%6d] Station 3 requests robot at => %s", ++station3_counter, getTime());
                 printtoconsole(TEXT);
@@ -833,7 +833,7 @@ void *userInterface(void *vargp)
             }
             else
             {
-              if((robotRegister_sent[0] == 3) && (station3_processed == 1))
+              if((station3_processed == 1))
               {
                 station3Register_sent[0]=0;
                 station3Register_sent[2] = 0;
@@ -917,7 +917,7 @@ void *userInterface(void *vargp)
               STATION3_ENABLE   =  0;
               STATION4_ENABLE   =  0;
               STATION5_ENABLE   =  1;
-              if((robotRegister_sent[0] != 5))
+              if((station5_processed == 0))
               {
                 robotRegister_sent[0] = 5;
                 station5_processed = 1;
@@ -929,7 +929,7 @@ void *userInterface(void *vargp)
             }
             else
             {
-              if((robotRegister_sent[0] == 5) && (station5_processed == 1))
+              if((station5_processed == 1))
               {
                 station5Register_sent[0]=0;
                 station5_processed = 0;
