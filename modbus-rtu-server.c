@@ -1757,6 +1757,12 @@ static void callback6( GtkWidget *widget,
   memset(station4Register_sent, 0, sizeof(station4Register_sent));
   memset(station5Register_sent, 0, sizeof(station5Register_sent));
 
+  station1Register_sent[4] = 1;
+  station2Register_sent[4] = 1;
+  station3Register_sent[4] = 1;
+  station4Register_sent[4] = 1;
+  station5Register_sent[4] = 1;
+
   memset(station1Register_sent_previous, -1, sizeof(station1Register_sent_previous));
   memset(station2Register_sent_previous, -1, sizeof(station2Register_sent_previous));
   memset(station3Register_sent_previous, -1, sizeof(station3Register_sent_previous));
