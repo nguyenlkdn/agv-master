@@ -1520,7 +1520,7 @@ void ControllProcess(void)
       {
         robotworking = 4;
         station4Register_sent[1] = 2;
-        while(station4Register_received[2] == 0 || (station4Register_received[0] == -1))
+        while(station4Register_received[3] == 0 || (station4Register_received[0] == -1))
         {
           printf("Wating Station 4 confirms\n");
           sleep(1);
