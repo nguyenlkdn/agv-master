@@ -701,10 +701,16 @@ void *robotThread(void *vargp)
       robotRegister_sent[0] = robot_status;
       resend = 1;
       station1_isaccepted = 0;
-      station2_isaccepted = 1;
-      station3_isaccepted = 1;
+      station2_isaccepted = 0;
+      station3_isaccepted = 0;
       station4_isaccepted = 0;
-      station5_isaccepted = 1;
+      station5_isaccepted = 0;
+      memset(station1Register_sent, 0, sizeof(station1Register_sent));
+      memset(station2Register_sent, 0, sizeof(station2Register_sent));
+      memset(station3Register_sent, 0, sizeof(station3Register_sent));
+      memset(station4Register_sent, 0, sizeof(station4Register_sent));
+      memset(station5Register_sent, 0, sizeof(station5Register_sent));
+
     }
     else
     {
