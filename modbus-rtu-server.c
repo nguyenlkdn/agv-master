@@ -705,11 +705,11 @@ void *robotThread(void *vargp)
       station3_isaccepted = 0;
       station4_isaccepted = 0;
       station5_isaccepted = 0;
-      memset(station1Register_sent, 0, sizeof(station1Register_sent));
-      memset(station2Register_sent, 0, sizeof(station2Register_sent));
-      memset(station3Register_sent, 0, sizeof(station3Register_sent));
-      memset(station4Register_sent, 0, sizeof(station4Register_sent));
-      memset(station5Register_sent, 0, sizeof(station5Register_sent));
+      // memset(station1Register_sent, 0, sizeof(station1Register_sent));
+      // memset(station2Register_sent, 0, sizeof(station2Register_sent));
+      // memset(station3Register_sent, 0, sizeof(station3Register_sent));
+      // memset(station4Register_sent, 0, sizeof(station4Register_sent));
+      // memset(station5Register_sent, 0, sizeof(station5Register_sent));
 
     }
     else
@@ -1335,9 +1335,10 @@ void RequestingProcess(void)
             printf("[OK] [%6d] Station 3 requests robot at => %s", station3_counter, getTime());
           }
         }
-        else if(station2request == 0)
+        else if(station3request == 0)
         {
           station3Register_sent[0]      = 0;
+          station3Register_sent[1]      = 0;
           station3Register_sent[2]      = 0;
           robotworking                  = 0;
           station4Register_sent[1]      = 1;
