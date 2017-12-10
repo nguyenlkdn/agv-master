@@ -681,7 +681,7 @@ void *robotThread(void *vargp)
       {
         memcpy(robotRegister_sent_previous, robotRegister_sent, sizeof(robotRegister_sent_previous));
         printf("Robot Writing: OK\n");
-        robotRegister_sent[2] = 0;
+        //robotRegister_sent[2] = 0;
         rewrite = 0;
         resend = 0;
         usleep(200000);
@@ -708,6 +708,7 @@ void *robotThread(void *vargp)
     if(robotRegister_received[0] == 0)
     {
       robotRegister_sent[2] = robot_status;
+      printf("Robot was reseted\n");
     }
     else
     {
