@@ -673,6 +673,7 @@ void *robotThread(void *vargp)
       else
       {
         memcpy(robotRegister_sent_previous, robotRegister_sent, sizeof(robotRegister_sent_previous));
+        printf("Robot Writing: OK\n");
         rewrite = 0;
         resend = 0;
         usleep(200000);
