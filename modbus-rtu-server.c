@@ -715,7 +715,7 @@ void *robotThread(void *vargp)
     else
     {
       robot_status = robotRegister_received[0];
-      if(robotRegister_received[2] != -1)
+      if(robotRegister_received[2] != 3)
       {
         robot_sensor = robotRegister_received[2];
       }
