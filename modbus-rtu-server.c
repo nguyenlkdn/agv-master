@@ -698,6 +698,11 @@ void *robotThread(void *vargp)
     {
       printf("Robot Reading: Timeout %d\n", rc);
     }
+    if(robotRegister_received[0] != 0)
+    {
+      robot_status = robotRegister_received[0];
+    }
+
     if(robotRegister_received[0] == 0)
     {
       robotRegister_sent[0] = robot_status;
@@ -1399,12 +1404,6 @@ void ControllProcess(void)
 {
 
   int16_t robotlocation = robotRegister_received[0];
-
-  if(robotlocation != 0)
-  {
-    robot_status = robotlocation;
-  }
-
   switch(robotlocation)
   {
     case 1:
