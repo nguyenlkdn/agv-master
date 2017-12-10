@@ -661,7 +661,6 @@ void *robotThread(void *vargp)
       )
     {
       printf("Write to robot: %d %d %d %d %d\n", robotRegister_sent[0], robotRegister_sent[1], robotRegister_sent[2], robotRegister_sent[3], robotRegister_sent[4], robotRegister_sent[5]);
-      memcpy(robotRegister_sent_previous, robotRegister_sent, sizeof(robotRegister_sent_previous));
       modbus_flush(modbus_rtu_robot_ctx);
       modbus_set_response_timeout(modbus_rtu_robot_ctx, ROBOT_WRITE_TIMEOUT_S, ROBOT_WRITE_TIMEOUT_uS);
       //modbus_set_debug(modbus_rtu_robot_ctx, TRUE);
@@ -673,9 +672,10 @@ void *robotThread(void *vargp)
       }
       else
       {
-        usleep(200000);
+        memcpy(robotRegister_sent_previous, robotRegister_sent, sizeof(robotRegister_sent_previous));
         rewrite = 0;
         resend = 0;
+        usleep(200000);
       }
     }
     modbus_flush(modbus_rtu_robot_ctx);
