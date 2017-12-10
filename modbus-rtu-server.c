@@ -670,6 +670,7 @@ void *robotThread(void *vargp)
       if(rc != 5)
       {
         rewrite = 1;
+        printf("Robot Writing Failed so that re-writing\n");
       }
       else
       {
