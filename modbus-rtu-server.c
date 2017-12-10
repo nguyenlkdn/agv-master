@@ -657,6 +657,11 @@ void *robotThread(void *vargp)
         break;
       }
     }
+    if(robotRegister_received[1] != robotRegister_sent[0])
+    {
+      resend = 1;
+    }
+    
     if(
       ((resend == 1) || (rewrite == 1))
       )
