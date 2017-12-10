@@ -652,6 +652,7 @@ void *robotThread(void *vargp)
     {
       if(robotRegister_sent_previous[rc] != robotRegister_sent[rc])
       {
+        printf("Has new packages so that writing to robot\n");
         resend = 1;
         break;
       }
