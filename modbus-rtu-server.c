@@ -661,7 +661,7 @@ void *robotThread(void *vargp)
     {
       resend = 1;
     }
-    
+
     if(
       ((resend == 1) || (rewrite == 1))
       )
@@ -712,7 +712,7 @@ void *robotThread(void *vargp)
     {
       if(robot_status != 0)
       {
-        robotRegister_sent[0] = robot_status;
+        robotRegister_sent[2] = robot_status;
       }
       station1_isaccepted = 0;
       station2_isaccepted = 1;
