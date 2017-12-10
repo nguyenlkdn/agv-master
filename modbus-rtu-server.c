@@ -219,6 +219,7 @@ GtkWidget *actstation5;
 GtkWidget *actstation6;
 
 int16_t robot_status = 0;
+int16_t robot_sensor = 0;
 uint16_t robot_control = 0;
 
 void RequestingProcess(void);
@@ -708,12 +709,15 @@ void *robotThread(void *vargp)
     if(robotRegister_received[0] == 0)
     {
       robotRegister_sent[2] = robot_status;
+      robotRegister_sent[3] = robot_sensor;
       printf("Robot was reseted\n");
     }
     else
     {
       robot_status = robotRegister_received[0];
+      robot_sensor = robotRegister_received[2];
       robotRegister_sent[2] = 0;
+      robotRegister_sent[3] = 0;
     }
 
     if(robotRegister_received[0] == 0)
