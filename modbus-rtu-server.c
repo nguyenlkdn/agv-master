@@ -703,6 +703,7 @@ void *robotThread(void *vargp)
     {
       printf("Robot Reading: Timeout %d\n", rc);
     }
+
     if(robotRegister_received[0] != 0)
     {
       robot_status = robotRegister_received[0];
@@ -710,9 +711,13 @@ void *robotThread(void *vargp)
     }
     else
     {
-      if(robot_status != 0)
+      if(robot_status == 0)
       {
         robotRegister_sent[2] = robot_status;
+      }
+      else
+      {
+        robotRegister_sent[2] = 0;
       }
     }
 
