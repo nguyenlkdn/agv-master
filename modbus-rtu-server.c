@@ -705,7 +705,10 @@ void *robotThread(void *vargp)
 
     if(robotRegister_received[0] == 0)
     {
-      robotRegister_sent[0] = robot_status;
+      if(robot_status != 0)
+      {
+        robotRegister_sent[0] = robot_status;
+      }
       station1_isaccepted = 0;
       station2_isaccepted = 1;
       station3_isaccepted = 1;
