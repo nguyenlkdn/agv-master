@@ -681,6 +681,7 @@ void *robotThread(void *vargp)
         usleep(200000);
       }
     }
+
     modbus_flush(modbus_rtu_robot_ctx);
     modbus_set_response_timeout(modbus_rtu_robot_ctx, ROBOT_READ_TIMEOUT_S, ROBOT_READ_TIMEOUT_uS);
     //modbus_set_debug(modbus_rtu_robot_ctx, TRUE);
@@ -695,14 +696,11 @@ void *robotThread(void *vargp)
     }
     else
     {
-      #ifdef RobotModbus_DEBUG
-        printf("Robot Reading: Timeout %d\n", rc);
-      #endif
+      printf("Robot Reading: Timeout %d\n", rc);
     }
     if(robotRegister_received[0] == 0)
     {
       robotRegister_sent[0] = robot_status;
-      resend = 1;
       station1_isaccepted = 0;
       station2_isaccepted = 1;
       station3_isaccepted = 1;
