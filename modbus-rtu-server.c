@@ -94,6 +94,13 @@ uint8_t  station3_processed=0;
 uint8_t  station4_processed=0;
 uint8_t  station5_processed=0;
 
+uint8_t callingallowed = 0;
+uint8_t station1allowedfrommaster = 0;
+uint8_t station2allowedfrommaster = 0;
+uint8_t station3allowedfrommaster = 0;
+uint8_t station4allowedfrommaster = 0;
+uint8_t station5allowedfrommaster = 0;
+
 uint32_t station1_counter=0;
 uint32_t station2_counter=0;
 uint32_t station3_counter=0;
@@ -196,6 +203,14 @@ static void callback3( GtkWidget *widget, gpointer data);
 static void callback4( GtkWidget *widget, gpointer data);
 static void callback5( GtkWidget *widget, gpointer data);
 static void callback6( GtkWidget *widget, gpointer data);
+
+static void recallback1( GtkWidget *widget, gpointer data);
+static void recallback2( GtkWidget *widget, gpointer data);
+static void recallback3( GtkWidget *widget, gpointer data);
+static void recallback4( GtkWidget *widget, gpointer data);
+static void recallback5( GtkWidget *widget, gpointer data);
+static void recallback6( GtkWidget *widget, gpointer data);
+static void allowcallinghandler( GtkWidget *widget, gpointer data);
 /*
 
 */
@@ -217,7 +232,9 @@ GtkWidget *actstation3;
 GtkWidget *actstation4;
 GtkWidget *actstation5;
 GtkWidget *actstation6;
+GtkWidget *btnallowcalling;
 
+GtkWidget *image;
 int16_t robot_status = 0;
 int16_t robot_sensor = 0;
 uint16_t robot_control = 0;
@@ -740,11 +757,49 @@ void *robotThread(void *vargp)
     {
       if(robotRegister_received[0] == 1)
       {
-        station1_isaccepted = 0;
-        station2_isaccepted = 1;
-        station3_isaccepted = 1;
-        station4_isaccepted = 0;
-        station5_isaccepted = 1;
+        if(callingallowed == 0)
+        {
+          station1_isaccepted = 0;
+          station2_isaccepted = 0;
+          station3_isaccepted = 0;
+          station4_isaccepted = 0;
+          station5_isaccepted = 0;
+        }
+        else
+        {
+          if(callingallowed == 1)
+          {
+            station1_isaccepted = 0;
+            station2_isaccepted = 1;
+            station3_isaccepted = 1;
+            station4_isaccepted = 0;
+            station5_isaccepted = 1;
+          }
+          else if (callingallowed == 2)
+          {
+            station2_isaccepted = 1;
+
+          }
+          else if (callingallowed == 3)
+          {
+            station3_isaccepted = 1;
+            station3allowedfrommaster = 1;
+          }
+          else if (callingallowed == 4)
+          {
+            station4_isaccepted = 1;
+
+          }
+          else if (callingallowed == 5)
+          {
+            station5_isaccepted = 1;
+          }
+          //callingallowed = 0;
+        }
+
+        //gtk_label_set (GTK_LABEL(actstation1), "Recall Robot");
+        gtk_container_foreach (GTK_CONTAINER (actstation1), 
+                               (GtkCallback) recallback1, "Recall Robot");
       }
       else if(robotRegister_received[0] == 2)
       {
@@ -753,30 +808,48 @@ void *robotThread(void *vargp)
         station3_isaccepted = 0;
         station4_isaccepted = 0;
         station5_isaccepted = 0;
+        gtk_container_foreach (GTK_CONTAINER (actstation2), 
+                               (GtkCallback) recallback2, "Station 2");
       }
       else if(robotRegister_received[0] == 3)
       {
-        station1_isaccepted = 0;
-        station2_isaccepted = 1;
-        station3_isaccepted = 0;
-        station4_isaccepted = 0;
-        station5_isaccepted = 0;
+        if(callingallowed == 0)
+        {
+          station1_isaccepted = 0;
+          station2_isaccepted = 1;
+          station3_isaccepted = 0;
+          station4_isaccepted = 0;
+          station5_isaccepted = 0;
+        }
+
+        gtk_container_foreach (GTK_CONTAINER (actstation3), 
+                               (GtkCallback) recallback3, "Station 3");
       }
       else if(robotRegister_received[0] == 4)
       {
         station1_isaccepted = 0;
         station2_isaccepted = 0;
         station3_isaccepted = 0;
-        station4_isaccepted = 4;
+        station4_isaccepted = 0;
         station5_isaccepted = 0;
+        gtk_container_foreach (GTK_CONTAINER (actstation4), 
+                               (GtkCallback) recallback4, "Station 4");
+        gtk_container_foreach (GTK_CONTAINER (btnallowcalling), 
+                               (GtkCallback) allowcallinghandler, "Calling Denied");
       }
       else if(robotRegister_received[0] == 5)
       {
-        station1_isaccepted = 0;
-        station2_isaccepted = 0;
-        station3_isaccepted = 1;
-        station4_isaccepted = 0;
-        station5_isaccepted = 0;
+        if(callingallowed == 0)
+        {
+          station1_isaccepted = 0;
+          station2_isaccepted = 1;
+          station3_isaccepted = 1;
+          station4_isaccepted = 0;
+          station5_isaccepted = 0;
+        }
+
+        gtk_container_foreach (GTK_CONTAINER (actstation5), 
+                               (GtkCallback) recallback5, "Station 5");
       }
     }
 
@@ -812,7 +885,15 @@ void *userInterface(void *vargp)
         ControllProcess();
       }
       printf("Finished with master\n");
-      robot_control = 0;
+      if(robot_control == 0)
+      {
+        printf("Master was canceled requesting\n");
+        robotRegister_sent[0] = 1;
+      }
+      else
+      {
+        robot_control = 0;
+      }
     }
 
     // int i;
@@ -933,6 +1014,7 @@ void button_was_clicked (GtkWidget *widget, gpointer gdata)
     printtoconsole(TEXT);
     return;
   }
+
   if(!strcmp(gdata, "Recall Robot"))
   {
     gtk_container_foreach (GTK_CONTAINER (widget), 
@@ -957,6 +1039,11 @@ void button_was_clicked (GtkWidget *widget, gpointer gdata)
   {
     gtk_container_foreach (GTK_CONTAINER (widget), 
                            (GtkCallback) callback5, gdata);
+  }
+  else if (!strcmp(gdata, "Calling Denied"))
+  {
+    gtk_container_foreach (GTK_CONTAINER (widget), 
+                           (GtkCallback) allowcallinghandler, gdata);
   }
   else
   {
@@ -994,20 +1081,15 @@ void GUIInit(int argc, char *argv[])
     gtk_window_fullscreen(GTK_WINDOW(window));
   }
   gtk_window_set_title(GTK_WINDOW(window), "AGV Robot Controller");
-  gtk_container_set_border_width(GTK_CONTAINER(window), 50);
-
-  table = gtk_table_new(16, 16, FALSE);
+  gtk_container_set_border_width(GTK_CONTAINER(window), 10);
+  GdkColor red = {0x0000, 0xffff, 0x00ff, 0x00ff};
+  gtk_widget_modify_bg(GTK_CONTAINER(window), GTK_STATE_NORMAL, &red);
+  table = gtk_table_new(192, 108, FALSE);
   gtk_table_set_col_spacings(GTK_TABLE(table), 2);
   gtk_table_set_row_spacing(GTK_TABLE(table), 0, 2);
 
-  title = gtk_label_new("Logs: ");
-  halign = gtk_alignment_new(0, 0, 0, 0);
-  gtk_container_add(GTK_CONTAINER(halign), title);
-  gtk_table_attach(GTK_TABLE(table), halign, 0, 4, 0, 1, 
-      GTK_FILL, GTK_FILL, 0, 0);
-
   wins = gtk_text_view_new();
-  gtk_widget_set_size_request(wins, 200, 200);
+  gtk_widget_set_size_request(wins, 800, 1000);
 
   consoletxt = gtk_text_view_get_buffer(GTK_TEXT_VIEW(wins));
   gtk_text_buffer_create_tag(consoletxt, "gap",
@@ -1024,57 +1106,78 @@ void GUIInit(int argc, char *argv[])
       "weight", PANGO_WEIGHT_BOLD, NULL);
   gtk_text_buffer_get_iter_at_offset(consoletxt, &iter, 0);
 
+  title = gtk_label_new("Robot Working Logs: ");
+  halign = gtk_alignment_new(0, 0, 0, 0);
+  gtk_container_add(GTK_CONTAINER(halign), title);
+  gtk_table_attach(GTK_TABLE(table), halign, 0, 90, 0, 1, 
+      GTK_FILL, GTK_FILL, 0, 0);
+
   gtk_text_view_set_editable(GTK_TEXT_VIEW(wins), FALSE);
   gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(wins), FALSE);
-  gtk_table_attach(GTK_TABLE(table), wins,  0, 10, 1, 11, 
-      GTK_FILL | GTK_EXPAND, GTK_FILL | GTK_EXPAND, 1, 1);
+  gtk_table_attach(GTK_TABLE(table), wins,        0, 90, 1, 91, 
+      GTK_FILL | GTK_SHRINK, GTK_FILL | GTK_SHRINK, 1, 1);
 
   actstation2 = gtk_button_new_with_label("Station 2");
   gtk_widget_set_size_request(actstation2, 100, 100);
-  gtk_table_attach(GTK_TABLE(table), actstation2, 10, 11, 1, 2, 
+  gtk_table_attach(GTK_TABLE(table), actstation2, 90, 91, 1, 2, 
           GTK_FILL, GTK_FILL, 0, 0);
   g_signal_connect (GTK_OBJECT(actstation2), "clicked",
           G_CALLBACK (button_was_clicked), (gpointer) "Station 2");
 
   actstation3 = gtk_button_new_with_label("Station 3");
   gtk_widget_set_size_request(actstation3, 100, 100);
-  gtk_table_attach(GTK_TABLE(table), actstation3, 11, 12, 1, 2, 
+  gtk_table_attach(GTK_TABLE(table), actstation3, 91, 92, 1, 2, 
           GTK_FILL, GTK_FILL, 0, 0);
   g_signal_connect (GTK_OBJECT(actstation3), "clicked",
           G_CALLBACK (button_was_clicked), (gpointer) "Station 3");
 
   actstation4 = gtk_button_new_with_label("Station 4");
   gtk_widget_set_size_request(actstation4, 100, 100);
-  gtk_table_attach(GTK_TABLE(table), actstation4, 10, 11, 2, 3, 
+  gtk_table_attach(GTK_TABLE(table), actstation4, 90, 91, 2, 3, 
           GTK_FILL, GTK_FILL, 0, 0);
   g_signal_connect (GTK_OBJECT(actstation4), "clicked",
           G_CALLBACK (button_was_clicked), (gpointer) "Station 4");
 
   actstation5 = gtk_button_new_with_label("Station 5");
   gtk_widget_set_size_request(actstation5, 100, 100);
-  gtk_table_attach(GTK_TABLE(table), actstation5, 11, 12, 2, 3, 
+  gtk_table_attach(GTK_TABLE(table), actstation5, 91, 92, 2, 3, 
           GTK_FILL, GTK_FILL, 0, 0);
   g_signal_connect (GTK_OBJECT(actstation5), "clicked",
           G_CALLBACK (button_was_clicked), (gpointer) "Station 5");
 
   actstation1 = gtk_button_new_with_label("Recall Robot");
   gtk_widget_set_size_request(actstation1, 100, 100);
-  gtk_table_attach(GTK_TABLE(table), actstation1, 10, 12, 3, 11, 
+  gtk_table_attach(GTK_TABLE(table), actstation1, 90, 92, 3, 44, 
           GTK_FILL, GTK_FILL, 0, 0);
   g_signal_connect (GTK_OBJECT(actstation1), "clicked",
           G_CALLBACK (button_was_clicked), (gpointer) "Recall Robot");
+
+  btnallowcalling = gtk_button_new_with_label("Calling Denied");
+  gtk_widget_set_size_request(btnallowcalling, 100, 100);
+  gtk_table_attach(GTK_TABLE(table), btnallowcalling, 90, 92, 44, 91, 
+          GTK_FILL, GTK_FILL, 0, 0);
+  g_signal_connect (GTK_OBJECT(btnallowcalling), "clicked",
+          G_CALLBACK (button_was_clicked), (gpointer) "Calling Denied");
+
+
+  image = gtk_image_new ();
+  gtk_image_set_from_file (GTK_IMAGE(image), "/home/agv/logo.png");
+
+  //column 1
+  gtk_table_attach(GTK_TABLE(table), image, 190, 192, 1, 91,
+          GTK_FILL, GTK_FILL, 0, 0);
 
   halign2 = gtk_alignment_new(0, 1, 0, 0);
   hlpBtn = gtk_button_new_with_label("Help");
   gtk_container_add(GTK_CONTAINER(halign2), hlpBtn);
   gtk_widget_set_size_request(hlpBtn, 70, 30);
   gtk_table_set_row_spacing(GTK_TABLE(table), 3, 5);
-  gtk_table_attach(GTK_TABLE(table), halign2, 0, 1, 15, 16, 
+  gtk_table_attach(GTK_TABLE(table), halign2, 0, 1, 92, 93, 
       GTK_FILL, GTK_FILL, 0, 0);
 
   actstation6 = gtk_button_new_with_label("Reset Stations");
-  gtk_widget_set_size_request(actstation6, 70, 30);
-  gtk_table_attach(GTK_TABLE(table), actstation6, 1, 3, 15, 16, 
+  gtk_widget_set_size_request(actstation6, 140, 30);
+  gtk_table_attach(GTK_TABLE(table), actstation6, 1, 3, 92, 93, 
           GTK_FILL, GTK_FILL, 0, 0);
   g_signal_connect (GTK_OBJECT(actstation6), "clicked",
           G_CALLBACK (button_was_clicked), (gpointer) "Reset Stations");
@@ -1101,16 +1204,56 @@ static void callback1( GtkWidget *widget,
   }
   else
   {
-    gtk_label_set (GTK_LABEL(widget), "Calling");
-    snprintf (TEXT, sizeof(TEXT), "Re-called ROBOT to STATION 1\n");
-    printtoconsole(TEXT);
-    robotRegister_sent[0] = 1;
-    robot_control = 1;
-    station1Register_sent[1] = 1;
+    if(robotRegister_received[0] == 1)
+    {
+      snprintf (TEXT, sizeof(TEXT), "ROBOT still in STATION 1\n");
+      printtoconsole(TEXT);
+    }
+    else
+    {
+      gtk_label_set (GTK_LABEL(widget), "Calling");
+      snprintf (TEXT, sizeof(TEXT), "Re-called ROBOT to STATION 1\n");
+      printtoconsole(TEXT);
+      robotRegister_sent[0] = 1;
+      robot_control = 1;
+      station1Register_sent[1] = 1;
+    }
   }
   //gtk_label_get(GTK_LABEL(widget), button_label);
   g_print ("%s was pressed, %s\n", (char *) data, (char*) button_label);
 
+}
+
+/* Our usual callback function */
+static void recallback1( GtkWidget *widget,
+                      gpointer   data )
+{
+  const char* button_label = gtk_label_get_label(GTK_LABEL(widget));
+  if(strcmp(button_label, "Calling") == 0)
+  {
+    gtk_label_set (GTK_LABEL(widget), "Recall Robot");
+  }
+}
+
+/* Our usual callback function */
+static void allowcallinghandler( GtkWidget *widget,
+                      gpointer   data )
+{
+  const char* button_label = gtk_label_get_label(GTK_LABEL(widget));
+  if(strcmp(button_label, "Calling Allowed") == 0)
+  {
+    callingallowed = 0;
+    gtk_label_set (GTK_LABEL(widget), "Calling Denied");
+    snprintf (TEXT, sizeof(TEXT), "DENIED calling from all Stations\n");
+    printtoconsole(TEXT);
+  }
+  else
+  {
+    callingallowed = 1;
+    gtk_label_set (GTK_LABEL(widget), "Calling Allowed");
+    snprintf (TEXT, sizeof(TEXT), "ALLOWED calling from all Stations\n");
+    printtoconsole(TEXT);
+  }
 }
 
 /* Our usual callback function */
@@ -1128,12 +1271,31 @@ static void callback2( GtkWidget *widget,
   }
   else
   {
-    gtk_label_set (GTK_LABEL(widget), "Calling");
-    snprintf (TEXT, sizeof(TEXT), "ROBOT was being sent to STATION 2\n");
-    printtoconsole(TEXT);
-    robotRegister_sent[0] = 2;
-    robot_control = 2;
-    station2Register_sent[1] = 1;
+    if(robotRegister_received[0] == 2)
+    {
+      snprintf (TEXT, sizeof(TEXT), "ROBOT still in STATION 2\n");
+      printtoconsole(TEXT);
+    }
+    else
+    {
+      gtk_label_set (GTK_LABEL(widget), "Calling");
+      snprintf (TEXT, sizeof(TEXT), "ROBOT was being sent to STATION 2\n");
+      printtoconsole(TEXT);
+      callingallowed = 2;
+      robotRegister_sent[0] = 2;
+      robot_control = 2;
+      station2Register_sent[1] = 1;
+    }
+  }
+}
+/* Our usual callback function */
+static void recallback2( GtkWidget *widget,
+                      gpointer   data )
+{
+  const char* button_label = gtk_label_get_label(GTK_LABEL(widget));
+  if(strcmp(button_label, "Calling") == 0)
+  {
+    gtk_label_set (GTK_LABEL(widget), "Station 2");
   }
 }
 
@@ -1152,15 +1314,33 @@ static void callback3( GtkWidget *widget,
   }
   else
   {
-    gtk_label_set (GTK_LABEL(widget), "Calling");
-    snprintf (TEXT, sizeof(TEXT), "ROBOT was being sent to STATION 3\n");
-    printtoconsole(TEXT);
-    robotRegister_sent[0] = 3;
-    robot_control = 3;
-    station3Register_sent[1] = 1;
+    if(robotRegister_received[0] == 3)
+    {
+      snprintf (TEXT, sizeof(TEXT), "ROBOT still in STATION 3\n");
+      printtoconsole(TEXT);
+    }
+    else
+    {
+      gtk_label_set (GTK_LABEL(widget), "Calling");
+      snprintf (TEXT, sizeof(TEXT), "ROBOT was being sent to STATION 3\n");
+      printtoconsole(TEXT);
+      callingallowed = 3;
+      robotRegister_sent[0] = 3;
+      robot_control = 3;
+      station3Register_sent[1] = 1;
+    }
   }
 }
-
+/* Our usual callback function */
+static void recallback3( GtkWidget *widget,
+                      gpointer   data )
+{
+  const char* button_label = gtk_label_get_label(GTK_LABEL(widget));
+  if(strcmp(button_label, "Calling") == 0)
+  {
+    gtk_label_set (GTK_LABEL(widget), "Station 3");
+  }
+}
 /* Our usual callback function */
 static void callback4( GtkWidget *widget,
                       gpointer   data )
@@ -1176,14 +1356,34 @@ static void callback4( GtkWidget *widget,
   }
   else
   {
-    gtk_label_set (GTK_LABEL(widget), "Calling");
-    snprintf (TEXT, sizeof(TEXT), "ROBOT was being sent to STATION 4\n");
-    printtoconsole(TEXT);
-    robotRegister_sent[0] = 4;
-    robot_control = 4;
-    station4Register_sent[1] = 1;
+    if(robotRegister_received[0] == 4)
+    {
+      snprintf (TEXT, sizeof(TEXT), "ROBOT still in STATION 4\n");
+      printtoconsole(TEXT);
+    }
+    else
+    {
+      gtk_label_set (GTK_LABEL(widget), "Calling");
+      snprintf (TEXT, sizeof(TEXT), "ROBOT was being sent to STATION 4\n");
+      printtoconsole(TEXT);
+      callingallowed = 4;
+      robotRegister_sent[0] = 4;
+      robot_control = 4;
+      station4Register_sent[1] = 1;
+    }
   }
 }
+/* Our usual callback function */
+static void recallback4( GtkWidget *widget,
+                      gpointer   data )
+{
+  const char* button_label = gtk_label_get_label(GTK_LABEL(widget));
+  if(strcmp(button_label, "Calling") == 0)
+  {
+    gtk_label_set (GTK_LABEL(widget), "Station 4");
+  }
+}
+
 /* Our usual callback function */
 static void callback5( GtkWidget *widget,
                       gpointer   data )
@@ -1199,13 +1399,31 @@ static void callback5( GtkWidget *widget,
   }
   else
   {
-    gtk_label_set (GTK_LABEL(widget), "Calling");
-    snprintf (TEXT, sizeof(TEXT), "ROBOT was being sent to STATION 5\n");
-    printtoconsole(TEXT);
-    robotRegister_sent[0] = 5;
-    robot_control = 5;
-    station5Register_sent[1] = 1;
-
+    if(robotRegister_received[0] == 5)
+    {
+      snprintf (TEXT, sizeof(TEXT), "ROBOT still in STATION 5\n");
+      printtoconsole(TEXT);
+    }
+    else
+    {
+      gtk_label_set (GTK_LABEL(widget), "Calling");
+      snprintf (TEXT, sizeof(TEXT), "ROBOT was being sent to STATION 5\n");
+      printtoconsole(TEXT);
+      callingallowed = 5;
+      robotRegister_sent[0] = 5;
+      robot_control = 5;
+      station5Register_sent[1] = 1;
+    }
+  }
+}
+/* Our usual callback function */
+static void recallback5( GtkWidget *widget,
+                      gpointer   data )
+{
+  const char* button_label = gtk_label_get_label(GTK_LABEL(widget));
+  if(strcmp(button_label, "Calling") == 0)
+  {
+    gtk_label_set (GTK_LABEL(widget), "Station 5");
   }
 }
 
@@ -1290,6 +1508,8 @@ void RequestingProcess(void)
   station3request = station3Register_received[0];
   station4request = station4Register_received[0];
   station5request = station5Register_received[0];
+  //printf("station 2 calling status: %d\n", callingallowed);
+
   if(++count == 10000000)
   {
     count = 0;
@@ -1303,9 +1523,14 @@ void RequestingProcess(void)
       (station5request == 0 || station5request == -1 || station5_isaccepted == 0)
       )
     {
-      if(station2_isaccepted == 1)
+      if(
+          (station2_isaccepted == 1)
+        )
+
       {
-        if((station2request == 1))
+        if(
+            (station2request == 1)
+          )
         {
           robotworking                  = 2;
           robotRegister_sent[0]         = 2; 
@@ -1339,10 +1564,12 @@ void RequestingProcess(void)
   }
 
   if(
-    (station5request == 0) || (station5request == -1) || (station5_isaccepted == 0)
+    (station5request == 0) || (station5request == -1) || (station5_isaccepted == 0) || (station3allowedfrommaster == 1)
     )
   {
-    if((station3_isaccepted == 1))
+    if(
+        (station3_isaccepted == 1)
+      )
     {
       if((station3request != -1))
       {
@@ -1366,6 +1593,7 @@ void RequestingProcess(void)
           station3Register_sent[2]      = 0;
           robotworking                  = 0;
           station4Register_sent[1]      = 1;
+          station3allowedfrommaster     = 0;
           if((station3_processed == 1))
           {
             station3_processed = 0;
@@ -1381,7 +1609,9 @@ void RequestingProcess(void)
   
   if((station5request != -1))
   {
-    if(station5_isaccepted == 1)
+    if(
+        (station5_isaccepted == 1)
+      )
     {
       if((station5request == 1))
       {
@@ -1560,20 +1790,6 @@ void ControllProcess(void)
         robotworking = 0;
         staion4_locking = 1;
       }
-
-      // if ((station4Register_received[2] == 1))
-      // {
-      //   printf("Station 4 was confirmed\n");
-      //   robotRegister_sent[0] = 1;
-      //   station4Register_sent[0] = 0;
-      //   station4Register_sent[1] = 0;
-      //   station4Register_sent[2] = 0;
-      // }
-      // else
-      // {
-      //   printf("waiting for station4 confirm %d %d\n", station4Register_received[2], station4Register_received[3]);
-      // }
-
     break;
     case 5:
       staion4_locking = 0;
