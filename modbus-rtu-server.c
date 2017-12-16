@@ -217,9 +217,11 @@ static void allowcallinghandler( GtkWidget *widget, gpointer data);
 modbus_t *ctx;
 modbus_t *modbus_rtu_robot_ctx;
 modbus_t *modbus_rtu_station_ctx;
+modbus_t *modbus_rtu_station_zigbee_ctx;
 modbus_mapping_t *mb_mapping;
 modbus_mapping_t *modbus_rtu_robot_mb_mapping;
 modbus_mapping_t *modbus_rtu_station_mb_mapping;
+modbus_mapping_t *modbus_rtu_station_zigbee_mb_mapping;
 modbus_mapping_t *modbus_rtu_station1_mb_mapping;
 modbus_mapping_t *modbus_rtu_station2_mb_mapping;
 modbus_mapping_t *modbus_rtu_station3_mb_mapping;
@@ -383,9 +385,9 @@ void *stationThread(void *vargp)
     if(STATION3_ENABLE == 1)
     {
       stationid=3;
-      modbus_set_response_timeout(modbus_rtu_station_ctx, STATION_TIMEOUT_S, STATION_TIMEOUT_uS);
-      modbus_set_slave(modbus_rtu_station_ctx, stationid);
-      rc = modbus_read_registers(modbus_rtu_station_ctx, 0, 5, station3Register_received);
+      modbus_set_response_timeout(modbus_rtu_station_zigbee_ctx, STATION_TIMEOUT_S, STATION_TIMEOUT_uS);
+      modbus_set_slave(modbus_rtu_station_zigbee_ctx, stationid);
+      rc = modbus_read_registers(modbus_rtu_station_zigbee_ctx, 0, 5, station3Register_received);
       if(rc == -1)
       {
         memset(station3Register_received, -1, sizeof(station3Register_received));
@@ -559,9 +561,9 @@ void *stationThread(void *vargp)
       if(issend == 1)
       {
         //printf("Writing to Station 3\n");
-        modbus_set_response_timeout(modbus_rtu_station_ctx, STATION_WRITE_TIMEOUT_S, STATION_WRITE_TIMEOUT_uS);
-        modbus_set_slave(modbus_rtu_station_ctx, 3);
-        rc = modbus_write_registers(modbus_rtu_station_ctx, 0, 5, station3Register_sent);
+        modbus_set_response_timeout(modbus_rtu_station_zigbee_ctx, STATION_WRITE_TIMEOUT_S, STATION_WRITE_TIMEOUT_uS);
+        modbus_set_slave(modbus_rtu_station_zigbee_ctx, 3);
+        rc = modbus_write_registers(modbus_rtu_station_zigbee_ctx, 0, 5, station3Register_sent);
         if(rc == 5)
         {
           issend = 0;
@@ -954,16 +956,21 @@ void robotInit()
 void stationInit()
 {
   modbus_rtu_station_ctx = modbus_new_rtu(STATION_DEVICE, 38400, 'N', 8, 1);
-  //modbus_set_debug(modbus_rtu_station_ctx, TRUE);
-  //modbus_set_slave(modbus_rtu_station_ctx, 1);
-  //modbus_set_response_timeout(modbus_rtu_station_ctx, 1, 500000);
+  modbus_rtu_station_zigbee_ctx = modbus_new_rtu(STATION_ZIGBEE_DEVICE, 38400, 'N', 8, 1);
   if(modbus_connect(modbus_rtu_station_ctx) == -1)
    {
-    fprintf(stderr, "Serial connection failed: %s\n", modbus_strerror(errno));
+    fprintf(stderr, "%s connection failed: %s\n", STATION_ZIGBEE_DEVICE, modbus_strerror(errno));
     modbus_free(modbus_rtu_station_ctx);
+    return;
    }
-
+   if(modbus_connect(modbus_rtu_station_zigbee_ctx) == -1)
+    {
+     fprintf(stderr, "%s connection failed: %s\n", STATION_ZIGBEE_DEVICE, modbus_strerror(errno));
+     modbus_free(modbus_rtu_station_zigbee_ctx);
+    }
   modbus_rtu_station_mb_mapping = modbus_mapping_new(MODBUS_MAX_READ_BITS, 0,
+                                 MODBUS_MAX_READ_REGISTERS, 0);
+  modbus_rtu_station_zigbee_mb_mapping = modbus_mapping_new(MODBUS_MAX_READ_BITS, 0,
                                  MODBUS_MAX_READ_REGISTERS, 0);
   if(modbus_rtu_station_mb_mapping == NULL)
    {
@@ -971,6 +978,13 @@ void stationInit()
                modbus_strerror(errno));
     free(modbus_rtu_station_mb_mapping);
    }
+
+   if(modbus_rtu_station_zigbee_mb_mapping == NULL)
+    {
+      fprintf(stderr, "Failed to allocate the mapping: %s\n",
+                modbus_strerror(errno));
+     free(modbus_rtu_station_zigbee_mb_mapping);
+    }
 }
 
 char* getTime()
