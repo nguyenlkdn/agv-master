@@ -741,6 +741,8 @@ void *robotThread(void *vargp)
 
     if(robotRegister_received[0] == 0)
     {
+      gtk_container_foreach (GTK_CONTAINER (actstation1), 
+                             (GtkCallback) recallback1, "Recall Robot");
       station1_isaccepted = 0;
       station2_isaccepted = 1;
       station3_isaccepted = 1;
@@ -798,8 +800,6 @@ void *robotThread(void *vargp)
         }
 
         //gtk_label_set (GTK_LABEL(actstation1), "Recall Robot");
-        gtk_container_foreach (GTK_CONTAINER (actstation1), 
-                               (GtkCallback) recallback1, "Recall Robot");
       }
       else if(robotRegister_received[0] == 2)
       {
