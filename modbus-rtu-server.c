@@ -834,8 +834,8 @@ void *robotThread(void *vargp)
         station5_isaccepted = 0;
         gtk_container_foreach (GTK_CONTAINER (actstation4), 
                                (GtkCallback) recallback4, "Station 4");
-        gtk_container_foreach (GTK_CONTAINER (btnallowcalling), 
-                               (GtkCallback) allowcallinghandler, "Calling Denied");
+        // gtk_container_foreach (GTK_CONTAINER (btnallowcalling), 
+        //                        (GtkCallback) allowcallinghandler, "Calling Denied");
       }
       else if(robotRegister_received[0] == 5)
       {
