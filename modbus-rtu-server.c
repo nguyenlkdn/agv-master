@@ -65,7 +65,8 @@ uint16_t STATION5_WRITING  =  0;
 #define ROBOT_WRITE_TIMEOUT_uS    0
 #define ROBOT_READ_TIMEOUT_S      1
 #define ROBOT_READ_TIMEOUT_uS     0
-
+#define font "Sans 60"
+PangoFontDescription *font_desc;
 /*
   User Interface Defination
 */
@@ -112,7 +113,7 @@ uint16_t station2_read_err=0;
 uint16_t station3_read_err=0;
 uint16_t station4_read_err=0;
 uint16_t station5_read_err=0;
-
+uint16_t robot_read_err = 0;
 uint64_t station1_write_err=0;
 uint16_t station2_write_err=0;
 uint16_t station3_write_err=0;
@@ -228,18 +229,99 @@ modbus_mapping_t *modbus_rtu_station3_mb_mapping;
 modbus_mapping_t *modbus_rtu_station4_mb_mapping;
 modbus_mapping_t *modbus_rtu_station5_mb_mapping;
 
+GtkWidget *btnstation1;
 GtkWidget *actstation1;
 GtkWidget *actstation2;
 GtkWidget *actstation3;
 GtkWidget *actstation4;
 GtkWidget *actstation5;
 GtkWidget *actstation6;
+GtkWidget *actstation7;
+GtkWidget *actstation8;
+GtkWidget *actstation9;
+GtkWidget *actstation10;
 GtkWidget *btnallowcalling;
 
 GtkWidget *image;
 int16_t robot_status = 0;
 int16_t robot_sensor = 0;
 uint16_t robot_control = 0;
+
+GtkWidget *colorseldlg = NULL;
+GtkWidget *drawingarea = NULL;
+GdkColor color;
+
+GtkWidget *robotbattery;
+GtkWidget *robotlocation;
+GtkWidget *robotstatus;
+GtkWidget *robotconnection;
+GtkWidget *robotspeedmax;
+
+GtkWidget *station1status;
+GtkWidget *station2status;
+GtkWidget *station3status;
+GtkWidget *station4status;
+GtkWidget *station5status;
+GtkWidget *station6status;
+GtkWidget *station7status;
+GtkWidget *station8status;
+GtkWidget *station9status;
+GtkWidget *station10status;
+
+
+
+static void color_changed_cb( GtkWidget         *widget,
+                              GtkColorSelection *colorsel )
+{
+  GdkColor ncolor;
+
+  gtk_color_selection_get_current_color (colorsel, &ncolor);
+  gtk_widget_modify_bg (drawingarea, GTK_STATE_NORMAL, &ncolor);       
+}
+
+static gboolean area_event( GtkWidget *widget,
+                            GdkEvent  *event,
+                            gpointer   client_data )
+{
+  gint handled = FALSE;
+  gint response;
+  GtkColorSelection *colorsel;
+
+  /* Check if we've received a button pressed event */
+
+  if (event->type == GDK_BUTTON_PRESS)
+    {
+      handled = TRUE;
+
+       /* Create color selection dialog */
+      if (colorseldlg == NULL)
+        colorseldlg = gtk_color_selection_dialog_new ("Select background color");
+
+      /* Get the ColorSelection widget */
+      colorsel = GTK_COLOR_SELECTION (GTK_COLOR_SELECTION_DIALOG (colorseldlg)->colorsel);
+
+      gtk_color_selection_set_previous_color (colorsel, &color);
+      gtk_color_selection_set_current_color (colorsel, &color);
+      gtk_color_selection_set_has_palette (colorsel, TRUE);
+
+      /* Connect to the "color_changed" signal, set the client-data
+       * to the colorsel widget */
+      g_signal_connect (colorsel, "color_changed",
+                        G_CALLBACK (color_changed_cb), (gpointer) colorsel);
+
+      /* Show the dialog */
+      response = gtk_dialog_run (GTK_DIALOG (colorseldlg));
+
+      if (response == GTK_RESPONSE_OK)
+        gtk_color_selection_get_current_color (colorsel, &color);
+      else 
+        gtk_widget_modify_bg (drawingarea, GTK_STATE_NORMAL, &color);
+
+      gtk_widget_hide (colorseldlg);
+    }
+
+  return handled;
+}
 
 void RequestingProcess(void);
 /*
@@ -385,9 +467,9 @@ void *stationThread(void *vargp)
     if(STATION3_ENABLE == 1)
     {
       stationid=3;
-      modbus_set_response_timeout(modbus_rtu_station_zigbee_ctx, STATION_TIMEOUT_S, STATION_TIMEOUT_uS);
-      modbus_set_slave(modbus_rtu_station_zigbee_ctx, stationid);
-      rc = modbus_read_registers(modbus_rtu_station_zigbee_ctx, 0, 5, station3Register_received);
+      modbus_set_response_timeout(modbus_rtu_station_ctx, STATION_TIMEOUT_S, STATION_TIMEOUT_uS);
+      modbus_set_slave(modbus_rtu_station_ctx, stationid);
+      rc = modbus_read_registers(modbus_rtu_station_ctx, 0, 5, station3Register_received);
       if(rc == -1)
       {
         memset(station3Register_received, -1, sizeof(station3Register_received));
@@ -458,7 +540,68 @@ void *stationThread(void *vargp)
         #endif    
       }
     }
+    if(station2_read_err >= 1)
+    {
+      station2_read_err = 0;
+      snprintf(TEXT, sizeof(TEXT), "Offline");
+      gtk_entry_set_text (GTK_ENTRY (station2status), TEXT);
+    }
+    else
+    {
+      //station5_read_err = 0;
+      snprintf(TEXT, sizeof(TEXT), "Online");
+      gtk_entry_set_text (GTK_ENTRY (station2status), TEXT);
+    }
+    if(station3_read_err >= 1)
+    {
+      station3_read_err = 0;
+      snprintf(TEXT, sizeof(TEXT), "Offline");
+      gtk_entry_set_text (GTK_ENTRY (station3status), TEXT);
+    }
+    else
+    {
+      //station5_read_err = 0;
+      snprintf(TEXT, sizeof(TEXT), "Online");
+      gtk_entry_set_text (GTK_ENTRY (station3status), TEXT);
+    }
 
+    if(station4_read_err >= 1)
+    {
+      station4_read_err = 0;
+      snprintf(TEXT, sizeof(TEXT), "Offline");
+      gtk_entry_set_text (GTK_ENTRY (station4status), TEXT);
+    }
+    else
+    {
+      //station5_read_err = 0;
+      snprintf(TEXT, sizeof(TEXT), "Online");
+      gtk_entry_set_text (GTK_ENTRY (station4status), TEXT);
+    }
+
+    if(station5_read_err >= 1)
+    {
+      station5_read_err = 0;
+      snprintf(TEXT, sizeof(TEXT), "Offline");
+      gtk_entry_set_text (GTK_ENTRY (station5status), TEXT);
+    }
+    else
+    {
+      //station5_read_err = 0;
+      snprintf(TEXT, sizeof(TEXT), "Online");
+      gtk_entry_set_text (GTK_ENTRY (station5status), TEXT);
+    }
+
+    if(robot_read_err >= 1)
+    {
+      robot_read_err = 0;
+      snprintf(TEXT, sizeof(TEXT), "Offline");
+      gtk_entry_set_text (GTK_ENTRY (robotconnection), TEXT);
+    }
+    else
+    {
+      snprintf(TEXT, sizeof(TEXT), "Online");
+      gtk_entry_set_text (GTK_ENTRY (robotconnection), TEXT);
+    }
 /*
   
 */
@@ -561,9 +704,9 @@ void *stationThread(void *vargp)
       if(issend == 1)
       {
         //printf("Writing to Station 3\n");
-        modbus_set_response_timeout(modbus_rtu_station_zigbee_ctx, STATION_WRITE_TIMEOUT_S, STATION_WRITE_TIMEOUT_uS);
-        modbus_set_slave(modbus_rtu_station_zigbee_ctx, 3);
-        rc = modbus_write_registers(modbus_rtu_station_zigbee_ctx, 0, 5, station3Register_sent);
+        modbus_set_response_timeout(modbus_rtu_station_ctx, STATION_WRITE_TIMEOUT_S, STATION_WRITE_TIMEOUT_uS);
+        modbus_set_slave(modbus_rtu_station_ctx, 3);
+        rc = modbus_write_registers(modbus_rtu_station_ctx, 0, 5, station3Register_sent);
         if(rc == 5)
         {
           issend = 0;
@@ -677,6 +820,7 @@ void *robotThread(void *vargp)
         break;
       }
     }
+
     if(robotRegister_received[1] != robotRegister_sent[0])
     {
       resend = 1;
@@ -722,8 +866,15 @@ void *robotThread(void *vargp)
     }
     else
     {
+      robot_read_err++;
       printf("Robot Reading: Timeout %d\n", rc);
     }
+    snprintf(TEXT, sizeof(TEXT), "%d", robotRegister_received[0]);
+    gtk_entry_set_text (GTK_ENTRY (robotlocation), TEXT);
+
+    snprintf(TEXT, sizeof(TEXT), "%d", robotRegister_received[2]);
+    gtk_entry_set_text (GTK_ENTRY (robotstatus), TEXT);
+
 
     if(robotRegister_received[0] == 0)
     {
@@ -748,11 +899,6 @@ void *robotThread(void *vargp)
       station3_isaccepted = 1;
       station4_isaccepted = 0;
       station5_isaccepted = 1;
-      // memset(station1Register_sent, 0, sizeof(station1Register_sent));
-      // memset(station2Register_sent, 0, sizeof(station2Register_sent));
-      // memset(station3Register_sent, 0, sizeof(station3Register_sent));
-      // memset(station4Register_sent, 0, sizeof(station4Register_sent));
-      // memset(station5Register_sent, 0, sizeof(station5Register_sent));
 
     }
     else
@@ -834,10 +980,16 @@ void *robotThread(void *vargp)
         station3_isaccepted = 0;
         station4_isaccepted = 0;
         station5_isaccepted = 0;
+        if(robotRegister_sent[0] == 4)
+        {
+          station4Register_sent[0] = 4;
+        }
+        else
+        {
+          station4Register_sent[0] = 0;
+        }
         gtk_container_foreach (GTK_CONTAINER (actstation4), 
                                (GtkCallback) recallback4, "Station 4");
-        // gtk_container_foreach (GTK_CONTAINER (btnallowcalling), 
-        //                        (GtkCallback) allowcallinghandler, "Calling Denied");
       }
       else if(robotRegister_received[0] == 5)
       {
@@ -898,14 +1050,6 @@ void *userInterface(void *vargp)
       }
     }
 
-    // int i;
-    // printf("Robot Data: ");
-    // for(i=0;i<3;i++)
-    // {
-    //   printf("%3d", robotRegister_received[i]);
-    // }
-    // printf("\n");
-    //printf("Robot is in Station: %d\n", robotRegister_received[0]);
   }
 }
 ////////////// Init Common ////////////
@@ -956,22 +1100,22 @@ void robotInit()
 void stationInit()
 {
   modbus_rtu_station_ctx = modbus_new_rtu(STATION_DEVICE, 38400, 'N', 8, 1);
-  modbus_rtu_station_zigbee_ctx = modbus_new_rtu(STATION_ZIGBEE_DEVICE, 38400, 'N', 8, 1);
+  //modbus_rtu_station_zigbee_ctx = modbus_new_rtu(STATION_ZIGBEE_DEVICE, 38400, 'N', 8, 1);
   if(modbus_connect(modbus_rtu_station_ctx) == -1)
    {
-    fprintf(stderr, "%s connection failed: %s\n", STATION_ZIGBEE_DEVICE, modbus_strerror(errno));
+    fprintf(stderr, "%s connection failed: %s\n", STATION_DEVICE, modbus_strerror(errno));
     modbus_free(modbus_rtu_station_ctx);
     return;
    }
-   if(modbus_connect(modbus_rtu_station_zigbee_ctx) == -1)
-    {
-     fprintf(stderr, "%s connection failed: %s\n", STATION_ZIGBEE_DEVICE, modbus_strerror(errno));
-     modbus_free(modbus_rtu_station_zigbee_ctx);
-    }
+   // if(modbus_connect(modbus_rtu_station_zigbee_ctx) == -1)
+   //  {
+   //   fprintf(stderr, "%s connection failed: %s\n", STATION_ZIGBEE_DEVICE, modbus_strerror(errno));
+   //   modbus_free(modbus_rtu_station_zigbee_ctx);
+   //  }
   modbus_rtu_station_mb_mapping = modbus_mapping_new(MODBUS_MAX_READ_BITS, 0,
                                  MODBUS_MAX_READ_REGISTERS, 0);
-  modbus_rtu_station_zigbee_mb_mapping = modbus_mapping_new(MODBUS_MAX_READ_BITS, 0,
-                                 MODBUS_MAX_READ_REGISTERS, 0);
+  // modbus_rtu_station_zigbee_mb_mapping = modbus_mapping_new(MODBUS_MAX_READ_BITS, 0,
+  //                                MODBUS_MAX_READ_REGISTERS, 0);
   if(modbus_rtu_station_mb_mapping == NULL)
    {
      fprintf(stderr, "Failed to allocate the mapping: %s\n",
@@ -979,12 +1123,12 @@ void stationInit()
     free(modbus_rtu_station_mb_mapping);
    }
 
-   if(modbus_rtu_station_zigbee_mb_mapping == NULL)
-    {
-      fprintf(stderr, "Failed to allocate the mapping: %s\n",
-                modbus_strerror(errno));
-     free(modbus_rtu_station_zigbee_mb_mapping);
-    }
+   // if(modbus_rtu_station_zigbee_mb_mapping == NULL)
+   //  {
+   //    fprintf(stderr, "Failed to allocate the mapping: %s\n",
+   //              modbus_strerror(errno));
+   //   free(modbus_rtu_station_zigbee_mb_mapping);
+   //  }
 }
 
 char* getTime()
@@ -1089,21 +1233,49 @@ void GUIInit(int argc, char *argv[])
 
   window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER);
+    // drawingarea = gtk_drawing_area_new ();
+
+    // color.red = 0;
+    // color.blue = 65535;
+    // color.green = 0;
+    // gtk_widget_modify_bg (drawingarea, GTK_STATE_NORMAL, &color);       
+
+    // //gtk_widget_set_size_request (GTK_WIDGET (drawingarea), 200, 200);
+
+    // gtk_widget_set_events (drawingarea, GDK_BUTTON_PRESS_MASK);
+
+    // g_signal_connect (GTK_OBJECT (drawingarea), "event", 
+    //             GTK_SIGNAL_FUNC (area_event), (gpointer) drawingarea);
+    
+    // /* Add drawingarea to window, then show them both */
+
+    // gtk_container_add (GTK_CONTAINER (window), drawingarea);
+
+    // // gtk_widget_show (drawingarea);
+    // // gtk_widget_show (window);
+
   //gtk_widget_set_size_request (window, 720, 480);
   if(isfullscreen == 1)
   {
     gtk_window_fullscreen(GTK_WINDOW(window));
   }
+  PangoFontDescription *df;
+
+  df = pango_font_description_from_string("Monospace");
+
+  pango_font_description_set_size(df,20*PANGO_SCALE);
+
   gtk_window_set_title(GTK_WINDOW(window), "AGV Robot Controller");
-  gtk_container_set_border_width(GTK_CONTAINER(window), 10);
-  GdkColor red = {0x0000, 0xffff, 0x00ff, 0x00ff};
+  gtk_container_set_border_width(GTK_CONTAINER(window), 12);
+  GdkColor red = {0x0000, 47575, 65535, 64858};
   gtk_widget_modify_bg(GTK_CONTAINER(window), GTK_STATE_NORMAL, &red);
-  table = gtk_table_new(192, 108, FALSE);
+
+  table = gtk_table_new(10, 8, FALSE);
   gtk_table_set_col_spacings(GTK_TABLE(table), 2);
   gtk_table_set_row_spacing(GTK_TABLE(table), 0, 2);
 
   wins = gtk_text_view_new();
-  gtk_widget_set_size_request(wins, 800, 1000);
+  //gtk_widget_set_size_request(table, 1920, 1080);
 
   consoletxt = gtk_text_view_get_buffer(GTK_TEXT_VIEW(wins));
   gtk_text_buffer_create_tag(consoletxt, "gap",
@@ -1120,81 +1292,347 @@ void GUIInit(int argc, char *argv[])
       "weight", PANGO_WEIGHT_BOLD, NULL);
   gtk_text_buffer_get_iter_at_offset(consoletxt, &iter, 0);
 
-  title = gtk_label_new("Robot Working Logs: ");
+  title = gtk_label_new("Console Logs ");
+  gtk_widget_modify_font(title, df);
   halign = gtk_alignment_new(0, 0, 0, 0);
   gtk_container_add(GTK_CONTAINER(halign), title);
-  gtk_table_attach(GTK_TABLE(table), halign, 0, 90, 0, 1, 
+  gtk_table_attach(GTK_TABLE(table), halign, 1, 3, 9, 10, 
       GTK_FILL, GTK_FILL, 0, 0);
+
+  title = gtk_label_new("Robot Status ");
+  gtk_widget_modify_font(title, df);
+  gtk_table_attach(GTK_TABLE(table), title, 3, 5, 2, 3, 
+      GTK_FILL, GTK_FILL, 0, 0);
+
+  // Robot Status labels
+  ////////////////////////////////////
+  title = gtk_label_new("Robot Battery: ");
+  //gtk_widget_modify_font(title, df);
+  gtk_widget_set_size_request(title, 150, 50);
+  gtk_table_attach(GTK_TABLE(table), title, 3, 4, 3, 4, 
+      GTK_FILL, GTK_FILL, 0, 0);
+
+  robotbattery = gtk_entry_new ();
+  gtk_entry_set_max_length (GTK_ENTRY (robotbattery), 50);
+  gtk_entry_set_text (GTK_ENTRY (robotbattery), "none");
+  gtk_table_attach(GTK_TABLE(table), robotbattery, 4, 5, 3, 4, 
+      GTK_FILL, GTK_FILL, 0, 0);
+
+  title = gtk_label_new("Robot Location: ");
+  gtk_table_attach(GTK_TABLE(table), title, 3, 4, 4, 5, 
+      GTK_FILL, GTK_FILL, 0, 0);
+
+  robotlocation = gtk_entry_new ();
+  gtk_entry_set_max_length (GTK_ENTRY (robotlocation), 50);
+  gtk_entry_set_text (GTK_ENTRY (robotlocation), "none");
+  gtk_table_attach(GTK_TABLE(table), robotlocation, 4, 5, 4, 5, 
+      GTK_FILL, GTK_FILL, 0, 0);
+
+  title = gtk_label_new("Robot Status: ");
+  gtk_table_attach(GTK_TABLE(table), title, 3, 4, 5, 6, 
+      GTK_FILL, GTK_FILL, 0, 0);
+
+  robotstatus = gtk_entry_new ();
+  gtk_entry_set_max_length (GTK_ENTRY (robotstatus), 50);
+  gtk_entry_set_text (GTK_ENTRY (robotstatus), "none");
+  gtk_table_attach(GTK_TABLE(table), robotstatus, 4, 5, 5, 6, 
+      GTK_FILL, GTK_FILL, 0, 0);
+
+  title = gtk_label_new("Robot Connection: ");
+  gtk_table_attach(GTK_TABLE(table), title, 3, 4, 6, 7, 
+      GTK_FILL, GTK_FILL, 0, 0);
+
+  robotconnection = gtk_entry_new ();
+  gtk_entry_set_max_length (GTK_ENTRY (robotconnection), 50);
+  gtk_entry_set_text (GTK_ENTRY (robotconnection), "none");
+  gtk_table_attach(GTK_TABLE(table), robotconnection, 4, 5, 6, 7, 
+      GTK_FILL, GTK_FILL, 0, 0);
+
+  title = gtk_label_new("Robot Speed Max: ");
+  gtk_table_attach(GTK_TABLE(table), title, 3, 4, 7, 8, 
+      GTK_FILL, GTK_FILL, 0, 0);
+
+  robotspeedmax = gtk_entry_new ();
+  gtk_entry_set_max_length (GTK_ENTRY (robotspeedmax), 50);
+  gtk_entry_set_text (GTK_ENTRY (robotspeedmax), "none");
+  gtk_table_attach(GTK_TABLE(table), robotspeedmax, 4, 5, 7, 8, 
+      GTK_FILL, GTK_FILL, 0, 0);
+
+  title = gtk_label_new("Station Status ");
+  gtk_widget_modify_font(title, df);
+  //halign = gtk_alignment_new(0, 0, 0, 0);
+  //gtk_container_add(GTK_CONTAINER(halign), title);
+  gtk_table_attach(GTK_TABLE(table), title, 5, 9, 2, 3, 
+      GTK_FILL, GTK_FILL, 0, 0);
+
+  // station Status labels
+  ////////////////////////////////////
+  title = gtk_label_new("   Station 1: ");
+  gtk_table_attach(GTK_TABLE(table), title, 5, 6, 3, 4, 
+      GTK_FILL, GTK_FILL, 0, 0);
+
+  station1status = gtk_entry_new ();
+  gtk_entry_set_max_length (GTK_ENTRY (station1status), 50);
+  gtk_entry_set_text (GTK_ENTRY (station1status), "none");
+  gtk_table_attach(GTK_TABLE(table), station1status, 6, 7, 3, 4, 
+      GTK_FILL, GTK_FILL, 0, 0);
+
+  title = gtk_label_new("Station 2: ");
+  gtk_table_attach(GTK_TABLE(table), title, 7, 8, 3, 4, 
+      GTK_FILL, GTK_FILL, 0, 0);
+  station2status = gtk_entry_new ();
+  gtk_entry_set_max_length (GTK_ENTRY (station2status), 50);
+  gtk_entry_set_text (GTK_ENTRY (station2status), "none");
+  gtk_table_attach(GTK_TABLE(table), station2status, 8, 9, 3, 4, 
+      GTK_FILL, GTK_FILL, 0, 0);
+
+  title = gtk_label_new("Station 3: ");
+  gtk_table_attach(GTK_TABLE(table), title, 5, 6, 4, 5, 
+      GTK_FILL, GTK_FILL, 0, 0);
+
+  station3status = gtk_entry_new ();
+  gtk_entry_set_max_length (GTK_ENTRY (station3status), 50);
+  gtk_entry_set_text (GTK_ENTRY (station3status), "none");
+  gtk_table_attach(GTK_TABLE(table), station3status, 6, 7, 4, 5, 
+      GTK_FILL, GTK_FILL, 0, 0);
+
+  title = gtk_label_new("Station 4: ");
+  gtk_table_attach(GTK_TABLE(table), title, 7, 8, 4, 5, 
+      GTK_FILL, GTK_FILL, 0, 0);
+
+  station4status = gtk_entry_new ();
+  gtk_entry_set_max_length (GTK_ENTRY (station4status), 50);
+  gtk_entry_set_text (GTK_ENTRY (station4status), "none");
+  gtk_table_attach(GTK_TABLE(table), station4status, 8, 9, 4, 5, 
+      GTK_FILL, GTK_FILL, 0, 0);
+
+  title = gtk_label_new("Station 5: ");
+  gtk_table_attach(GTK_TABLE(table), title, 5, 6, 5, 6, 
+      GTK_FILL, GTK_FILL, 0, 0);
+
+  station5status = gtk_entry_new ();
+  gtk_entry_set_max_length (GTK_ENTRY (station5status), 50);
+  gtk_entry_set_text (GTK_ENTRY (station5status), "none");
+  gtk_table_attach(GTK_TABLE(table), station5status, 6, 7, 5, 6, 
+      GTK_FILL, GTK_FILL, 0, 0);
+
+  title = gtk_label_new("Station 6: ");
+  gtk_table_attach(GTK_TABLE(table), title, 7, 8, 5, 6, 
+      GTK_FILL, GTK_FILL, 0, 0);
+
+  station6status = gtk_entry_new ();
+  gtk_entry_set_max_length (GTK_ENTRY (station6status), 50);
+  gtk_entry_set_text (GTK_ENTRY (station6status), "none");
+  gtk_table_attach(GTK_TABLE(table), station6status, 8, 9, 5, 6, 
+      GTK_FILL, GTK_FILL, 0, 0);
+
+  title = gtk_label_new("Station 7: ");
+  gtk_table_attach(GTK_TABLE(table), title, 5, 6, 6, 7, 
+      GTK_FILL, GTK_FILL, 0, 0);
+
+  station7status = gtk_entry_new ();
+  gtk_entry_set_max_length (GTK_ENTRY (station7status), 50);
+  gtk_entry_set_text (GTK_ENTRY (station7status), "none");
+  gtk_table_attach(GTK_TABLE(table), station7status, 6, 7, 6, 7, 
+      GTK_FILL, GTK_FILL, 0, 0);
+
+  title = gtk_label_new("Station 8: ");
+  gtk_table_attach(GTK_TABLE(table), title, 7, 8, 6, 7, 
+      GTK_FILL, GTK_FILL, 0, 0);
+
+  station8status = gtk_entry_new ();
+  gtk_entry_set_max_length (GTK_ENTRY (station8status), 50);
+  gtk_entry_set_text (GTK_ENTRY (station8status), "none");
+  gtk_table_attach(GTK_TABLE(table), station8status, 8, 9, 6, 7, 
+      GTK_FILL, GTK_FILL, 0, 0);
+
+  title = gtk_label_new("Station 9: ");
+  gtk_table_attach(GTK_TABLE(table), title, 5, 6, 7, 8, 
+      GTK_FILL, GTK_FILL, 0, 0);
+
+  station9status = gtk_entry_new ();
+  gtk_entry_set_max_length (GTK_ENTRY (station9status), 50);
+  gtk_entry_set_text (GTK_ENTRY (station9status), "none");
+  gtk_table_attach(GTK_TABLE(table), station9status, 6, 7, 7, 8, 
+      GTK_FILL, GTK_FILL, 0, 0);
+
+  title = gtk_label_new("Station 10: ");
+  gtk_table_attach(GTK_TABLE(table), title, 7, 8, 7, 8, 
+      GTK_FILL, GTK_FILL, 0, 0);
+
+  station10status = gtk_entry_new ();
+  gtk_entry_set_max_length (GTK_ENTRY (station10status), 50);
+  gtk_entry_set_text (GTK_ENTRY (station10status), "none");
+  gtk_table_attach(GTK_TABLE(table), station10status, 8, 9, 7, 8, 
+      GTK_FILL, GTK_FILL, 0, 0);
+  // g_signal_connect (robotbattery, "activate",
+  //       G_CALLBACK (enter_callback),
+  //       robotbattery);
+  ////////////////////////////////////
+
+
 
   gtk_text_view_set_editable(GTK_TEXT_VIEW(wins), FALSE);
   gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(wins), FALSE);
-  gtk_table_attach(GTK_TABLE(table), wins,        0, 90, 1, 91, 
+  gtk_widget_set_size_request(wins, 400, 400);
+  gtk_table_attach(GTK_TABLE(table), wins,        1, 3, 10, 11, 
       GTK_FILL | GTK_SHRINK, GTK_FILL | GTK_SHRINK, 1, 1);
 
-  actstation2 = gtk_button_new_with_label("Station 2");
-  gtk_widget_set_size_request(actstation2, 100, 100);
-  gtk_table_attach(GTK_TABLE(table), actstation2, 90, 91, 1, 2, 
+  title = gtk_label_new("Control Panel");
+  gtk_widget_modify_font(title, df);
+
+  halign = gtk_alignment_new(0, 0, 0, 0);
+  gtk_container_add(GTK_CONTAINER(halign), title);
+  gtk_table_attach(GTK_TABLE(table), halign, 1, 3, 1, 2, 
+      GTK_FILL, GTK_FILL, 0, 0);
+
+  btnstation1 = gtk_button_new_with_label("Station 1");
+  gtk_widget_set_size_request(btnstation1, 300, 100);
+  gtk_widget_modify_font(btnstation1, df);
+
+  gtk_table_attach(GTK_TABLE(table), btnstation1, 1, 2, 2, 3, 
           GTK_FILL, GTK_FILL, 0, 0);
-  g_signal_connect (GTK_OBJECT(actstation2), "clicked",
-          G_CALLBACK (button_was_clicked), (gpointer) "Station 2");
+  g_signal_connect (GTK_OBJECT(btnstation1), "clicked",
+          G_CALLBACK (button_was_clicked), (gpointer) "Station 1");
 
   actstation3 = gtk_button_new_with_label("Station 3");
-  gtk_widget_set_size_request(actstation3, 100, 100);
-  gtk_table_attach(GTK_TABLE(table), actstation3, 91, 92, 1, 2, 
+  gtk_widget_set_size_request(actstation3, 300, 100);
+  gtk_table_attach(GTK_TABLE(table), actstation3, 1, 2, 3, 4, 
           GTK_FILL, GTK_FILL, 0, 0);
   g_signal_connect (GTK_OBJECT(actstation3), "clicked",
           G_CALLBACK (button_was_clicked), (gpointer) "Station 3");
 
-  actstation4 = gtk_button_new_with_label("Station 4");
-  gtk_widget_set_size_request(actstation4, 100, 100);
-  gtk_table_attach(GTK_TABLE(table), actstation4, 90, 91, 2, 3, 
-          GTK_FILL, GTK_FILL, 0, 0);
-  g_signal_connect (GTK_OBJECT(actstation4), "clicked",
-          G_CALLBACK (button_was_clicked), (gpointer) "Station 4");
-
   actstation5 = gtk_button_new_with_label("Station 5");
-  gtk_widget_set_size_request(actstation5, 100, 100);
-  gtk_table_attach(GTK_TABLE(table), actstation5, 91, 92, 2, 3, 
+  gtk_widget_set_size_request(actstation5, 300, 100);
+  gtk_table_attach(GTK_TABLE(table), actstation5, 1, 2, 4, 5, 
           GTK_FILL, GTK_FILL, 0, 0);
   g_signal_connect (GTK_OBJECT(actstation5), "clicked",
           G_CALLBACK (button_was_clicked), (gpointer) "Station 5");
 
+  actstation7 = gtk_button_new_with_label("Station 7");
+  gtk_widget_set_size_request(actstation7, 300, 100);
+  gtk_table_attach(GTK_TABLE(table), actstation7, 1, 2, 5, 6, 
+          GTK_FILL, GTK_FILL, 0, 0);
+  g_signal_connect (GTK_OBJECT(actstation7), "clicked",
+          G_CALLBACK (area_event), (gpointer) "Station 7");
+
+  actstation9 = gtk_button_new_with_label("Station 9");
+  gtk_widget_set_size_request(actstation9, 300, 100);
+  gtk_table_attach(GTK_TABLE(table), actstation9, 1, 2, 6, 7, 
+          GTK_FILL, GTK_FILL, 0, 0);
+  g_signal_connect (GTK_OBJECT(actstation9), "clicked",
+          G_CALLBACK (button_was_clicked), (gpointer) "Station 9");
+
+  actstation2 = gtk_button_new_with_label("Station 2");
+  gtk_widget_set_size_request(actstation2, 300, 100);
+  gtk_table_attach(GTK_TABLE(table), actstation2, 2, 3, 2, 3, 
+          GTK_FILL, GTK_FILL, 0, 0);
+  g_signal_connect (GTK_OBJECT(actstation2), "clicked",
+          G_CALLBACK (button_was_clicked), (gpointer) "Station 2");
+
+  actstation4 = gtk_button_new_with_label("Station 4");
+  gtk_widget_set_size_request(actstation4, 300, 100);
+  gtk_table_attach(GTK_TABLE(table), actstation4, 2, 3, 3, 4, 
+          GTK_FILL, GTK_FILL, 0, 0);
+  g_signal_connect (GTK_OBJECT(actstation4), "clicked",
+          G_CALLBACK (button_was_clicked), (gpointer) "Station 4");
+
+  actstation6 = gtk_button_new_with_label("Station 6");
+  gtk_widget_set_size_request(actstation6, 300, 100);
+  gtk_table_attach(GTK_TABLE(table), actstation6, 2, 3, 4, 5, 
+          GTK_FILL, GTK_FILL, 0, 0);
+  g_signal_connect (GTK_OBJECT(actstation6), "clicked",
+          G_CALLBACK (button_was_clicked), (gpointer) "Station 6");
+
+  actstation8 = gtk_button_new_with_label("Station 8");
+  gtk_widget_set_size_request(actstation8, 300, 100);
+  gtk_table_attach(GTK_TABLE(table), actstation8, 2, 3, 5, 6, 
+          GTK_FILL, GTK_FILL, 0, 0);
+  g_signal_connect (GTK_OBJECT(actstation8), "clicked",
+          G_CALLBACK (button_was_clicked), (gpointer) "Station 8");
+
+  actstation10 = gtk_button_new_with_label("Station 10");
+  gtk_widget_set_size_request(actstation10, 300, 100);
+  gtk_table_attach(GTK_TABLE(table), actstation10, 2, 3, 6, 7, 
+          GTK_FILL, GTK_FILL, 0, 0);
+  g_signal_connect (GTK_OBJECT(actstation10), "clicked",
+          G_CALLBACK (button_was_clicked), (gpointer) "Station 10");
+
   actstation1 = gtk_button_new_with_label("Recall Robot");
-  gtk_widget_set_size_request(actstation1, 100, 100);
-  gtk_table_attach(GTK_TABLE(table), actstation1, 90, 92, 3, 44, 
+  gtk_widget_set_size_request(actstation1, 300, 100);
+  gtk_table_attach(GTK_TABLE(table), actstation1, 1, 3, 7, 8, 
           GTK_FILL, GTK_FILL, 0, 0);
   g_signal_connect (GTK_OBJECT(actstation1), "clicked",
           G_CALLBACK (button_was_clicked), (gpointer) "Recall Robot");
 
-  btnallowcalling = gtk_button_new_with_label("Calling Denied");
-  gtk_widget_set_size_request(btnallowcalling, 100, 100);
-  gtk_table_attach(GTK_TABLE(table), btnallowcalling, 90, 92, 44, 91, 
+  btnallowcalling = gtk_button_new_with_label("Get yarn dyed");
+  gtk_widget_set_size_request(btnallowcalling, 300, 100);
+  gtk_table_attach(GTK_TABLE(table), btnallowcalling, 1, 3, 8, 9, 
           GTK_FILL, GTK_FILL, 0, 0);
   g_signal_connect (GTK_OBJECT(btnallowcalling), "clicked",
           G_CALLBACK (button_was_clicked), (gpointer) "Calling Denied");
 
-
+  /*
+    Robot Status
+  */
   image = gtk_image_new ();
-  gtk_image_set_from_file (GTK_IMAGE(image), "/home/agv/logo.png");
-
+  gtk_image_set_from_file (GTK_IMAGE(image), "/home/agv/coast.png");
+  halign = gtk_alignment_new(0, 0, 0, 0);
+  gtk_container_add(GTK_CONTAINER(halign), image);
   //column 1
-  gtk_table_attach(GTK_TABLE(table), image, 190, 192, 1, 91,
+  gtk_table_attach(GTK_TABLE(table), halign, 4, 9, 8, 11,
           GTK_FILL, GTK_FILL, 0, 0);
 
-  halign2 = gtk_alignment_new(0, 1, 0, 0);
-  hlpBtn = gtk_button_new_with_label("Help");
-  gtk_container_add(GTK_CONTAINER(halign2), hlpBtn);
-  gtk_widget_set_size_request(hlpBtn, 70, 30);
-  gtk_table_set_row_spacing(GTK_TABLE(table), 3, 5);
-  gtk_table_attach(GTK_TABLE(table), halign2, 0, 1, 92, 93, 
-      GTK_FILL, GTK_FILL, 0, 0);
 
-  actstation6 = gtk_button_new_with_label("Reset Stations");
-  gtk_widget_set_size_request(actstation6, 140, 30);
-  gtk_table_attach(GTK_TABLE(table), actstation6, 1, 3, 92, 93, 
-          GTK_FILL, GTK_FILL, 0, 0);
-  g_signal_connect (GTK_OBJECT(actstation6), "clicked",
-          G_CALLBACK (button_was_clicked), (gpointer) "Reset Stations");
+  // actstation2 = gtk_button_new_with_label("Station 2");
+  // gtk_widget_set_size_request(actstation2, 100, 100);
+  // gtk_table_attach(GTK_TABLE(table), actstation2, 90, 91, 1, 2, 
+  //         GTK_FILL, GTK_FILL, 0, 0);
+  // g_signal_connect (GTK_OBJECT(actstation2), "clicked",
+  //         G_CALLBACK (button_was_clicked), (gpointer) "Station 2");
+
+  // actstation3 = gtk_button_new_with_label("Station 3");
+  // gtk_widget_set_size_request(actstation3, 100, 100);
+  // gtk_table_attach(GTK_TABLE(table), actstation3, 91, 92, 1, 2, 
+  //         GTK_FILL, GTK_FILL, 0, 0);
+  // g_signal_connect (GTK_OBJECT(actstation3), "clicked",
+  //         G_CALLBACK (button_was_clicked), (gpointer) "Station 3");
+
+  // actstation4 = gtk_button_new_with_label("Station 4");
+  // gtk_widget_set_size_request(actstation4, 100, 100);
+  // gtk_table_attach(GTK_TABLE(table), actstation4, 90, 91, 2, 3, 
+  //         GTK_FILL, GTK_FILL, 0, 0);
+  // g_signal_connect (GTK_OBJECT(actstation4), "clicked",
+  //         G_CALLBACK (button_was_clicked), (gpointer) "Station 4");
+
+  // actstation5 = gtk_button_new_with_label("Station 5");
+  // gtk_widget_set_size_request(actstation5, 100, 100);
+  // gtk_table_attach(GTK_TABLE(table), actstation5, 91, 92, 2, 3, 
+  //         GTK_FILL, GTK_FILL, 0, 0);
+  // g_signal_connect (GTK_OBJECT(actstation5), "clicked",
+  //         G_CALLBACK (button_was_clicked), (gpointer) "Station 5");
+
+  // image = gtk_image_new ();
+  // gtk_image_set_from_file (GTK_IMAGE(image), "/home/agv/logo.png");
+
+  // //column 1
+  // gtk_table_attach(GTK_TABLE(table), image, 190, 192, 1, 91,
+  //         GTK_FILL, GTK_FILL, 0, 0);
+
+  // halign2 = gtk_alignment_new(0, 1, 0, 0);
+  // hlpBtn = gtk_button_new_with_label("Help");
+  // gtk_container_add(GTK_CONTAINER(halign2), hlpBtn);
+  // gtk_widget_set_size_request(hlpBtn, 70, 30);
+  // gtk_table_set_row_spacing(GTK_TABLE(table), 3, 5);
+  // gtk_table_attach(GTK_TABLE(table), halign2, 0, 1, 92, 93, 
+  //     GTK_FILL, GTK_FILL, 0, 0);
+
+  // actstation6 = gtk_button_new_with_label("Reset Stations");
+  // gtk_widget_set_size_request(actstation6, 140, 30);
+  // gtk_table_attach(GTK_TABLE(table), actstation6, 1, 3, 92, 93, 
+  //         GTK_FILL, GTK_FILL, 0, 0);
+  // g_signal_connect (GTK_OBJECT(actstation6), "clicked",
+  //         G_CALLBACK (button_was_clicked), (gpointer) "Reset Stations");
 
   gtk_container_add(GTK_CONTAINER(window), table);
 
@@ -1254,17 +1692,17 @@ static void allowcallinghandler( GtkWidget *widget,
                       gpointer   data )
 {
   const char* button_label = gtk_label_get_label(GTK_LABEL(widget));
-  if(strcmp(button_label, "Calling Allowed") == 0)
+  if(strcmp(button_label, "Send yarn NOT DYED") == 0)
   {
     callingallowed = 0;
-    gtk_label_set (GTK_LABEL(widget), "Calling Denied");
+    gtk_label_set (GTK_LABEL(widget), "Get yarn dyed");
     snprintf (TEXT, sizeof(TEXT), "DENIED calling from all Stations\n");
     printtoconsole(TEXT);
   }
   else
   {
     callingallowed = 1;
-    gtk_label_set (GTK_LABEL(widget), "Calling Allowed");
+    gtk_label_set (GTK_LABEL(widget), "Send yarn NOT DYED");
     snprintf (TEXT, sizeof(TEXT), "ALLOWED calling from all Stations\n");
     printtoconsole(TEXT);
   }
@@ -1510,8 +1948,8 @@ void printtoconsole(char* text)
   // gtk_text_buffer_get_bounds(consoletxt, &start, &end);
   // gtk_text_buffer_delete(consoletxt, &start, &end);
   gtk_text_buffer_insert(consoletxt, &iter, text, -1);
-  //gtk_text_buffer_get_end_iter(consoletxt, &end);
-  //gtk_text_view_scroll_to_iter(GTK_TEXT_VIEW(wins), &end, 0.0, FALSE, 0.0,0.0);
+  gtk_text_buffer_get_end_iter(consoletxt, &end);
+  gtk_text_view_scroll_to_iter(GTK_TEXT_VIEW(wins), &end, 0.0, FALSE, 0.0,0.0);
 }
 
 uint32_t count=0;
