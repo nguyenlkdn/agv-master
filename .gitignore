@@ -3,8 +3,3 @@ Fri
 Makefile
 modbus-rtu-server.o
 config.h
-buttonlabel.c
-checkbox.c
-example
-example-1
-textview.c
