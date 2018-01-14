@@ -65,9 +65,9 @@ uint16_t STATION5_WRITING  =  0;
 /*
 
 */
-int16_t stationRead_reg[STATION_MAX][6];
-int16_t stationWrite_reg[STATION_MAX][6];
-
+int16_t stationRead_reg[STATION_MAX][5];
+int16_t stationWrite_reg[STATION_MAX][5];
+int16_t stationstatus[STATION_MAX];
 #define font "Sans 60"
 PangoFontDescription *font_desc;
 /*
@@ -198,7 +198,16 @@ void robotInit();
 void stationInit();
 char *getTime();
 void printtoconsole(char* text);
-void stationresponding(uint16_t id);
+
+// Jan 14
+uint16_t stationresponding(uint16_t id);
+uint16_t stationderesponding(uint16_t id);
+
+uint16_t stationcontroller(uint16_t id);
+int16_t stationwriting(int16_t id, int16_t* regs);
+int16_t stationreading(int16_t id, int16_t *regs, int16_t usleeptime);
+
+///////////////////////////////////////
 /*
 
 */
@@ -244,6 +253,11 @@ GtkWidget *actstation7;
 GtkWidget *actstation8;
 GtkWidget *actstation9;
 GtkWidget *actstation10;
+GtkWidget *actstation11;
+GtkWidget *actstation12;
+GtkWidget *actstation13;
+GtkWidget *actstation14;
+GtkWidget *actstation15;
 GtkWidget *btnallowcalling;
 
 GtkWidget *image;
@@ -271,6 +285,11 @@ GtkWidget *station7status;
 GtkWidget *station8status;
 GtkWidget *station9status;
 GtkWidget *station10status;
+GtkWidget *station11status;
+GtkWidget *station12status;
+GtkWidget *station13status;
+GtkWidget *station14status;
+GtkWidget *station15status;
 
 
 
@@ -327,7 +346,6 @@ static gboolean area_event( GtkWidget *widget,
   return handled;
 }
 
-void RequestingProcess(void);
 /*
 */
 int main(int argc, char *argv[])
@@ -337,11 +355,11 @@ int main(int argc, char *argv[])
   stationInit();
   pthread_t stationThread_id, userThread_id, robotThread_id, userInterface_id;
   pthread_create(&userThread_id, NULL, userThread, NULL);
-  pthread_create(&userInterface_id, NULL, userInterface, NULL);
-  //pthread_create(&robotThread_id, NULL, robotThread, NULL);
+  //pthread_create(&userInterface_id, NULL, userInterface, NULL);
+  pthread_create(&robotThread_id, NULL, robotThread, NULL);
   pthread_create(&stationThread_id, NULL, stationThread, NULL);
-  //pthread_join(robotThread_id, NULL);
-  pthread_join(userInterface_id, NULL);
+  pthread_join(robotThread_id, NULL);
+  //pthread_join(userInterface_id, NULL);
   pthread_join(userThread_id, NULL);
   pthread_join(stationThread_id, NULL);
   return 0;
@@ -437,20 +455,29 @@ void *stationThread(void *vargp)
       Reading Stations
     */
     int32_t stationscan;
-    for(stationscan=STATION_START;stationscan<=STATION_MAX;stationscan++)
+    uint16_t come_to_valid_point;
+    if(robotRegister_received[0] >= 2)
+    {
+      stationscan = robotRegister_received[0];
+    }
+    else
+    {
+      stationscan=STATION_START;
+    }
+    for(;stationscan<=STATION_MAX;stationscan++)
     {
       if(stationignore[stationscan] == 1)
       {
         modbus_set_response_timeout(modbus_rtu_station_ctx, STATION_TIMEOUT_S, STATION_TIMEOUT_uS);
         modbus_set_slave(modbus_rtu_station_ctx, stationscan);
         //modbus_flush(modbus_rtu_station_ctx);
-        //modbus_set_debug(modbus_rtu_station_ctx, TRUE);
+        modbus_set_debug(modbus_rtu_station_ctx, FALSE);
         ////////////// Reading //////////////////////
         rc = modbus_read_registers(modbus_rtu_station_ctx, 0, 5, stationRead_reg[stationscan]);
         if(rc == -1)
         {
           memset(stationRead_reg[stationscan], -1, sizeof(stationRead_reg[stationscan]));
-          DEBUG_PRINT("STATION %d: READ TIMEOUT!\n", stationscan);
+          printf("STATION %d: READ TIMEOUT!\n", stationscan);
         }
         else
         {
@@ -461,30 +488,30 @@ void *stationThread(void *vargp)
             DEBUG_PRINT("%6d", stationRead_reg[stationscan][i], i);
           }
           DEBUG_PRINT("\n");
+
+          // Sleep between Reading & Writing Thread
           usleep(500000);
-          ///////////////// Writing ////////////////////
-          rc = modbus_write_registers(modbus_rtu_station_ctx, 0, 5, stationWrite_reg[stationscan]);
-          if(rc == -1)
+          
+          ////////////////////////////////////
+          // /*
+          //   Checking Calling
+          // */
+          if(stationRead_reg[stationscan][0] == 1)
           {
-            DEBUG_PRINT("STATION %d: WRITE TIMEOUT!\n", stationscan);
+            stationstatus[stationscan] = 1;
+            come_to_valid_point = stationresponding(stationscan);
+            if(come_to_valid_point == 1)
+            {
+              stationcontroller(stationscan);
+            }
+            break;
           }
           else
           {
-            DEBUG_PRINT("STATION %d: WRITE OK!\n", stationscan);
+            stationderesponding(stationscan);
           }
+          ////////////////////////////////////
         }
-      }
-    }
-    ////////////////////////////////////
-    /*
-      Checking Calling
-    */
-    for(stationscan=STATION_START;stationscan<=STATION_MAX;stationscan++)
-    {
-      if(stationRead_reg[stationscan][0] == 1)
-      {
-        printf("%d HAS Requeting\n", stationscan);
-        stationresponding(stationscan);
       }
     }
     ////////////////////////////////////
@@ -522,7 +549,7 @@ void *robotThread(void *vargp)
       ((resend == 1) || (rewrite == 1))
       )
     {
-      printf("Write to robot: %d %d %d %d %d\n", robotRegister_sent[0], robotRegister_sent[1], robotRegister_sent[2], robotRegister_sent[3], robotRegister_sent[4], robotRegister_sent[5]);
+      DEBUG_PRINT("Write to robot: %d %d %d %d %d\n", robotRegister_sent[0], robotRegister_sent[1], robotRegister_sent[2], robotRegister_sent[3], robotRegister_sent[4], robotRegister_sent[5]);
       modbus_flush(modbus_rtu_robot_ctx);
       modbus_set_response_timeout(modbus_rtu_robot_ctx, ROBOT_WRITE_TIMEOUT_S, ROBOT_WRITE_TIMEOUT_uS);
       //modbus_set_debug(modbus_rtu_robot_ctx, TRUE);
@@ -536,7 +563,7 @@ void *robotThread(void *vargp)
       else
       {
         memcpy(robotRegister_sent_previous, robotRegister_sent, sizeof(robotRegister_sent_previous));
-        printf("Robot Writing: OK\n");
+        DEBUG_PRINT("Robot Writing: OK\n");
         //robotRegister_sent[2] = 0;
         rewrite = 0;
         resend = 0;
@@ -552,7 +579,7 @@ void *robotThread(void *vargp)
     if(rc != -1)
     {
       #ifdef RobotModbus_DEBUG
-        printf("Robot Reading: OK\n");
+        DEBUG_PRINT("Robot Reading: OK\n");
       #endif
       usleep(200000);
     }
@@ -572,7 +599,7 @@ void *robotThread(void *vargp)
     {
       robotRegister_sent[2] = robot_status;
       robotRegister_sent[3] = robot_sensor;
-      printf("Robot was reseted\n");
+      DEBUG_PRINT("Robot was reseted\n");
     }
     else
     {
@@ -703,6 +730,7 @@ void *robotThread(void *vargp)
   }
   return NULL;
 }
+
 void *userInterface(void *vargp)
 {
   uint8_t hascalling = 0;
@@ -713,35 +741,7 @@ void *userInterface(void *vargp)
   uint16_t robot_loc = 0;
   while(1)
   {
-    if(robot_control == 0)
-    {
-      RequestingProcess();
-      ControllProcess();
-    }
-    else
-    {
-      printf("Robot in Manual Mode under control of the Station 1\n");
-      stored_robot_location = robot_control;
-      uint8_t hasnew_calling = 0;
-      uint8_t robotstatus = 0;
-      while(robot_control != robotRegister_received[0] && (robot_control != 0))
-      {
-        //printf("Robot is going to station %d/%d under control of Station 1\n", robot_control, robotRegister_received[0]);
-        RequestingProcess();
-        ControllProcess();
-      }
-      printf("Finished with master\n");
-      if(robot_control == 0)
-      {
-        printf("Master was canceled requesting\n");
-        robotRegister_sent[0] = 1;
-      }
-      else
-      {
-        robot_control = 0;
-      }
-    }
-
+    
   }
 }
 ////////////// Init Common ////////////
@@ -806,7 +806,8 @@ void stationInit()
                modbus_strerror(errno));
     free(modbus_rtu_station_mb_mapping);
    }
-   memset(stationignore, 0, sizeof(stationignore));
+   memset(stationignore, 1, sizeof(stationignore));
+   memset(stationstatus, 0, sizeof(stationstatus));
    stationignore[12]=1;
    int i;
    for(i=0;i<STATION_MAX;i++)
@@ -917,26 +918,6 @@ void GUIInit(int argc, char *argv[])
 
   window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER);
-    // drawingarea = gtk_drawing_area_new ();
-
-    // color.red = 0;
-    // color.blue = 65535;
-    // color.green = 0;
-    // gtk_widget_modify_bg (drawingarea, GTK_STATE_NORMAL, &color);       
-
-    // //gtk_widget_set_size_request (GTK_WIDGET (drawingarea), 200, 200);
-
-    // gtk_widget_set_events (drawingarea, GDK_BUTTON_PRESS_MASK);
-
-    // g_signal_connect (GTK_OBJECT (drawingarea), "event", 
-    //             GTK_SIGNAL_FUNC (area_event), (gpointer) drawingarea);
-    
-    // /* Add drawingarea to window, then show them both */
-
-    // gtk_container_add (GTK_CONTAINER (window), drawingarea);
-
-    // // gtk_widget_show (drawingarea);
-    // // gtk_widget_show (window);
 
   //gtk_widget_set_size_request (window, 720, 480);
   if(isfullscreen == 1)
@@ -954,7 +935,7 @@ void GUIInit(int argc, char *argv[])
   GdkColor red = {0x0000, 47575, 65535, 64858};
   gtk_widget_modify_bg(GTK_CONTAINER(window), GTK_STATE_NORMAL, &red);
 
-  table = gtk_table_new(10, 8, FALSE);
+  table = gtk_table_new(11, 9, FALSE);
   gtk_table_set_col_spacings(GTK_TABLE(table), 2);
   gtk_table_set_row_spacing(GTK_TABLE(table), 0, 2);
 
@@ -980,12 +961,12 @@ void GUIInit(int argc, char *argv[])
   gtk_widget_modify_font(title, df);
   halign = gtk_alignment_new(0, 0, 0, 0);
   gtk_container_add(GTK_CONTAINER(halign), title);
-  gtk_table_attach(GTK_TABLE(table), halign, 1, 3, 9, 10, 
+  gtk_table_attach(GTK_TABLE(table), halign, 1, 4, 9, 10, 
       GTK_FILL, GTK_FILL, 0, 0);
 
   title = gtk_label_new("Robot Status ");
   gtk_widget_modify_font(title, df);
-  gtk_table_attach(GTK_TABLE(table), title, 3, 5, 2, 3, 
+  gtk_table_attach(GTK_TABLE(table), title, 4, 6, 2, 3, 
       GTK_FILL, GTK_FILL, 0, 0);
 
   // Robot Status labels
@@ -993,173 +974,220 @@ void GUIInit(int argc, char *argv[])
   title = gtk_label_new("Robot Battery: ");
   //gtk_widget_modify_font(title, df);
   gtk_widget_set_size_request(title, 150, 50);
-  gtk_table_attach(GTK_TABLE(table), title, 3, 4, 3, 4, 
+  gtk_table_attach(GTK_TABLE(table), title, 4, 5, 3, 4, 
       GTK_FILL, GTK_FILL, 0, 0);
 
   robotbattery = gtk_entry_new ();
   gtk_entry_set_max_length (GTK_ENTRY (robotbattery), 50);
   gtk_entry_set_text (GTK_ENTRY (robotbattery), "none");
-  gtk_table_attach(GTK_TABLE(table), robotbattery, 4, 5, 3, 4, 
+  gtk_table_attach(GTK_TABLE(table), robotbattery, 5, 6, 3, 4, 
       GTK_FILL, GTK_FILL, 0, 0);
 
   title = gtk_label_new("Robot Location: ");
-  gtk_table_attach(GTK_TABLE(table), title, 3, 4, 4, 5, 
+  gtk_table_attach(GTK_TABLE(table), title, 4, 5, 4, 5, 
       GTK_FILL, GTK_FILL, 0, 0);
 
   robotlocation = gtk_entry_new ();
   gtk_entry_set_max_length (GTK_ENTRY (robotlocation), 50);
   gtk_entry_set_text (GTK_ENTRY (robotlocation), "none");
-  gtk_table_attach(GTK_TABLE(table), robotlocation, 4, 5, 4, 5, 
+  gtk_table_attach(GTK_TABLE(table), robotlocation, 5, 6, 4, 5, 
       GTK_FILL, GTK_FILL, 0, 0);
 
   title = gtk_label_new("Robot Status: ");
-  gtk_table_attach(GTK_TABLE(table), title, 3, 4, 5, 6, 
+  gtk_table_attach(GTK_TABLE(table), title, 4, 5, 5, 6, 
       GTK_FILL, GTK_FILL, 0, 0);
 
   robotstatus = gtk_entry_new ();
   gtk_entry_set_max_length (GTK_ENTRY (robotstatus), 50);
   gtk_entry_set_text (GTK_ENTRY (robotstatus), "none");
-  gtk_table_attach(GTK_TABLE(table), robotstatus, 4, 5, 5, 6, 
+  gtk_table_attach(GTK_TABLE(table), robotstatus, 5, 6, 5, 6, 
       GTK_FILL, GTK_FILL, 0, 0);
 
   title = gtk_label_new("Robot Connection: ");
-  gtk_table_attach(GTK_TABLE(table), title, 3, 4, 6, 7, 
+  gtk_table_attach(GTK_TABLE(table), title, 4, 5, 6, 7, 
       GTK_FILL, GTK_FILL, 0, 0);
 
   robotconnection = gtk_entry_new ();
   gtk_entry_set_max_length (GTK_ENTRY (robotconnection), 50);
   gtk_entry_set_text (GTK_ENTRY (robotconnection), "none");
-  gtk_table_attach(GTK_TABLE(table), robotconnection, 4, 5, 6, 7, 
+  gtk_table_attach(GTK_TABLE(table), robotconnection, 5, 6, 6, 7, 
       GTK_FILL, GTK_FILL, 0, 0);
 
   title = gtk_label_new("Robot Speed Max: ");
-  gtk_table_attach(GTK_TABLE(table), title, 3, 4, 7, 8, 
+  gtk_table_attach(GTK_TABLE(table), title, 4, 5, 7, 8, 
       GTK_FILL, GTK_FILL, 0, 0);
 
   robotspeedmax = gtk_entry_new ();
   gtk_entry_set_max_length (GTK_ENTRY (robotspeedmax), 50);
   gtk_entry_set_text (GTK_ENTRY (robotspeedmax), "none");
-  gtk_table_attach(GTK_TABLE(table), robotspeedmax, 4, 5, 7, 8, 
+  gtk_table_attach(GTK_TABLE(table), robotspeedmax, 5, 6, 7, 8, 
       GTK_FILL, GTK_FILL, 0, 0);
 
   title = gtk_label_new("Station Status ");
   gtk_widget_modify_font(title, df);
   //halign = gtk_alignment_new(0, 0, 0, 0);
   //gtk_container_add(GTK_CONTAINER(halign), title);
-  gtk_table_attach(GTK_TABLE(table), title, 5, 9, 2, 3, 
+  gtk_table_attach(GTK_TABLE(table), title, 6, 10, 2, 3, 
       GTK_FILL, GTK_FILL, 0, 0);
 
   // station Status labels
   ////////////////////////////////////
   title = gtk_label_new("   Station 1: ");
-  gtk_table_attach(GTK_TABLE(table), title, 5, 6, 3, 4, 
+  gtk_table_attach(GTK_TABLE(table), title, 6, 7, 3, 4, 
       GTK_FILL, GTK_FILL, 0, 0);
 
   station1status = gtk_entry_new ();
   gtk_entry_set_max_length (GTK_ENTRY (station1status), 50);
   gtk_entry_set_text (GTK_ENTRY (station1status), "none");
-  gtk_table_attach(GTK_TABLE(table), station1status, 6, 7, 3, 4, 
-      GTK_FILL, GTK_FILL, 0, 0);
-
-  title = gtk_label_new("Station 2: ");
-  gtk_table_attach(GTK_TABLE(table), title, 7, 8, 3, 4, 
-      GTK_FILL, GTK_FILL, 0, 0);
-  station2status = gtk_entry_new ();
-  gtk_entry_set_max_length (GTK_ENTRY (station2status), 50);
-  gtk_entry_set_text (GTK_ENTRY (station2status), "none");
-  gtk_table_attach(GTK_TABLE(table), station2status, 8, 9, 3, 4, 
+  gtk_table_attach(GTK_TABLE(table), station1status, 7, 8, 3, 4, 
       GTK_FILL, GTK_FILL, 0, 0);
 
   title = gtk_label_new("Station 3: ");
-  gtk_table_attach(GTK_TABLE(table), title, 5, 6, 4, 5, 
+  gtk_table_attach(GTK_TABLE(table), title, 6, 7, 4, 5, 
       GTK_FILL, GTK_FILL, 0, 0);
 
   station3status = gtk_entry_new ();
   gtk_entry_set_max_length (GTK_ENTRY (station3status), 50);
   gtk_entry_set_text (GTK_ENTRY (station3status), "none");
-  gtk_table_attach(GTK_TABLE(table), station3status, 6, 7, 4, 5, 
-      GTK_FILL, GTK_FILL, 0, 0);
-
-  title = gtk_label_new("Station 4: ");
-  gtk_table_attach(GTK_TABLE(table), title, 7, 8, 4, 5, 
-      GTK_FILL, GTK_FILL, 0, 0);
-
-  station4status = gtk_entry_new ();
-  gtk_entry_set_max_length (GTK_ENTRY (station4status), 50);
-  gtk_entry_set_text (GTK_ENTRY (station4status), "none");
-  gtk_table_attach(GTK_TABLE(table), station4status, 8, 9, 4, 5, 
+  gtk_table_attach(GTK_TABLE(table), station3status, 7, 8, 4, 5, 
       GTK_FILL, GTK_FILL, 0, 0);
 
   title = gtk_label_new("Station 5: ");
-  gtk_table_attach(GTK_TABLE(table), title, 5, 6, 5, 6, 
+  gtk_table_attach(GTK_TABLE(table), title, 6, 7, 5, 6, 
       GTK_FILL, GTK_FILL, 0, 0);
 
   station5status = gtk_entry_new ();
   gtk_entry_set_max_length (GTK_ENTRY (station5status), 50);
   gtk_entry_set_text (GTK_ENTRY (station5status), "none");
-  gtk_table_attach(GTK_TABLE(table), station5status, 6, 7, 5, 6, 
-      GTK_FILL, GTK_FILL, 0, 0);
-
-  title = gtk_label_new("Station 6: ");
-  gtk_table_attach(GTK_TABLE(table), title, 7, 8, 5, 6, 
-      GTK_FILL, GTK_FILL, 0, 0);
-
-  station6status = gtk_entry_new ();
-  gtk_entry_set_max_length (GTK_ENTRY (station6status), 50);
-  gtk_entry_set_text (GTK_ENTRY (station6status), "none");
-  gtk_table_attach(GTK_TABLE(table), station6status, 8, 9, 5, 6, 
+  gtk_table_attach(GTK_TABLE(table), station5status, 7, 8, 5, 6, 
       GTK_FILL, GTK_FILL, 0, 0);
 
   title = gtk_label_new("Station 7: ");
-  gtk_table_attach(GTK_TABLE(table), title, 5, 6, 6, 7, 
+  gtk_table_attach(GTK_TABLE(table), title, 6, 7, 6, 7, 
       GTK_FILL, GTK_FILL, 0, 0);
 
   station7status = gtk_entry_new ();
   gtk_entry_set_max_length (GTK_ENTRY (station7status), 50);
   gtk_entry_set_text (GTK_ENTRY (station7status), "none");
-  gtk_table_attach(GTK_TABLE(table), station7status, 6, 7, 6, 7, 
-      GTK_FILL, GTK_FILL, 0, 0);
-
-  title = gtk_label_new("Station 8: ");
-  gtk_table_attach(GTK_TABLE(table), title, 7, 8, 6, 7, 
-      GTK_FILL, GTK_FILL, 0, 0);
-
-  station8status = gtk_entry_new ();
-  gtk_entry_set_max_length (GTK_ENTRY (station8status), 50);
-  gtk_entry_set_text (GTK_ENTRY (station8status), "none");
-  gtk_table_attach(GTK_TABLE(table), station8status, 8, 9, 6, 7, 
+  gtk_table_attach(GTK_TABLE(table), station7status, 7, 8, 6, 7, 
       GTK_FILL, GTK_FILL, 0, 0);
 
   title = gtk_label_new("Station 9: ");
-  gtk_table_attach(GTK_TABLE(table), title, 5, 6, 7, 8, 
+  gtk_table_attach(GTK_TABLE(table), title, 6, 7, 7, 8, 
       GTK_FILL, GTK_FILL, 0, 0);
 
   station9status = gtk_entry_new ();
   gtk_entry_set_max_length (GTK_ENTRY (station9status), 50);
   gtk_entry_set_text (GTK_ENTRY (station9status), "none");
-  gtk_table_attach(GTK_TABLE(table), station9status, 6, 7, 7, 8, 
+  gtk_table_attach(GTK_TABLE(table), station9status, 7, 8, 7, 8, 
+      GTK_FILL, GTK_FILL, 0, 0);
+
+  title = gtk_label_new("Station 2: ");
+  gtk_table_attach(GTK_TABLE(table), title, 8, 9, 3, 4, 
+      GTK_FILL, GTK_FILL, 0, 0);
+  station2status = gtk_entry_new ();
+  gtk_entry_set_max_length (GTK_ENTRY (station2status), 50);
+  gtk_entry_set_text (GTK_ENTRY (station2status), "none");
+  gtk_table_attach(GTK_TABLE(table), station2status, 9, 10, 3, 4, 
+      GTK_FILL, GTK_FILL, 0, 0);
+
+  title = gtk_label_new("Station 4: ");
+  gtk_table_attach(GTK_TABLE(table), title, 8, 9, 4, 5, 
+      GTK_FILL, GTK_FILL, 0, 0);
+
+  station4status = gtk_entry_new ();
+  gtk_entry_set_max_length (GTK_ENTRY (station4status), 50);
+  gtk_entry_set_text (GTK_ENTRY (station4status), "none");
+  gtk_table_attach(GTK_TABLE(table), station4status, 9, 10, 4, 5, 
+      GTK_FILL, GTK_FILL, 0, 0);
+
+  title = gtk_label_new("Station 6: ");
+  gtk_table_attach(GTK_TABLE(table), title, 8, 9, 5, 6, 
+      GTK_FILL, GTK_FILL, 0, 0);
+
+  station6status = gtk_entry_new ();
+  gtk_entry_set_max_length (GTK_ENTRY (station6status), 50);
+  gtk_entry_set_text (GTK_ENTRY (station6status), "none");
+  gtk_table_attach(GTK_TABLE(table), station6status, 9, 10, 5, 6, 
+      GTK_FILL, GTK_FILL, 0, 0);
+
+  title = gtk_label_new("Station 8: ");
+  gtk_table_attach(GTK_TABLE(table), title, 8, 9, 6, 7, 
+      GTK_FILL, GTK_FILL, 0, 0);
+
+  station8status = gtk_entry_new ();
+  gtk_entry_set_max_length (GTK_ENTRY (station8status), 50);
+  gtk_entry_set_text (GTK_ENTRY (station8status), "none");
+  gtk_table_attach(GTK_TABLE(table), station8status, 9, 10, 6, 7, 
       GTK_FILL, GTK_FILL, 0, 0);
 
   title = gtk_label_new("Station 10: ");
-  gtk_table_attach(GTK_TABLE(table), title, 7, 8, 7, 8, 
+  gtk_table_attach(GTK_TABLE(table), title, 8, 9, 7, 8, 
       GTK_FILL, GTK_FILL, 0, 0);
 
   station10status = gtk_entry_new ();
   gtk_entry_set_max_length (GTK_ENTRY (station10status), 50);
   gtk_entry_set_text (GTK_ENTRY (station10status), "none");
-  gtk_table_attach(GTK_TABLE(table), station10status, 8, 9, 7, 8, 
+  gtk_table_attach(GTK_TABLE(table), station10status, 9, 10, 7, 8, 
       GTK_FILL, GTK_FILL, 0, 0);
-  // g_signal_connect (robotbattery, "activate",
-  //       G_CALLBACK (enter_callback),
-  //       robotbattery);
+
   ////////////////////////////////////
+  title = gtk_label_new("Station 11: ");
+  gtk_table_attach(GTK_TABLE(table), title, 10, 11, 3, 4, 
+      GTK_FILL, GTK_FILL, 0, 0);
 
+  station11status = gtk_entry_new ();
+  gtk_entry_set_max_length (GTK_ENTRY (station11status), 50);
+  gtk_entry_set_text (GTK_ENTRY (station11status), "none");
+  gtk_table_attach(GTK_TABLE(table), station11status, 11, 12, 3, 4, 
+      GTK_FILL, GTK_FILL, 0, 0);
 
+  title = gtk_label_new("Station 12: ");
+  gtk_table_attach(GTK_TABLE(table), title, 10, 11, 4, 5, 
+      GTK_FILL, GTK_FILL, 0, 0);
+
+  station12status = gtk_entry_new ();
+  gtk_entry_set_max_length (GTK_ENTRY (station12status), 50);
+  gtk_entry_set_text (GTK_ENTRY (station12status), "none");
+  gtk_table_attach(GTK_TABLE(table), station12status, 11, 12, 4, 5, 
+      GTK_FILL, GTK_FILL, 0, 0);
+
+  title = gtk_label_new("Station 13: ");
+  gtk_table_attach(GTK_TABLE(table), title, 10, 11, 5, 6, 
+      GTK_FILL, GTK_FILL, 0, 0);
+
+  station13status = gtk_entry_new ();
+  gtk_entry_set_max_length (GTK_ENTRY (station13status), 50);
+  gtk_entry_set_text (GTK_ENTRY (station13status), "none");
+  gtk_table_attach(GTK_TABLE(table), station13status, 11, 12, 5, 6, 
+      GTK_FILL, GTK_FILL, 0, 0);
+
+  title = gtk_label_new("Station 14: ");
+  gtk_table_attach(GTK_TABLE(table), title, 10, 11, 6, 7, 
+      GTK_FILL, GTK_FILL, 0, 0);
+
+  station14status = gtk_entry_new ();
+  gtk_entry_set_max_length (GTK_ENTRY (station14status), 50);
+  gtk_entry_set_text (GTK_ENTRY (station14status), "none");
+  gtk_table_attach(GTK_TABLE(table), station14status, 11, 12, 6, 7, 
+      GTK_FILL, GTK_FILL, 0, 0);
+
+  title = gtk_label_new("Station 15: ");
+  gtk_table_attach(GTK_TABLE(table), title, 10, 11, 7, 8, 
+      GTK_FILL, GTK_FILL, 0, 0);
+
+  station15status = gtk_entry_new ();
+  gtk_entry_set_max_length (GTK_ENTRY (station15status), 50);
+  gtk_entry_set_text (GTK_ENTRY (station15status), "none");
+  gtk_table_attach(GTK_TABLE(table), station15status, 11, 12, 7, 8, 
+      GTK_FILL, GTK_FILL, 0, 0);
+
+  ////////////////////////////////////
 
   gtk_text_view_set_editable(GTK_TEXT_VIEW(wins), FALSE);
   gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(wins), FALSE);
   gtk_widget_set_size_request(wins, 400, 400);
-  gtk_table_attach(GTK_TABLE(table), wins,        1, 3, 10, 11, 
+  gtk_table_attach(GTK_TABLE(table), wins,        1, 4, 10, 11, 
       GTK_FILL | GTK_SHRINK, GTK_FILL | GTK_SHRINK, 1, 1);
 
   title = gtk_label_new("Control Panel");
@@ -1167,7 +1195,7 @@ void GUIInit(int argc, char *argv[])
 
   halign = gtk_alignment_new(0, 0, 0, 0);
   gtk_container_add(GTK_CONTAINER(halign), title);
-  gtk_table_attach(GTK_TABLE(table), halign, 1, 3, 1, 2, 
+  gtk_table_attach(GTK_TABLE(table), halign, 1, 4, 1, 2, 
       GTK_FILL, GTK_FILL, 0, 0);
 
   btnstation1 = gtk_button_new_with_label("Station 1");
@@ -1242,16 +1270,54 @@ void GUIInit(int argc, char *argv[])
   g_signal_connect (GTK_OBJECT(actstation10), "clicked",
           G_CALLBACK (button_was_clicked), (gpointer) "Station 10");
 
+  //////////////////////////////////
+  actstation11 = gtk_button_new_with_label("Station 11");
+  gtk_widget_set_size_request(actstation11, 300, 100);
+  gtk_table_attach(GTK_TABLE(table), actstation11, 3, 4, 2, 3, 
+          GTK_FILL, GTK_FILL, 0, 0);
+  g_signal_connect (GTK_OBJECT(actstation11), "clicked",
+          G_CALLBACK (button_was_clicked), (gpointer) "Station 11");
+
+  actstation12 = gtk_button_new_with_label("Station 12");
+  gtk_widget_set_size_request(actstation12, 300, 100);
+  gtk_table_attach(GTK_TABLE(table), actstation12, 3, 4, 3, 4, 
+          GTK_FILL, GTK_FILL, 0, 0);
+  g_signal_connect (GTK_OBJECT(actstation12), "clicked",
+          G_CALLBACK (button_was_clicked), (gpointer) "Station 12");
+
+  actstation13 = gtk_button_new_with_label("Station 13");
+  gtk_widget_set_size_request(actstation13, 300, 100);
+  gtk_table_attach(GTK_TABLE(table), actstation13, 3, 4, 4, 5, 
+          GTK_FILL, GTK_FILL, 0, 0);
+  g_signal_connect (GTK_OBJECT(actstation13), "clicked",
+          G_CALLBACK (button_was_clicked), (gpointer) "Station 13");
+
+  actstation14 = gtk_button_new_with_label("Station 14");
+  gtk_widget_set_size_request(actstation14, 300, 100);
+  gtk_table_attach(GTK_TABLE(table), actstation14, 3, 4, 5, 6, 
+          GTK_FILL, GTK_FILL, 0, 0);
+  g_signal_connect (GTK_OBJECT(actstation14), "clicked",
+          G_CALLBACK (button_was_clicked), (gpointer) "Station 14");
+
+  actstation15 = gtk_button_new_with_label("Station 15");
+  gtk_widget_set_size_request(actstation15, 300, 100);
+  gtk_table_attach(GTK_TABLE(table), actstation15, 3, 4, 6, 7, 
+          GTK_FILL, GTK_FILL, 0, 0);
+  g_signal_connect (GTK_OBJECT(actstation15), "clicked",
+          G_CALLBACK (button_was_clicked), (gpointer) "Station 15");
+
+  //////////////////////////////////
+
   actstation1 = gtk_button_new_with_label("Recall Robot");
   gtk_widget_set_size_request(actstation1, 300, 100);
-  gtk_table_attach(GTK_TABLE(table), actstation1, 1, 3, 7, 8, 
+  gtk_table_attach(GTK_TABLE(table), actstation1, 1, 4, 7, 8, 
           GTK_FILL, GTK_FILL, 0, 0);
   g_signal_connect (GTK_OBJECT(actstation1), "clicked",
           G_CALLBACK (button_was_clicked), (gpointer) "Recall Robot");
 
   btnallowcalling = gtk_button_new_with_label("Get yarn dyed");
   gtk_widget_set_size_request(btnallowcalling, 300, 100);
-  gtk_table_attach(GTK_TABLE(table), btnallowcalling, 1, 3, 8, 9, 
+  gtk_table_attach(GTK_TABLE(table), btnallowcalling, 1, 4, 8, 9, 
           GTK_FILL, GTK_FILL, 0, 0);
   g_signal_connect (GTK_OBJECT(btnallowcalling), "clicked",
           G_CALLBACK (button_was_clicked), (gpointer) "Calling Denied");
@@ -1266,57 +1332,6 @@ void GUIInit(int argc, char *argv[])
   //column 1
   gtk_table_attach(GTK_TABLE(table), halign, 4, 9, 8, 11,
           GTK_FILL, GTK_FILL, 0, 0);
-
-
-  // actstation2 = gtk_button_new_with_label("Station 2");
-  // gtk_widget_set_size_request(actstation2, 100, 100);
-  // gtk_table_attach(GTK_TABLE(table), actstation2, 90, 91, 1, 2, 
-  //         GTK_FILL, GTK_FILL, 0, 0);
-  // g_signal_connect (GTK_OBJECT(actstation2), "clicked",
-  //         G_CALLBACK (button_was_clicked), (gpointer) "Station 2");
-
-  // actstation3 = gtk_button_new_with_label("Station 3");
-  // gtk_widget_set_size_request(actstation3, 100, 100);
-  // gtk_table_attach(GTK_TABLE(table), actstation3, 91, 92, 1, 2, 
-  //         GTK_FILL, GTK_FILL, 0, 0);
-  // g_signal_connect (GTK_OBJECT(actstation3), "clicked",
-  //         G_CALLBACK (button_was_clicked), (gpointer) "Station 3");
-
-  // actstation4 = gtk_button_new_with_label("Station 4");
-  // gtk_widget_set_size_request(actstation4, 100, 100);
-  // gtk_table_attach(GTK_TABLE(table), actstation4, 90, 91, 2, 3, 
-  //         GTK_FILL, GTK_FILL, 0, 0);
-  // g_signal_connect (GTK_OBJECT(actstation4), "clicked",
-  //         G_CALLBACK (button_was_clicked), (gpointer) "Station 4");
-
-  // actstation5 = gtk_button_new_with_label("Station 5");
-  // gtk_widget_set_size_request(actstation5, 100, 100);
-  // gtk_table_attach(GTK_TABLE(table), actstation5, 91, 92, 2, 3, 
-  //         GTK_FILL, GTK_FILL, 0, 0);
-  // g_signal_connect (GTK_OBJECT(actstation5), "clicked",
-  //         G_CALLBACK (button_was_clicked), (gpointer) "Station 5");
-
-  // image = gtk_image_new ();
-  // gtk_image_set_from_file (GTK_IMAGE(image), "/home/agv/logo.png");
-
-  // //column 1
-  // gtk_table_attach(GTK_TABLE(table), image, 190, 192, 1, 91,
-  //         GTK_FILL, GTK_FILL, 0, 0);
-
-  // halign2 = gtk_alignment_new(0, 1, 0, 0);
-  // hlpBtn = gtk_button_new_with_label("Help");
-  // gtk_container_add(GTK_CONTAINER(halign2), hlpBtn);
-  // gtk_widget_set_size_request(hlpBtn, 70, 30);
-  // gtk_table_set_row_spacing(GTK_TABLE(table), 3, 5);
-  // gtk_table_attach(GTK_TABLE(table), halign2, 0, 1, 92, 93, 
-  //     GTK_FILL, GTK_FILL, 0, 0);
-
-  // actstation6 = gtk_button_new_with_label("Reset Stations");
-  // gtk_widget_set_size_request(actstation6, 140, 30);
-  // gtk_table_attach(GTK_TABLE(table), actstation6, 1, 3, 92, 93, 
-  //         GTK_FILL, GTK_FILL, 0, 0);
-  // g_signal_connect (GTK_OBJECT(actstation6), "clicked",
-  //         G_CALLBACK (button_was_clicked), (gpointer) "Reset Stations");
 
   gtk_container_add(GTK_CONTAINER(window), table);
 
@@ -1636,406 +1651,141 @@ void printtoconsole(char* text)
   gtk_text_view_scroll_to_iter(GTK_TEXT_VIEW(wins), &end, 0.0, FALSE, 0.0,0.0);
 }
 
-uint32_t count=0;
-void RequestingProcess(void)
+uint16_t stationresponding(uint16_t id)
 {
-  station1request = station1Register_received[0];
-  station2request = station2Register_received[0];
-  station3request = station3Register_received[0];
-  station4request = station4Register_received[0];
-  station5request = station5Register_received[0];
-  //printf("station 2 calling status: %d\n", callingallowed);
+  DEBUG_PRINT("%d HAS Requeting\n", id);
+  // Confirm with Station
+  stationWrite_reg[id][2] = 2;
+  stationwriting(id, stationWrite_reg[id]);
 
-  if(++count == 10000000)
+  // Request to Robots
+  robotRegister_sent[0] = id;
+
+  // Get Robot location
+  int16_t prt_robotlocation;
+  prt_robotlocation = robotRegister_received[0];
+  //prt_robotlocation = 12;
+  if(prt_robotlocation == id)
   {
-    count = 0;
-    //printf("%d %d %d %d %d\n", station1request, station2request, station3request, station4request, station5request);
-
+    stationWrite_reg[id][0] = id;
+    stationwriting(id, stationWrite_reg[id]);
+    return 1;
   }
-  if((station2request != -1))
+  return 0;
+}
+
+uint16_t stationderesponding(uint16_t id)
+{
+  if(stationstatus[id] == 0)
   {
-    if(
-      (station3request == 0 || station3request == -1 || station3_isaccepted == 0) &&
-      (station5request == 0 || station5request == -1 || station5_isaccepted == 0)
-      )
-    {
-      if(
-          (station2_isaccepted == 1)
-        )
-
-      {
-        if(
-            (station2request == 1)
-          )
-        {
-          robotworking                  = 2;
-          robotRegister_sent[0]         = 2; 
-          station2Register_sent[2]      = 2;
-          if((station2_processed == 0))
-          {
-            station2_processed          = 1;
-            snprintf(TEXT, sizeof(TEXT), "[OK] [%6d] Station 2 requests robot at => %s", ++station2_counter, getTime());
-            printtoconsole(TEXT);
-            printf("[OK] [%6d] Station 2 requests robot at => %s", station2_counter, getTime());
-          }
-        }
-        else
-        {
-          robotworking = 0;
-          station2Register_sent[0]  = 0;
-          station2Register_sent[2]  = 0;
-          if((station2_processed == 1))
-          {
-            station2_processed        = 0;
-            robotRegister_sent[0]     = 4;
-            station4Register_sent[1]    = 1;
-
-            printf("[OK] Station 2 has canceled requests at => %s", getTime());
-            snprintf(TEXT, sizeof(TEXT), "[OK] Station 2 has canceled requests at => %s", getTime());
-            printtoconsole(TEXT);
-          }
-        }
-      }
-    }
+    printf("%d HASN'T Requeting\n", id);
   }
+  else
+  {
+    printf("%d HAS canceled Requeting\n", id);
 
-  if(
-    (station5request == 0) || (station5request == -1) || (station5_isaccepted == 0) || (station3allowedfrommaster == 1)
-    )
-  {
-    if(
-        (station3_isaccepted == 1)
-      )
-    {
-      if((station3request != -1))
-      {
-        if((station3request == 1))
-        {
-          robotworking = 3;
-          robotRegister_sent[0]         = 3;
-          station3Register_sent[2]      = 3;
-          if((station3_processed == 0))
-          {
-            station3_processed          = 1;
-            snprintf(TEXT, sizeof(TEXT), "[OK] [%6d] Station 3 requests robot at => %s", ++station3_counter, getTime());
-            printtoconsole(TEXT);
-            printf("[OK] [%6d] Station 3 requests robot at => %s", station3_counter, getTime());
-          }
-        }
-        else if(station3request == 0)
-        {
-          station3Register_sent[0]      = 0;
-          station3Register_sent[1]      = 0;
-          station3Register_sent[2]      = 0;
-          robotworking                  = 0;
-          station4Register_sent[1]      = 1;
-          station3allowedfrommaster     = 0;
-          if((station3_processed == 1))
-          {
-            station3_processed = 0;
-            robotRegister_sent[0]         = 4;
-            printf("[OK] Station 3 has canceled requests at => %s", getTime());
-            snprintf(TEXT, sizeof(TEXT), "[OK] Station 3 has canceled requests at => %s", getTime());
-            printtoconsole(TEXT);
-          }
-        }
-      }
-    }
-  }
-  
-  if((station5request != -1))
-  {
-    if(
-        (station5_isaccepted == 1)
-      )
-    {
-      if((station5request == 1))
-      {
-        robotworking = 5;
-        robotRegister_sent[0]         = 5;
-        station5Register_sent[2]      = 5;
-        if((station5_processed == 0))
-        {
-          station5_processed          = 1;
-          snprintf(TEXT, sizeof(TEXT), "[OK] [%6d] Station 5 requests robot at => %s", ++station5_counter, getTime());
-          printtoconsole(TEXT);
-          printf("[OK] [%6d] Station 5 requests robot at => %s", station5_counter, getTime());
-        }
-      }
-      else if(
-              (station2request == 0) &&
-              (station3request == 0)
-              )
-      {
-        station5Register_sent[0]      = 0;
-        station5Register_sent[2]      = 0;
-        robotworking = 0;
-        if((station5_processed == 1))
-        {
-          station5_processed          = 0;
-          robotRegister_sent[0]       = 4;
-          station4Register_sent[1]    = 1;
-          printf("[OK] Station 5 has canceled requests at => %s", getTime());
-          snprintf(TEXT, sizeof(TEXT), "[OK] Station 5 has canceled requests at => %s", getTime());
-          printtoconsole(TEXT);
-        }
-      }
-    }
+    // Confirm with Station
+    stationWrite_reg[id][2] = 0;
+    stationwriting(id, stationWrite_reg[id]);
+
+    // Clear station calling logs
+    stationstatus[id] = 0;
+
+    // Request to Robots
+    robotRegister_sent[0] = 15;
   }
 }
 
-void ControllProcess(void)
+uint16_t stationcontroller(uint16_t id)
 {
-
-  int16_t robotlocation = robotRegister_received[0];
-  switch(robotlocation)
+  int16_t increasing, decreasing, canceled;
+  canceled = 0;
+  while(1)
   {
-    case 1:
-      staion4_locking = 0;
-    break;
-    case 2:
-      staion4_locking = 0;
-      if(station2_processed == 1)
-      {
-        robotworking = 2;
-        station1Register_sent[0]=0;
-        station2Register_sent[0]=robotlocation;
-        station2Register_sent[1]=2;
-        station3Register_sent[0]=0;
-        station4Register_sent[0]=0;
-        station5Register_sent[0]=0;
-        printf("[OK] Robot come to Station %d at %s", robotlocation, getTime());
-        while(1)
-        {
-          station2request = station2Register_received[0];
-          station2control1 = station2Register_received[2];
-          station2control2 = station2Register_received[3];
-          if((station2control1 == 1) && (robotRegister_sent[1] != 1))
-          {
-            printf("%s[WARN] Increased the Carier at station %d\n%s", KYEL, robotlocation, NONE);
-            robotRegister_sent[1]=1;
-          }
-          else if ((station2control2 == 1) && (robotRegister_sent[1] != 0))
-          {
-            printf("%s[WARN] Decreased the Carier\n%s", KGRN, NONE);
-            robotRegister_sent[1]=0;
-          }
-          if((station2request == 0) && station2request != -1)
-          {
-            if(robotRegister_sent[1] == 1)
-            {
-              printf("%s\r[WARNING] Please DECREASE the Carier firstly%s", KRED, NONE);
-            }
-            else
-            {
-              printf("[OK] Robot finished at Station %d\n", robotlocation);
-              snprintf(TEXT, sizeof(TEXT), "[OK] Robot was finished at station %d at %s", robotlocation, getTime());
-              printtoconsole(TEXT);
-              break;
-            }
-          }
-        }
-        sleep(1);
-        STATION1_ENABLE   =  0;
-        STATION2_ENABLE   =  1;
-        STATION3_ENABLE   =  1;
-        STATION4_ENABLE   =  1;
-        STATION5_ENABLE   =  1;
-        robotworking = 0;
-        station2Register_sent[0]=0;
-        station2Register_sent[1]=0;
-        station2Register_sent[2]=0;
-        robotRegister_sent[0]=4;
-        station2_processed = 0;
-      }
-    break;
-    case 3:
-      staion4_locking = 0;
-      if(station3_processed == 1)
-      {
-        robotworking = 3;
-        station1Register_sent[0]=0;
-        station2Register_sent[0]=0;
-        station3Register_sent[0]=robotlocation;
-        station3Register_sent[1]=2;
-        station4Register_sent[0]=0;
-        station5Register_sent[0]=0;
-        printf("[OK] Robot come to Station %d at %s", robotlocation, getTime());
-        while(1)
-        {
-          station3request = station3Register_received[0];
-          station3control1 = station3Register_received[2];
-          station3control2 = station3Register_received[3];
-          if((station3control1 == 1) && (station3control1 != -1) && (robotRegister_sent[1] != 1))
-          {
-            printf("%s[WARN] Increased the Barier at station %d\n%s", KYEL, robotlocation, NONE);
-            robotRegister_sent[1]=1;
-          }
-          else if ((station3control2 == 1) && (station3control2 != -1) && (robotRegister_sent[1] != 0))
-          {
-            printf("%s[WARN] Decreased the Barier\n%s", KGRN, NONE);
-            robotRegister_sent[1]=0;
-          }
-          if((station3Register_received[0] == 0) && station3Register_received[0] != -1)
-          {
-            if(robotRegister_sent[1] == 1)
-            {
-              printf("%s\r[ERROR] Please DECREASE the Barier firstly%s", KRED, NONE);
-            }
-            else
-            {
-              printf("[OK] Robot finished at Station %d\n", robotlocation);
-              snprintf(TEXT, sizeof(TEXT), "[OK] Robot was finished at station %d at %s", robotlocation, getTime());
-              printtoconsole(TEXT);
-              break;
-            }
-
-          }
-        }
-        sleep(1);
-        STATION1_ENABLE   =  0;
-        STATION2_ENABLE   =  1;
-        STATION3_ENABLE   =  1;
-        STATION4_ENABLE   =  1;
-        STATION5_ENABLE   =  1;
-        robotworking = 0;
-        station3Register_sent[0]=0;
-        station3Register_sent[1]=0;
-        station3Register_sent[2]=0;
-        robotRegister_sent[0]=4;
-        station3_processed = 0;
-      }
-    break;
-    case 4:
-      if(staion4_locking == 0)
-      {
-        robotworking = 4;
-        station4Register_sent[1] = 2;
-        while(station4Register_received[3] == 0 || (station4Register_received[0] == -1))
-        {
-          printf("Wating Station 4 confirms\n");
-          sleep(1);
-        }
-        robotRegister_sent[0] = 1;
-        snprintf(TEXT, sizeof(TEXT), "Station 4 was confirmed at %s", getTime());
-        printtoconsole(TEXT);
-        printf("Station 4 was confirmed\n");
-        station4Register_sent[0] = 0;
-        station4Register_sent[1] = 0;
-        station4Register_sent[2] = 0;
-        robotworking = 0;
-        staion4_locking = 1;
-      }
-    break;
-    case 5:
-      staion4_locking = 0;
-    if(station5_processed == 1)
+    printf("Station Controller Hanlder !!!\n");
+    stationreading(id, stationRead_reg[id], 1000000);
+    canceled = stationRead_reg[id][0];
+    increasing = stationRead_reg[id][2];
+    decreasing = stationRead_reg[id][3];
+    if(
+        (increasing == 1) &&
+        (decreasing == 0)
+      )
     {
-      robotworking = 5;
-      station1Register_sent[0]=0;
-      station2Register_sent[0]=0;
-      station3Register_sent[0]=0;
-      station4Register_sent[0]=0;
-      station5Register_sent[0]=robotlocation;
-      station5Register_sent[1]=2;
-      STATION5_WRITING = 1;
-      printf("[OK] Robot come to Station %d at %s", robotlocation, getTime());
-      while(1)
-      {
-        station5request=station5Register_received[0];
-        station5control1=station5Register_received[2];
-        station5control2=station5Register_received[3];
-        if((station5control1 == 1) && (robotRegister_sent[1] != 1))
-        {
-          printf("%s[WARN] Increased the Barier at station %d\n%s", KYEL, robotlocation, NONE);
-          robotRegister_sent[1]=1;
-        }
-        else if ((station5control2 == 1) && (robotRegister_sent[1] != 0))
-        {
-          printf("%s[WARN] Decreased the Barier\n%s", KGRN, NONE);
-          robotRegister_sent[1]=0;
-        }
-        if((station5request == 0) && station5request != -1)
-        {
-          if(robotRegister_sent[1] == 1)
-          {
-            printf("%s\r[ERROR] Please DECREASE the Barier firstly%s", KRED, NONE);
-          }
-          else
-          {
-            printf("[OK] Robot finished at Station %d\n", robotlocation);
-            snprintf(TEXT, sizeof(TEXT), "[OK] Robot was finished at station %d at %s", robotlocation, getTime());
-            printtoconsole(TEXT);
-            break;
-          }
-
-        }
-      }
-      sleep(1);
-      STATION1_ENABLE   =  0;
-      STATION2_ENABLE   =  1;
-      STATION3_ENABLE   =  1;
-      STATION4_ENABLE   =  1;
-      STATION5_ENABLE   =  1;
-      robotworking = 0;
-      station5Register_sent[0]=0;
-      station5Register_sent[1]=0;
-      station5Register_sent[2]=0;
-      robotRegister_sent[0]=4;
-      station5_processed = 0;
+      robotRegister_sent[1]=1;
+      DEBUG_PRINT("Increased the Carier\n");
     }
-    break;
-    default:
-      //printf("[WARNING] Unknow robot location!!!\n");
-    break;
+    else if(
+            (increasing == 0) &&
+            (decreasing == 1)
+      )
+    {
+      robotRegister_sent[1]=0;
+      DEBUG_PRINT("Decreased the Carier\n");
+    }
+
+    if(canceled == 0)
+    {
+      printf("Finished at station %d\n", id);
+
+      // Clear all station regs
+      stationWrite_reg[id][0] = 0;
+      stationWrite_reg[id][1] = 0;
+      stationWrite_reg[id][2] = 0;
+      stationWrite_reg[id][3] = 0;
+      stationWrite_reg[id][4] = 0;
+      stationwriting(id, stationWrite_reg[id]);
+
+      // Clear station calling logs
+      stationstatus[id] = 0;
+      
+      return 0;
+    }
+    DEBUG_PRINT("Robot is working at %d\n", id);
   }
+  return 1;
 }
 
-void stationresponding(uint16_t id)
+int16_t stationwriting(int16_t id, int16_t* regs)
 {
-  switch(id)
+  usleep(500000);
+
+  // Setting for writing to station
+  modbus_set_response_timeout(modbus_rtu_station_ctx, STATION_TIMEOUT_S, STATION_TIMEOUT_uS);
+  modbus_set_slave(modbus_rtu_station_ctx, id);
+  //modbus_flush(modbus_rtu_station_ctx);
+  modbus_set_debug(modbus_rtu_station_ctx, FALSE);
+  return modbus_write_registers(modbus_rtu_station_ctx, 0, 5, regs);
+}
+int16_t stationreading(int16_t id, int16_t *regs, int16_t usleeptime)
+{
+  // Sleep for each reading
+  if(usleeptime > 0)
   {
-    case 2:
+    usleep(usleeptime);
+  }
 
-    break;
-    case 3:
+  // Return for reading status
+  int16_t rc;
 
-    break;
-    case 4:
+  // Setting for writing to station
+  modbus_set_response_timeout(modbus_rtu_station_ctx, STATION_TIMEOUT_S, STATION_TIMEOUT_uS);
+  modbus_set_slave(modbus_rtu_station_ctx, id);
+  //modbus_flush(modbus_rtu_station_ctx);
+  modbus_set_debug(modbus_rtu_station_ctx, FALSE);
 
-    break;
-    case 5:
+  // Begin to read
+  rc = modbus_read_registers(modbus_rtu_station_ctx, 0, 5, regs);
 
-    break;
-    case 6:
-
-    break;
-    case 7:
-
-    break;
-    case 8:
-
-    break;
-    case 9:
-
-    break;
-    case 10:
-
-    break;
-    case 11:
-
-    break;
-    case 12:
-      stationWrite_reg[12][1] = 12;
-    break;
-    case 13:
-
-    break;
-    case 14:
-
-    break;
-    default:
-      DEBUG_PRINT("[ERROR] Invalid Station ID\n");
-    break;
+  // Check reading status
+  if(rc == -1)
+  {
+    printf("%s Station %d Reading TIMEOUT\n", __FUNCTION__, id);
+    return 1;
+  }
+  else
+  {
+    DEBUG_PRINT("%s Station %d Reading OK\n", __FUNCTION__, id);
+    return 0;
   }
 }
