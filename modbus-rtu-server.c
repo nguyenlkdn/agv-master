@@ -68,6 +68,7 @@ uint16_t STATION5_WRITING  =  0;
 int16_t stationRead_reg[STATION_MAX][5];
 int16_t stationWrite_reg[STATION_MAX][5];
 int16_t stationstatus[STATION_MAX];
+int16_t under_control_ofMaster=0;
 #define font "Sans 60"
 PangoFontDescription *font_desc;
 /*
@@ -478,6 +479,20 @@ void *stationThread(void *vargp)
       stationWrite_reg[15][2] = 0;
       stationwriting(15, stationWrite_reg[15]);
     }
+    else if(under_control_ofMaster > 0)
+    {
+    	while(1)
+    	{
+    		printf("Under control of Master to %d\n", under_control_ofMaster);
+    		if(stationresponding(under_control_ofMaster) == 1)
+    		{
+    		  stationcontroller(under_control_ofMaster);
+    		  under_control_ofMaster = 0;
+    		  break;
+    		}
+    		sleep(1);
+    	}
+    }
     else
     {
       /*
@@ -579,7 +594,7 @@ void *robotThread(void *vargp)
     {
       if(robotRegister_sent_previous[rc] != robotRegister_sent[rc])
       {
-        printf("Has new packages so that writing to robot: %d \n", robotRegister_sent[0]);
+        //printf("Has new packages so that writing to robot: %d \n", robotRegister_sent[0]);
         resend = 1;
         break;
       }
@@ -603,7 +618,7 @@ void *robotThread(void *vargp)
       if(rc != 5)
       {
         rewrite = 1;
-        printf("Robot Writing Failed so that re-writing\n");
+        DEBUG_PRINT("Robot Writing Failed so that re-writing\n");
       }
       else
       {
@@ -860,7 +875,8 @@ void stationInit()
    }
    memset(stationignore, 1, sizeof(stationignore));
    memset(stationstatus, 0, sizeof(stationstatus));
-   stationignore[12]=1;
+   //stationignore[2]=0;
+   //stationignore[11]=0;
    int i;
    for(i=0;i<STATION_MAX;i++)
    {
@@ -2269,4 +2285,6 @@ void guisending(int16_t id)
 {
   robotRegister_sent[0] = id;
   stationWrite_reg[id][1] = 1;
+  stationwriting(id, stationWrite_reg[id]);
+  under_control_ofMaster=id;
 }
