@@ -457,83 +457,108 @@ void *stationThread(void *vargp)
   int32_t rc;
   while (1)
   {
-    /*
-      List of station will be ignored
-    */
-    DEBUG_PRINT("Ignored %d: ", STATION_MAX);
-    for(rc=1;rc<=STATION_MAX;rc++)
+    if(robotRegister_received[0] == 15 && robotRegister_sent[0] == 15)
     {
-      stationid = rc;
-      if(stationignore[rc] == 0)
+      printf("Robot was come to Station 15\n");
+      stationWrite_reg[15][1] = 2;
+      stationWrite_reg[15][0] = 15;
+      stationwriting(15, stationWrite_reg[15]);
+      while(stationRead_reg[15][3] == 0 || (stationRead_reg[15][3] == -1))
       {
-        DEBUG_PRINT("%3d", rc);
+        stationreading(15, stationRead_reg[15], 1000000);
+        printf("Wating Station 15 confirms\n");
+        sleep(1);
       }
-    }
-    DEBUG_PRINT("\n");
-    ////////////////////////////////////
-    /*
-      Reading Stations
-    */
-    int32_t stationscan;
-    uint16_t come_to_valid_point;
-    if(robotRegister_received[0] >= 2)
-    {
-      stationscan = robotRegister_received[0]+1;
+      robotRegister_sent[0] = 1;
+      snprintf(TEXT, sizeof(TEXT), "Station 15 was confirmed at %s", getTime());
+      printtoconsole(TEXT);
+      printf("Station 15 was confirmed\n");
+      stationWrite_reg[15][0] = 0;
+      stationWrite_reg[15][1] = 0;
+      stationWrite_reg[15][2] = 0;
+      stationwriting(15, stationWrite_reg[15]);
     }
     else
     {
-      stationscan=STATION_START;
-    }
-    for(;stationscan<=STATION_MAX;stationscan++)
-    {
-      if(stationignore[stationscan] == 1)
+      /*
+        List of station will be ignored
+      */
+      DEBUG_PRINT("Ignored %d: ", STATION_MAX);
+      for(rc=1;rc<=STATION_MAX;rc++)
       {
-        modbus_set_response_timeout(modbus_rtu_station_ctx, STATION_TIMEOUT_S, STATION_TIMEOUT_uS);
-        modbus_set_slave(modbus_rtu_station_ctx, stationscan);
-        //modbus_flush(modbus_rtu_station_ctx);
-        modbus_set_debug(modbus_rtu_station_ctx, FALSE);
-        ////////////// Reading //////////////////////
-        rc = modbus_read_registers(modbus_rtu_station_ctx, 0, 5, stationRead_reg[stationscan]);
-        if(rc == -1)
+        stationid = rc;
+        if(stationignore[rc] == 0)
         {
-          memset(stationRead_reg[stationscan], -1, sizeof(stationRead_reg[stationscan]));
-          printf("STATION %d: READ TIMEOUT!\n", stationscan);
+          DEBUG_PRINT("%3d", rc);
         }
-        else
+      }
+      DEBUG_PRINT("\n");
+      ////////////////////////////////////
+      /*
+        Reading Stations
+      */
+      int32_t stationscan;
+      uint16_t come_to_valid_point;
+      if(robotRegister_received[0] >= 2)
+      {
+        stationscan = robotRegister_received[0];
+      }
+      else
+      {
+        stationscan=STATION_START;
+      }
+      for(;stationscan<=STATION_MAX;stationscan++)
+      {
+        if(stationignore[stationscan] == 1)
         {
-          int i;
-          DEBUG_PRINT("[%d] STATION %d READs OK, with Data: ", rc, stationscan);
-          for(i=0;i<5;i++)
+          modbus_set_response_timeout(modbus_rtu_station_ctx, STATION_TIMEOUT_S, STATION_TIMEOUT_uS);
+          modbus_set_slave(modbus_rtu_station_ctx, stationscan);
+          //modbus_flush(modbus_rtu_station_ctx);
+          modbus_set_debug(modbus_rtu_station_ctx, FALSE);
+          ////////////// Reading //////////////////////
+          rc = modbus_read_registers(modbus_rtu_station_ctx, 0, 5, stationRead_reg[stationscan]);
+          if(rc == -1)
           {
-            DEBUG_PRINT("%6d", stationRead_reg[stationscan][i], i);
-          }
-          DEBUG_PRINT("\n");
-
-          // Sleep between Reading & Writing Thread
-          usleep(500000);
-          
-          ////////////////////////////////////
-          // /*
-          //   Checking Calling
-          // */
-          if(stationRead_reg[stationscan][0] == 1)
-          {
-            stationstatus[stationscan] = 1;
-            come_to_valid_point = stationresponding(stationscan);
-            if(come_to_valid_point == 1)
-            {
-              stationcontroller(stationscan);
-            }
-            break;
+            memset(stationRead_reg[stationscan], -1, sizeof(stationRead_reg[stationscan]));
+            printf("STATION %d: READ TIMEOUT!\n", stationscan);
           }
           else
           {
-            stationderesponding(stationscan);
+            int i;
+            DEBUG_PRINT("[%d] STATION %d READs OK, with Data: ", rc, stationscan);
+            for(i=0;i<5;i++)
+            {
+              DEBUG_PRINT("%6d", stationRead_reg[stationscan][i], i);
+            }
+            DEBUG_PRINT("\n");
+
+            // Sleep between Reading & Writing Thread
+            usleep(500000);
+            
+            ////////////////////////////////////
+            // /*
+            //   Checking Calling
+            // */
+            if(stationRead_reg[stationscan][0] == 1)
+            {
+              stationstatus[stationscan] = 1;
+              come_to_valid_point = stationresponding(stationscan);
+              if(come_to_valid_point == 1)
+              {
+                stationcontroller(stationscan);
+              }
+              break;
+            }
+            else
+            {
+              stationderesponding(stationscan);
+            }
+            ////////////////////////////////////
           }
-          ////////////////////////////////////
         }
       }
     }
+    printf("%s %d %d\n", __FUNCTION__, robotRegister_sent[0], robotRegister_received[0]);
     ////////////////////////////////////
     usleep(500000);
   }
