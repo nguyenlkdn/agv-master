@@ -486,14 +486,16 @@ void *stationThread(void *vargp)
     		printf("Under control of Master to %d\n", under_control_ofMaster);
     		if(stationresponding(under_control_ofMaster) == 1)
     		{
-    		  stationcontroller(under_control_ofMaster);
-    		  under_control_ofMaster = 0;
-    		  break;
+    			stationWrite_reg[under_control_ofMaster][1] = 2;
+  				stationwriting(under_control_ofMaster, stationWrite_reg[under_control_ofMaster]);
+    		  	stationcontroller(under_control_ofMaster);
+    		  	under_control_ofMaster = 0;
+    		  	break;
     		}
     		sleep(1);
     	}
     }
-    else
+    else if (callingallowed == 1)
     {
       /*
         List of station will be ignored
@@ -790,6 +792,11 @@ void *robotThread(void *vargp)
 
         gtk_container_foreach (GTK_CONTAINER (actstation5), 
                                (GtkCallback) recallback5, "Station 5");
+      }
+      else if(robotRegister_received[0] == 6)
+      {
+        gtk_container_foreach (GTK_CONTAINER (actstation6), 
+                               (GtkCallback) recallback6, "Station 6");
       }
     }
 
@@ -2191,7 +2198,7 @@ uint16_t stationcontroller(uint16_t id)
   canceled = 0;
   while(1)
   {
-    printf("Station Controller Hanlder !!!\n");
+    printf("Station Controller Hanlder %d!!!\n", id);
     stationreading(id, stationRead_reg[id], 1000000);
     canceled = stationRead_reg[id][0];
     increasing = stationRead_reg[id][2];
