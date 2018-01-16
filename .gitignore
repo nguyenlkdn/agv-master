@@ -1,4 +1,2 @@
 server
-Makefile
 modbus-rtu-server.o
-config.h
