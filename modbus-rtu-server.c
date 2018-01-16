@@ -2150,9 +2150,12 @@ void printtoconsole(char* text)
 uint16_t stationresponding(uint16_t id)
 {
   DEBUG_PRINT("%d HAS Requeting\n", id);
-  // Confirm with Station
-  stationWrite_reg[id][2] = 2;
-  stationwriting(id, stationWrite_reg[id]);
+  if(id > 1)
+  {
+  	// Confirm with Station
+  	stationWrite_reg[id][2] = 2;
+  	stationwriting(id, stationWrite_reg[id]);
+  }
 
   // Request to Robots
   robotRegister_sent[0] = id;
@@ -2160,11 +2163,15 @@ uint16_t stationresponding(uint16_t id)
   // Get Robot location
   int16_t prt_robotlocation;
   prt_robotlocation = robotRegister_received[0];
+
   //prt_robotlocation = 12;
   if(prt_robotlocation == id)
   {
-    stationWrite_reg[id][0] = id;
-    stationwriting(id, stationWrite_reg[id]);
+  	if(id > 1)
+  	{
+  		stationWrite_reg[id][0] = id;
+  		stationwriting(id, stationWrite_reg[id]);
+  	}
     return 1;
   }
   return 0;
@@ -2194,6 +2201,10 @@ uint16_t stationderesponding(uint16_t id)
 
 uint16_t stationcontroller(uint16_t id)
 {
+	if(id<=1)
+	{
+		return 0;
+	}
   int16_t increasing, decreasing, canceled;
   canceled = 0;
   while(1)
@@ -2222,13 +2233,10 @@ uint16_t stationcontroller(uint16_t id)
 
     if(canceled == 0)
     {
-      printf("Finished at station %d\n", id);
+      DEBUG_PRINT("Finished at station %d\n", id);
+      
       // Clear all station regs
-      stationWrite_reg[id][0] = 0;
-      stationWrite_reg[id][1] = 0;
-      stationWrite_reg[id][2] = 0;
-      stationWrite_reg[id][3] = 0;
-      stationWrite_reg[id][4] = 0;
+      memset(stationWrite_reg[id], 0, 5);
       stationwriting(id, stationWrite_reg[id]);
 
       // Clear station calling logs
