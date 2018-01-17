@@ -10,7 +10,6 @@
 #include <gtk/gtk.h>
 
 #include "config.h"
-#include "button.h"
 //#define RobotModbus_DEBUG
 //#define Station1Modbus_DEBUG
 
@@ -62,7 +61,7 @@ enum {TCP, RTU};
 #define font "Sans 60"
 PangoFontDescription *font_desc;
 char TEXT[255];
-uint8_t callingallowed = 0;
+uint8_t callingallowed = 1;
 uint16_t UserCallingBuffer[10];
 GtkTextBuffer *consoletxt;
 GtkTextIter iter;
@@ -111,7 +110,7 @@ uint16_t stationderesponding(uint16_t id);
 
 uint16_t stationcontroller(uint16_t id);
 int16_t stationwriting(int16_t id, int16_t* regs);
-int16_t stationreading(int16_t id, int16_t *regs, int16_t usleeptime);
+int16_t stationreading(int16_t id, int16_t *regs, int32_t usleeptime);
 
 void guisending(int16_t id);
 
@@ -202,16 +201,16 @@ int main(int argc, char *argv[])
   pthread_t testing_id;
 
   pthread_create(&userThread_id, NULL, userThread, NULL);
-  //pthread_create(&robotThread_id, NULL, robotThread, NULL);
-  //pthread_create(&stationThread_id, NULL, stationThread, NULL);
+  pthread_create(&robotThread_id, NULL, robotThread, NULL);
+  pthread_create(&stationThread_id, NULL, stationThread, NULL);
 
-  pthread_create(&testing_id, NULL, testing, NULL);
+  //pthread_create(&testing_id, NULL, testing, NULL);
 
   pthread_join(userThread_id, NULL);
-  //pthread_join(robotThread_id, NULL);
-  //pthread_join(stationThread_id, NULL);
+  pthread_join(robotThread_id, NULL);
+  pthread_join(stationThread_id, NULL);
 
-  pthread_join(testing_id, NULL);
+  //pthread_join(testing_id, NULL);
   return 0;
 }
 
@@ -248,7 +247,7 @@ void *stationThread(void *vargp)
   {
     if(robotRegister_received[0] == 15 && robotRegister_sent[0] == 15)
     {
-      printf("Robot was come to Station 15\n");
+      DEBUG_PRINT("Robot was come to Station 15\n");
       stationWrite_reg[15][1] = 2;
       stationWrite_reg[15][0] = 15;
       stationwriting(15, stationWrite_reg[15]);
@@ -267,42 +266,61 @@ void *stationThread(void *vargp)
       stationWrite_reg[15][2] = 0;
       stationwriting(15, stationWrite_reg[15]);
     }
-    else if(isemtpyHistory() == 1)
+    
+    else if(isemtpyHistory() == 0)
     {
     	while(1)
     	{
     		// Get the reqeusting from history
-    		under_control_ofMaster = checkingHistory();
-
-    		// Request robot to stations
-    		robotRegister_sent[0] = under_control_ofMaster;
-
-    		// Confirm with station
-  			stationWrite_reg[under_control_ofMaster][1] = 1;
-  			stationwriting(under_control_ofMaster, stationWrite_reg[under_control_ofMaster]);
-
-    		printf("Under control of Master to %d\n", under_control_ofMaster);
-
-    		// Checking robot come station or not
-    		if(stationresponding(under_control_ofMaster) == 1)
+    		if(checkingHistory() != -1)
     		{
-    			// Turn on the led
-    			stationWrite_reg[under_control_ofMaster][1] = 2;
-  				stationwriting(under_control_ofMaster, stationWrite_reg[under_control_ofMaster]);
-    		  	
-    		  	// Allow station increase/decrease the carier
-    		  	stationcontroller(under_control_ofMaster);
+    			under_control_ofMaster = checkingHistory();
+    			printf("Under control of Master at the %d\n", under_control_ofMaster);
 
-    		  	// Clear the requesting
-    		  	deleteHistory(under_control_ofMaster);
-    		  	under_control_ofMaster = 0;
-    		  	break;
+    			// Request robot to stations
+    			robotRegister_sent[0] = under_control_ofMaster;
+    	  		
+    	  		// Confirm with station
+    			stationWrite_reg[under_control_ofMaster][1] = 1;
+    			stationwriting(under_control_ofMaster, stationWrite_reg[under_control_ofMaster]);
+
+    	  		// Checking robot come station or not
+    	  		if(stationresponding(under_control_ofMaster) == 1)
+    	  		{
+    	  			// Turn on the led
+    	  			stationWrite_reg[under_control_ofMaster][1] = 2;
+   					stationwriting(under_control_ofMaster, stationWrite_reg[under_control_ofMaster]);
+    	  		  	
+    	  		  	// Allow station increase/decrease the carier
+    	  		  	stationcontroller(under_control_ofMaster);
+
+    	  		  	// Clear the requesting
+    	  		  	deleteHistory(under_control_ofMaster);
+    	  		  	under_control_ofMaster = 0;
+    	  		  	break;
+    	  		}
+    	  		else
+    	  		{
+    	  			if(robotRegister_received[0] > under_control_ofMaster)
+    	  			{
+    	  				// Clear History if robot ignore RFID
+    	  				deleteHistory(under_control_ofMaster);
+
+    	  				// Clear The status of station 
+    	  				stationWrite_reg[under_control_ofMaster][0] = 0;
+    	  				stationWrite_reg[under_control_ofMaster][1] = 0;
+    	  				stationWrite_reg[under_control_ofMaster][2] = 0;
+    	  				stationwriting(under_control_ofMaster, stationWrite_reg[under_control_ofMaster]);
+    	  			}
+    	  		}
     		}
-    		sleep(1);
+    		usleep(1000000);
     	}
     }
     else if (callingallowed == 1)
     {
+    	printf("Searching the requesting\n");
+
       /*
         List of station will be ignored
       */
@@ -485,77 +503,81 @@ void *robotThread(void *vargp)
       robotRegister_sent[2] = 0;
 
       //////////////////////// Reset status /////////////////////////////
-      // if(robotRegister_received[0] == 1)
-      // {
-      //   gtk_container_foreach (GTK_CONTAINER (actstation1), 
-      //                          (GtkCallback) recallback1, "Recall Robot");
-      // }
-      // else if(robotRegister_received[0] == 2)
-      // {
-      //   gtk_container_foreach (GTK_CONTAINER (actstation2), 
-      //                          (GtkCallback) recallback2, "Station 2");
-      // }
-      // else if(robotRegister_received[0] == 3)
-      // {
-      //   gtk_container_foreach (GTK_CONTAINER (actstation3), 
-      //                          (GtkCallback) recallback3, "Station 3");
-      // }
-      // else if(robotRegister_received[0] == 4)
-      // {
-
-      //   gtk_container_foreach (GTK_CONTAINER (actstation4), 
-      //                          (GtkCallback) recallback4, "Station 4");
-      // }
-      // else if(robotRegister_received[0] == 5)
-      // {
-      //   gtk_container_foreach (GTK_CONTAINER (actstation5), 
-      //                          (GtkCallback) recallback5, "Station 5");
-      // }
-      // else if(robotRegister_received[0] == 6)
-      // {
-      //   gtk_container_foreach (GTK_CONTAINER (actstation6), 
-      //                          (GtkCallback) recallback6, "Station 6");
-      // }
-      // else if(robotRegister_received[0] == 6)
-      // {
-      //   gtk_container_foreach (GTK_CONTAINER (actstation6), 
-      //                          (GtkCallback) recallback6, "Station 6");
-      // }
-      // else if(robotRegister_received[0] == 6)
-      // {
-      //   gtk_container_foreach (GTK_CONTAINER (actstation6), 
-      //                          (GtkCallback) recallback6, "Station 6");
-      // }
-      // else if(robotRegister_received[0] == 6)
-      // {
-      //   gtk_container_foreach (GTK_CONTAINER (actstation6), 
-      //                          (GtkCallback) recallback6, "Station 6");
-      // }
-      // else if(robotRegister_received[0] == 6)
-      // {
-      //   gtk_container_foreach (GTK_CONTAINER (actstation6), 
-      //                          (GtkCallback) recallback6, "Station 6");
-      // }
-      // else if(robotRegister_received[0] == 6)
-      // {
-      //   gtk_container_foreach (GTK_CONTAINER (actstation6), 
-      //                          (GtkCallback) recallback6, "Station 6");
-      // }
-      // else if(robotRegister_received[0] == 6)
-      // {
-      //   gtk_container_foreach (GTK_CONTAINER (actstation6), 
-      //                          (GtkCallback) recallback6, "Station 6");
-      // }
-      // else if(robotRegister_received[0] == 6)
-      // {
-      //   gtk_container_foreach (GTK_CONTAINER (actstation6), 
-      //                          (GtkCallback) recallback6, "Station 6");
-      // }
-      // else if(robotRegister_received[0] == 6)
-      // {
-      //   gtk_container_foreach (GTK_CONTAINER (actstation6), 
-      //                          (GtkCallback) recallback6, "Station 6");
-      // }
+      if(robotRegister_received[0] == 1)
+      {
+        gtk_container_foreach (GTK_CONTAINER (actstation1), 
+                               (GtkCallback) recallback, "ST1");
+      }
+      else if(robotRegister_received[0] == 2)
+      {
+        gtk_container_foreach (GTK_CONTAINER (actstation2), 
+                               (GtkCallback) recallback, "ST2");
+      }
+      else if(robotRegister_received[0] == 3)
+      {
+        gtk_container_foreach (GTK_CONTAINER (actstation3), 
+                               (GtkCallback) recallback, "ST3");
+      }
+      else if(robotRegister_received[0] == 4)
+      {
+        gtk_container_foreach (GTK_CONTAINER (actstation4), 
+                               (GtkCallback) recallback, "ST4");
+      }
+      else if(robotRegister_received[0] == 5)
+      {
+        gtk_container_foreach (GTK_CONTAINER (actstation5), 
+                               (GtkCallback) recallback, "ST5");
+      }
+      else if(robotRegister_received[0] == 6)
+      {
+        gtk_container_foreach (GTK_CONTAINER (actstation6), 
+                               (GtkCallback) recallback, "ST6");
+      }
+      else if(robotRegister_received[0] == 7)
+      {
+        gtk_container_foreach (GTK_CONTAINER (actstation7), 
+                               (GtkCallback) recallback, "ST7");
+      }
+      else if(robotRegister_received[0] == 8)
+      {
+        gtk_container_foreach (GTK_CONTAINER (actstation8), 
+                               (GtkCallback) recallback, "ST8");
+      }
+      else if(robotRegister_received[0] == 9)
+      {
+        gtk_container_foreach (GTK_CONTAINER (actstation9), 
+                               (GtkCallback) recallback, "ST9");
+      }
+      else if(robotRegister_received[0] == 10)
+      {
+        gtk_container_foreach (GTK_CONTAINER (actstation10), 
+                               (GtkCallback) recallback, "ST10");
+      }
+      else if(robotRegister_received[0] == 11)
+      {
+        gtk_container_foreach (GTK_CONTAINER (actstation11), 
+                               (GtkCallback) recallback, "ST11");
+      }
+      else if(robotRegister_received[0] == 12)
+      {
+        gtk_container_foreach (GTK_CONTAINER (actstation12), 
+                               (GtkCallback) recallback, "ST12");
+      }
+      else if(robotRegister_received[0] == 13)
+      {
+        gtk_container_foreach (GTK_CONTAINER (actstation13), 
+                               (GtkCallback) recallback, "ST13");
+      }
+      else if(robotRegister_received[0] == 14)
+      {
+        gtk_container_foreach (GTK_CONTAINER (actstation14), 
+                               (GtkCallback) recallback, "ST14");
+      }
+      else if(robotRegister_received[0] == 15)
+      {
+        gtk_container_foreach (GTK_CONTAINER (actstation15), 
+                               (GtkCallback) recallback, "ST15");
+      }
     }
     usleep(500000);
   }
@@ -619,7 +641,8 @@ void stationInit()
    int i;
    for(i=0;i<STATION_MAX;i++)
    {
-    memset(stationRead_reg[i], -1, 5);
+    memset(stationRead_reg[i], 0, 5);
+    memset(stationWrite_reg[i], 0, 5);
    }
 }
 
@@ -1092,107 +1115,317 @@ void GUIInit(int argc, char *argv[])
 static void callback( GtkWidget *widget,
                       gpointer   data )
 {
-  	const char* button_label = gtk_label_get_label(GTK_LABEL(widget));
-  	if(strcmp(data, "ST1") == 0)
-  	{
-  	DEBUG_PRINT("Processing ST1\n");
-  	gtk_container_foreach (GTK_CONTAINER (actstation1), 
-  	                          (GtkCallback) recallback, data);
-	}
-	else if(strcmp(data, "ST2") == 0)
-  	{
-  	DEBUG_PRINT("Processing ST2\n");
-  	gtk_container_foreach (GTK_CONTAINER (actstation2), 
-  	                          (GtkCallback) recallback, data);
-	}
-	else if(strcmp(data, "ST3") == 0)
-  	{
-  	DEBUG_PRINT("Processing ST3\n");
-  	gtk_container_foreach (GTK_CONTAINER (actstation3), 
-  	                          (GtkCallback) recallback, data);
-	}
-	else if(strcmp(data, "ST4") == 0)
-  	{
-  	DEBUG_PRINT("Processing ST4\n");
-  	gtk_container_foreach (GTK_CONTAINER (actstation4), 
-  	                          (GtkCallback) recallback, data);
-	}
-	else if(strcmp(data, "ST5") == 0)
-  	{
-  	DEBUG_PRINT("Processing ST5\n");
-  	gtk_container_foreach (GTK_CONTAINER (actstation5), 
-  	                          (GtkCallback) recallback, data);
-	}
-	else if(strcmp(data, "ST6") == 0)
-  	{
-  	DEBUG_PRINT("Processing ST6\n");
-  	gtk_container_foreach (GTK_CONTAINER (actstation6), 
-  	                          (GtkCallback) recallback, data);
-	}
-	else if(strcmp(data, "ST7") == 0)
-  	{
-  	DEBUG_PRINT("Processing ST7\n");
-  	gtk_container_foreach (GTK_CONTAINER (actstation7), 
-  	                          (GtkCallback) recallback, data);
-	}
-	else if(strcmp(data, "ST8") == 0)
-  	{
-  	DEBUG_PRINT("Processing ST8\n");
-  	gtk_container_foreach (GTK_CONTAINER (actstation8), 
-  	                          (GtkCallback) recallback, data);
-	}
-	else if(strcmp(data, "ST9") == 0)
-  	{
-  	DEBUG_PRINT("Processing ST9\n");
-  	gtk_container_foreach (GTK_CONTAINER (actstation9), 
-  	                          (GtkCallback) recallback, data);
-	}
-	else if(strcmp(data, "ST10") == 0)
-  	{
-  	DEBUG_PRINT("Processing ST10\n");
-  	gtk_container_foreach (GTK_CONTAINER (actstation10), 
-  	                          (GtkCallback) recallback, data);
-	}
-	else if(strcmp(data, "ST11") == 0)
-  	{
-  	DEBUG_PRINT("Processing ST11\n");
-  	gtk_container_foreach (GTK_CONTAINER (actstation11), 
-  	                          (GtkCallback) recallback, data);
-	}
-	else if(strcmp(data, "ST12") == 0)
-  	{
-  	DEBUG_PRINT("Processing ST12\n");
-  	gtk_container_foreach (GTK_CONTAINER (actstation12), 
-  	                          (GtkCallback) recallback, data);
-	}
-	else if(strcmp(data, "ST13") == 0)
-  	{
-  	DEBUG_PRINT("Processing ST13\n");
-  	gtk_container_foreach (GTK_CONTAINER (actstation13), 
-  	                          (GtkCallback) recallback, data);
-	}
-	else if(strcmp(data, "ST14") == 0)
-  	{
-  	DEBUG_PRINT("Processing ST14\n");
-  	gtk_container_foreach (GTK_CONTAINER (actstation14), 
-  	                          (GtkCallback) recallback, data);
-	}
-	else if(strcmp(data, "ST15") == 0)
-  	{
-  	DEBUG_PRINT("Processing ST15\n");
-  	gtk_container_foreach (GTK_CONTAINER (actstation15), 
-  	                          (GtkCallback) recallback, data);
-	}
-	else if(strcmp(data, "STCALL") == 0)
-  	{
-  	DEBUG_PRINT("Processing STCALL\n");
-  	gtk_container_foreach (GTK_CONTAINER (btnallowcalling), 
-  	                          (GtkCallback) allowcallinghandler, data);
-	}
-  	else
-  	{
-  		printf("[ERROR] unknow button\n");
-  	}
+	const char* button_label = gtk_label_get_label(GTK_LABEL(widget));
+	    if(strcmp(data, "ST1") == 0)
+	    {
+	    	if(strcmp(button_label, "Calling") == 0)
+	    	{
+	    	  gtk_label_set (GTK_LABEL(widget), "Station 1");
+	    	  deleteHistory(1);
+	    	}
+	    	else
+	    	{
+	    		gtk_label_set (GTK_LABEL(widget), "Calling");
+	    		attachcalling(1);
+	    	}
+	  	}
+	  	else if(strcmp(data, "ST2") == 0)
+	    	{
+	    	if(strcmp(button_label, "Calling") == 0)
+	    	{
+	    	  gtk_label_set (GTK_LABEL(widget), "Station 2");
+	    	  deleteHistory(2);
+	    	}
+	    	else
+	    	{
+	    		gtk_label_set (GTK_LABEL(widget), "Calling");
+	    		attachcalling(2);
+	    	}
+	  	}
+	  	else if(strcmp(data, "ST3") == 0)
+	    	{
+	    	if(strcmp(button_label, "Calling") == 0)
+	    	{
+	    	  gtk_label_set (GTK_LABEL(widget), "Station 3");
+	    	  deleteHistory(3);
+	    	}
+	    	else
+	    	{
+	    		gtk_label_set (GTK_LABEL(widget), "Calling");
+	    		attachcalling(3);
+	    	}
+	  	}
+	  	else if(strcmp(data, "ST4") == 0)
+	    	{
+	    	if(strcmp(button_label, "Calling") == 0)
+	    	{
+	    	  gtk_label_set (GTK_LABEL(widget), "Station 4");
+	    	  deleteHistory(4);
+	    	}
+	    	else
+	    	{
+	    		gtk_label_set (GTK_LABEL(widget), "Calling");
+	    		attachcalling(4);
+	    	}
+	  	}
+	  	else if(strcmp(data, "ST5") == 0)
+	    	{
+	    	if(strcmp(button_label, "Calling") == 0)
+	    	{
+	    	  	gtk_label_set (GTK_LABEL(widget), "Station 5");
+	    	  	deleteHistory(5);
+	    	}
+	    	else
+	    	{
+	    		gtk_label_set (GTK_LABEL(widget), "Calling");
+	    		attachcalling(5);
+
+	    	}
+	  	}
+	  	else if(strcmp(data, "ST6") == 0)
+	    	{
+	    	if(strcmp(button_label, "Calling") == 0)
+	    	{
+	    	  gtk_label_set (GTK_LABEL(widget), "Station 6");
+	    	  deleteHistory(6);
+	    	}
+	    	else
+	    	{
+	    		gtk_label_set (GTK_LABEL(widget), "Calling");
+	    		attachcalling(6);
+	    	}
+	  	}
+	  	else if(strcmp(data, "ST7") == 0)
+	    	{
+	    	if(strcmp(button_label, "Calling") == 0)
+	    	{
+	    	  gtk_label_set (GTK_LABEL(widget), "Station 7");
+	    	  deleteHistory(7);
+
+	    	}
+	    	else
+	    	{
+	    		gtk_label_set (GTK_LABEL(widget), "Calling");
+	    		attachcalling(7);
+	    	}
+	  	}
+	  	else if(strcmp(data, "ST8") == 0)
+	    	{
+	    	if(strcmp(button_label, "Calling") == 0)
+	    	{
+	    	  gtk_label_set (GTK_LABEL(widget), "Station 8");
+	    	  deleteHistory(8);
+
+	    	}
+	    	else
+	    	{
+	    		gtk_label_set (GTK_LABEL(widget), "Calling");
+	    		attachcalling(8);
+	    	}
+	  	}
+	  	else if(strcmp(data, "ST9") == 0)
+	    	{
+	    	if(strcmp(button_label, "Calling") == 0)
+	    	{
+	    	  gtk_label_set (GTK_LABEL(widget), "Station 9");
+	    	  deleteHistory(9);
+
+	    	}
+	    	else
+	    	{
+	    		gtk_label_set (GTK_LABEL(widget), "Calling");
+	    		attachcalling(9);
+
+	    	}
+	  	}
+	  	else if(strcmp(data, "ST10") == 0)
+	    	{
+	    	if(strcmp(button_label, "Calling") == 0)
+	    	{
+	    	  gtk_label_set (GTK_LABEL(widget), "Station 10");
+	    	  deleteHistory(10);
+	    	}
+	    	else
+	    	{
+	    		gtk_label_set (GTK_LABEL(widget), "Calling");
+	    		attachcalling(10);
+
+	    	}
+	  	}
+	  	else if(strcmp(data, "ST11") == 0)
+	    	{
+	    	if(strcmp(button_label, "Calling") == 0)
+	    	{
+	    	  gtk_label_set (GTK_LABEL(widget), "Station 11");
+	    	  deleteHistory(11);
+
+	    	}
+	    	else
+	    	{
+	    		gtk_label_set (GTK_LABEL(widget), "Calling");
+	    		attachcalling(11);
+
+	    	}
+	  	}
+	  	else if(strcmp(data, "ST12") == 0)
+	    	{
+	    	if(strcmp(button_label, "Calling") == 0)
+	    	{
+	    	  gtk_label_set (GTK_LABEL(widget), "Station 12");
+	    	  deleteHistory(12);
+	    	}
+	    	else
+	    	{
+	    		gtk_label_set (GTK_LABEL(widget), "Calling");
+	    		attachcalling(12);
+
+	    	}
+	  	}
+	  	else if(strcmp(data, "ST13") == 0)
+	    	{
+	    	if(strcmp(button_label, "Calling") == 0)
+	    	{
+	    	  gtk_label_set (GTK_LABEL(widget), "Station 13");
+	    	  deleteHistory(13);
+
+	    	}
+	    	else
+	    	{
+	    		gtk_label_set (GTK_LABEL(widget), "Calling");
+	    		attachcalling(13);
+
+	    	}
+	  	}
+	  	else if(strcmp(data, "ST14") == 0)
+	    	{
+	    	if(strcmp(button_label, "Calling") == 0)
+	    	{
+	    	  gtk_label_set (GTK_LABEL(widget), "Station 14");
+	    	  deleteHistory(14);
+
+	    	}
+	    	else
+	    	{
+	    		gtk_label_set (GTK_LABEL(widget), "Calling");
+	    		attachcalling(14);
+
+	    	}
+	  	}
+	  	else if(strcmp(data, "ST15") == 0)
+		{
+	    	if(strcmp(button_label, "Calling") == 0)
+	    	{
+	    	  gtk_label_set (GTK_LABEL(widget), "Station 15");
+	    	  deleteHistory(15);
+
+	    	}
+	    	else
+	    	{
+	    		gtk_label_set (GTK_LABEL(widget), "Calling");
+	    		attachcalling(15);
+
+	    	}
+	  	}
+ //  	if(strcmp(data, "ST1") == 0)
+ //  	{
+ //  	DEBUG_PRINT("Processing ST1\n");
+ //  	gtk_container_foreach (GTK_CONTAINER (actstation1), 
+ //  	                          (GtkCallback) recallback, data);
+	// }
+	// else if(strcmp(data, "ST2") == 0)
+ //  	{
+ //  	DEBUG_PRINT("Processing ST2\n");
+ //  	gtk_container_foreach (GTK_CONTAINER (actstation2), 
+ //  	                          (GtkCallback) recallback, data);
+	// }
+	// else if(strcmp(data, "ST3") == 0)
+ //  	{
+ //  	DEBUG_PRINT("Processing ST3\n");
+ //  	gtk_container_foreach (GTK_CONTAINER (actstation3), 
+ //  	                          (GtkCallback) recallback, data);
+	// }
+	// else if(strcmp(data, "ST4") == 0)
+ //  	{
+ //  	DEBUG_PRINT("Processing ST4\n");
+ //  	gtk_container_foreach (GTK_CONTAINER (actstation4), 
+ //  	                          (GtkCallback) recallback, data);
+	// }
+	// else if(strcmp(data, "ST5") == 0)
+ //  	{
+ //  	DEBUG_PRINT("Processing ST5\n");
+ //  	gtk_container_foreach (GTK_CONTAINER (actstation5), 
+ //  	                          (GtkCallback) recallback, data);
+	// }
+	// else if(strcmp(data, "ST6") == 0)
+ //  	{
+ //  	DEBUG_PRINT("Processing ST6\n");
+ //  	gtk_container_foreach (GTK_CONTAINER (actstation6), 
+ //  	                          (GtkCallback) recallback, data);
+	// }
+	// else if(strcmp(data, "ST7") == 0)
+ //  	{
+ //  	DEBUG_PRINT("Processing ST7\n");
+ //  	gtk_container_foreach (GTK_CONTAINER (actstation7), 
+ //  	                          (GtkCallback) recallback, data);
+	// }
+	// else if(strcmp(data, "ST8") == 0)
+ //  	{
+ //  	DEBUG_PRINT("Processing ST8\n");
+ //  	gtk_container_foreach (GTK_CONTAINER (actstation8), 
+ //  	                          (GtkCallback) recallback, data);
+	// }
+	// else if(strcmp(data, "ST9") == 0)
+ //  	{
+ //  	DEBUG_PRINT("Processing ST9\n");
+ //  	gtk_container_foreach (GTK_CONTAINER (actstation9), 
+ //  	                          (GtkCallback) recallback, data);
+	// }
+	// else if(strcmp(data, "ST10") == 0)
+ //  	{
+ //  	DEBUG_PRINT("Processing ST10\n");
+ //  	gtk_container_foreach (GTK_CONTAINER (actstation10), 
+ //  	                          (GtkCallback) recallback, data);
+	// }
+	// else if(strcmp(data, "ST11") == 0)
+ //  	{
+ //  	DEBUG_PRINT("Processing ST11\n");
+ //  	gtk_container_foreach (GTK_CONTAINER (actstation11), 
+ //  	                          (GtkCallback) recallback, data);
+	// }
+	// else if(strcmp(data, "ST12") == 0)
+ //  	{
+ //  	DEBUG_PRINT("Processing ST12\n");
+ //  	gtk_container_foreach (GTK_CONTAINER (actstation12), 
+ //  	                          (GtkCallback) recallback, data);
+	// }
+	// else if(strcmp(data, "ST13") == 0)
+ //  	{
+ //  	DEBUG_PRINT("Processing ST13\n");
+ //  	gtk_container_foreach (GTK_CONTAINER (actstation13), 
+ //  	                          (GtkCallback) recallback, data);
+	// }
+	// else if(strcmp(data, "ST14") == 0)
+ //  	{
+ //  	DEBUG_PRINT("Processing ST14\n");
+ //  	gtk_container_foreach (GTK_CONTAINER (actstation14), 
+ //  	                          (GtkCallback) recallback, data);
+	// }
+	// else if(strcmp(data, "ST15") == 0)
+ //  	{
+ //  	DEBUG_PRINT("Processing ST15\n");
+ //  	gtk_container_foreach (GTK_CONTAINER (actstation15), 
+ //  	                          (GtkCallback) recallback, data);
+	// }
+	// else if(strcmp(data, "STCALL") == 0)
+ //  	{
+ //  	DEBUG_PRINT("Processing STCALL\n");
+ //  	gtk_container_foreach (GTK_CONTAINER (btnallowcalling), 
+ //  	                          (GtkCallback) allowcallinghandler, data);
+	// }
+ //  	else
+ //  	{
+ //  		printf("[ERROR] unknow button\n");
+ //  	}
   // if(strcmp(button_label, "Calling") == 0)
   // {
   //   robotRegister_sent[0] = 0;
@@ -1223,218 +1456,111 @@ static void recallback( GtkWidget *widget,
                       gpointer   data )
 {
   	const char* button_label = gtk_label_get_label(GTK_LABEL(widget));
-  	int16_t robot_requesting = 0;
-  	printf("Recallback funtion\n");
-    if(strcmp(data, "ST1") == 0)
-    {
-    	if(strcmp(button_label, "Calling") == 0)
-    	{
-    	  gtk_label_set (GTK_LABEL(widget), "Station 1");
-    	  deleteHistory(1);
-    	}
-    	else
-    	{
-    		gtk_label_set (GTK_LABEL(widget), "Calling");
-    		attachcalling(1);
-    	}
-  	}
-  	else if(strcmp(data, "ST2") == 0)
-    	{
-    	if(strcmp(button_label, "Calling") == 0)
-    	{
-    	  gtk_label_set (GTK_LABEL(widget), "Station 2");
-    	  deleteHistory(2);
-    	}
-    	else
-    	{
-    		gtk_label_set (GTK_LABEL(widget), "Calling");
-    		attachcalling(2);
-    	}
-  	}
-  	else if(strcmp(data, "ST3") == 0)
-    	{
-    	if(strcmp(button_label, "Calling") == 0)
-    	{
-    	  gtk_label_set (GTK_LABEL(widget), "Station 3");
-    	  deleteHistory(3);
-    	}
-    	else
-    	{
-    		gtk_label_set (GTK_LABEL(widget), "Calling");
-    		attachcalling(3);
-    	}
-  	}
-  	else if(strcmp(data, "ST4") == 0)
-    	{
-    	if(strcmp(button_label, "Calling") == 0)
-    	{
-    	  gtk_label_set (GTK_LABEL(widget), "Station 4");
-    	  deleteHistory(4);
-    	}
-    	else
-    	{
-    		gtk_label_set (GTK_LABEL(widget), "Calling");
-    		attachcalling(4);
-    	}
-  	}
-  	else if(strcmp(data, "ST5") == 0)
-    	{
-    	if(strcmp(button_label, "Calling") == 0)
-    	{
-    	  	gtk_label_set (GTK_LABEL(widget), "Station 5");
-    	  	deleteHistory(5);
-    	}
-    	else
-    	{
-    		gtk_label_set (GTK_LABEL(widget), "Calling");
-    		attachcalling(5);
-
-    	}
-  	}
-  	else if(strcmp(data, "ST6") == 0)
-    	{
-    	if(strcmp(button_label, "Calling") == 0)
-    	{
-    	  gtk_label_set (GTK_LABEL(widget), "Station 6");
-    	  deleteHistory(6);
-    	}
-    	else
-    	{
-    		gtk_label_set (GTK_LABEL(widget), "Calling");
-    		attachcalling(6);
-    	}
-  	}
-  	else if(strcmp(data, "ST7") == 0)
-    	{
-    	if(strcmp(button_label, "Calling") == 0)
-    	{
-    	  gtk_label_set (GTK_LABEL(widget), "Station 7");
-    	  deleteHistory(7);
-
-    	}
-    	else
-    	{
-    		gtk_label_set (GTK_LABEL(widget), "Calling");
-    		attachcalling(7);
-    	}
-  	}
-  	else if(strcmp(data, "ST8") == 0)
-    	{
-    	if(strcmp(button_label, "Calling") == 0)
-    	{
-    	  gtk_label_set (GTK_LABEL(widget), "Station 8");
-    	  deleteHistory(8);
-
-    	}
-    	else
-    	{
-    		gtk_label_set (GTK_LABEL(widget), "Calling");
-    		attachcalling(8);
-    	}
-  	}
-  	else if(strcmp(data, "ST9") == 0)
-    	{
-    	if(strcmp(button_label, "Calling") == 0)
-    	{
-    	  gtk_label_set (GTK_LABEL(widget), "Station 9");
-    	  deleteHistory(9);
-
-    	}
-    	else
-    	{
-    		gtk_label_set (GTK_LABEL(widget), "Calling");
-    		attachcalling(9);
-
-    	}
-  	}
-  	else if(strcmp(data, "ST10") == 0)
-    	{
-    	if(strcmp(button_label, "Calling") == 0)
-    	{
-    	  gtk_label_set (GTK_LABEL(widget), "Station 10");
-    	  deleteHistory(10);
-    	}
-    	else
-    	{
-    		gtk_label_set (GTK_LABEL(widget), "Calling");
-    		attachcalling(10);
-
-    	}
-  	}
-  	else if(strcmp(data, "ST11") == 0)
-    	{
-    	if(strcmp(button_label, "Calling") == 0)
-    	{
-    	  gtk_label_set (GTK_LABEL(widget), "Station 11");
-    	  deleteHistory(11);
-
-    	}
-    	else
-    	{
-    		gtk_label_set (GTK_LABEL(widget), "Calling");
-    		attachcalling(11);
-
-    	}
-  	}
-  	else if(strcmp(data, "ST12") == 0)
-    	{
-    	if(strcmp(button_label, "Calling") == 0)
-    	{
-    	  gtk_label_set (GTK_LABEL(widget), "Station 12");
-    	  deleteHistory(12);
-    	}
-    	else
-    	{
-    		gtk_label_set (GTK_LABEL(widget), "Calling");
-    		attachcalling(12);
-
-    	}
-  	}
-  	else if(strcmp(data, "ST13") == 0)
-    	{
-    	if(strcmp(button_label, "Calling") == 0)
-    	{
-    	  gtk_label_set (GTK_LABEL(widget), "Station 13");
-    	  deleteHistory(13);
-
-    	}
-    	else
-    	{
-    		gtk_label_set (GTK_LABEL(widget), "Calling");
-    		attachcalling(13);
-
-    	}
-  	}
-  	else if(strcmp(data, "ST14") == 0)
-    	{
-    	if(strcmp(button_label, "Calling") == 0)
-    	{
-    	  gtk_label_set (GTK_LABEL(widget), "Station 14");
-    	  deleteHistory(14);
-
-    	}
-    	else
-    	{
-    		gtk_label_set (GTK_LABEL(widget), "Calling");
-    		attachcalling(14);
-
-    	}
-  	}
-  	else if(strcmp(data, "ST15") == 0)
-    	{
-    	if(strcmp(button_label, "Calling") == 0)
-    	{
-    	  gtk_label_set (GTK_LABEL(widget), "Station 15");
-    	  deleteHistory(15);
-
-    	}
-    	else
-    	{
-    		gtk_label_set (GTK_LABEL(widget), "Calling");
-    		attachcalling(15);
-
-    	}
-  	}
+  	    if(strcmp(data, "ST1") == 0)
+  	    {
+  	    	if(strcmp(button_label, "Calling") == 0)
+  	    	{
+  	    	  gtk_label_set (GTK_LABEL(widget), "Station 1");
+  	    	}
+  	  	}
+  	  	else if(strcmp(data, "ST2") == 0)
+  	    	{
+  	    	if(strcmp(button_label, "Calling") == 0)
+  	    	{
+  	    	  gtk_label_set (GTK_LABEL(widget), "Station 2");
+  	    	}
+  	  	}
+  	  	else if(strcmp(data, "ST3") == 0)
+  	    	{
+  	    	if(strcmp(button_label, "Calling") == 0)
+  	    	{
+  	    	  gtk_label_set (GTK_LABEL(widget), "Station 3");
+  	    	}
+  	  	}
+  	  	else if(strcmp(data, "ST4") == 0)
+  	    	{
+  	    	if(strcmp(button_label, "Calling") == 0)
+  	    	{
+  	    	  gtk_label_set (GTK_LABEL(widget), "Station 4");
+  	    	}
+  	  	}
+  	  	else if(strcmp(data, "ST5") == 0)
+  	    	{
+  	    	if(strcmp(button_label, "Calling") == 0)
+  	    	{
+  	    	  	gtk_label_set (GTK_LABEL(widget), "Station 5");
+  	    	}
+  	  	}
+  	  	else if(strcmp(data, "ST6") == 0)
+  	    	{
+  	    	if(strcmp(button_label, "Calling") == 0)
+  	    	{
+  	    	  gtk_label_set (GTK_LABEL(widget), "Station 6");
+  	    	}
+  	  	}
+  	  	else if(strcmp(data, "ST7") == 0)
+  	    	{
+  	    	if(strcmp(button_label, "Calling") == 0)
+  	    	{
+  	    	  gtk_label_set (GTK_LABEL(widget), "Station 7");
+  	    	}
+  	  	}
+  	  	else if(strcmp(data, "ST8") == 0)
+  	    	{
+  	    	if(strcmp(button_label, "Calling") == 0)
+  	    	{
+  	    	  gtk_label_set (GTK_LABEL(widget), "Station 8");
+  	    	}
+  	  	}
+  	  	else if(strcmp(data, "ST9") == 0)
+  	    	{
+  	    	if(strcmp(button_label, "Calling") == 0)
+  	    	{
+  	    	  gtk_label_set (GTK_LABEL(widget), "Station 9");
+  	    	}
+  	  	}
+  	  	else if(strcmp(data, "ST10") == 0)
+  	    	{
+  	    	if(strcmp(button_label, "Calling") == 0)
+  	    	{
+  	    	  gtk_label_set (GTK_LABEL(widget), "Station 10");
+  	    	}
+  	  	}
+  	  	else if(strcmp(data, "ST11") == 0)
+  	    	{
+  	    	if(strcmp(button_label, "Calling") == 0)
+  	    	{
+  	    	  gtk_label_set (GTK_LABEL(widget), "Station 11");
+  	    	}
+  	  	}
+  	  	else if(strcmp(data, "ST12") == 0)
+  	    	{
+  	    	if(strcmp(button_label, "Calling") == 0)
+  	    	{
+  	    	  gtk_label_set (GTK_LABEL(widget), "Station 12");
+  	    	}
+  	  	}
+  	  	else if(strcmp(data, "ST13") == 0)
+  	    	{
+  	    	if(strcmp(button_label, "Calling") == 0)
+  	    	{
+  	    	  gtk_label_set (GTK_LABEL(widget), "Station 13");
+  	    	}
+  	  	}
+  	  	else if(strcmp(data, "ST14") == 0)
+  	    	{
+  	    	if(strcmp(button_label, "Calling") == 0)
+  	    	{
+  	    	  gtk_label_set (GTK_LABEL(widget), "Station 14");
+  	    	}
+  	  	}
+  	  	else if(strcmp(data, "ST15") == 0)
+  		{
+  	    	if(strcmp(button_label, "Calling") == 0)
+  	    	{
+  	    	  gtk_label_set (GTK_LABEL(widget), "Station 15");
+  	    	}
+  	  	}
 }
 
 /* Our usual callback function */
@@ -1585,7 +1711,7 @@ int16_t stationwriting(int16_t id, int16_t* regs)
   modbus_set_debug(modbus_rtu_station_ctx, FALSE);
   return modbus_write_registers(modbus_rtu_station_ctx, 0, 5, regs);
 }
-int16_t stationreading(int16_t id, int16_t *regs, int16_t usleeptime)
+int16_t stationreading(int16_t id, int16_t *regs, int32_t usleeptime)
 {
   // Sleep for each reading
   if(usleeptime > 0)
