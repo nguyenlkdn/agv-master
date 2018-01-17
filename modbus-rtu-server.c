@@ -74,7 +74,7 @@ int16_t stationRead_reg[STATION_MAX][5];
 int16_t stationWrite_reg[STATION_MAX][5];
 int16_t stationstatus[STATION_MAX];
 int16_t under_control_ofMaster=0;
-
+int16_t IS_GUI_INITED = 0;
 /*
 ////////// Robot Variables ///////////////////
 */
@@ -105,7 +105,7 @@ char *getTime();
 void printtoconsole(char* text);
 
 // Jan 14
-uint16_t stationresponding(uint16_t id);
+uint16_t stationresponding(uint16_t id, int32_t usleeptime);
 uint16_t stationderesponding(uint16_t id);
 
 uint16_t stationcontroller(uint16_t id);
@@ -253,20 +253,27 @@ void *stationThread(void *vargp)
       stationwriting(15, stationWrite_reg[15]);
       while(stationRead_reg[15][3] == 0 || (stationRead_reg[15][3] == -1))
       {
-        stationreading(15, stationRead_reg[15], 1000000);
+      	sleep(1);
+        stationreading(15, stationRead_reg[15], 100000);
         printf("Wating Station 15 confirms\n");
-        sleep(1);
+        if(robotRegister_sent[0] != 15 )
+        {
+        	snprintf(TEXT, sizeof(TEXT), "[WARNING] Robot was recalling without confirm of ST 15");
+        	printtoconsole(TEXT);
+        	break;
+        }
       }
       robotRegister_sent[0] = 1;
-      snprintf(TEXT, sizeof(TEXT), "Station 15 was confirmed at %s", getTime());
+      snprintf(TEXT, sizeof(TEXT), "Finished at ST 15 %s", getTime());
       printtoconsole(TEXT);
-      printf("Station 15 was confirmed\n");
+
+      // Clear Status of ST 15
       stationWrite_reg[15][0] = 0;
       stationWrite_reg[15][1] = 0;
       stationWrite_reg[15][2] = 0;
       stationwriting(15, stationWrite_reg[15]);
     }
-    
+
     else if(isemtpyHistory() == 0)
     {
     	while(1)
@@ -285,7 +292,7 @@ void *stationThread(void *vargp)
     			stationwriting(under_control_ofMaster, stationWrite_reg[under_control_ofMaster]);
 
     	  		// Checking robot come station or not
-    	  		if(stationresponding(under_control_ofMaster) == 1)
+    	  		if(stationresponding(under_control_ofMaster, 500000) == 1)
     	  		{
     	  			// Turn on the led
     	  			stationWrite_reg[under_control_ofMaster][1] = 2;
@@ -314,7 +321,7 @@ void *stationThread(void *vargp)
     	  			}
     	  		}
     		}
-    		usleep(1000000);
+    		usleep(500000);
     	}
     }
     else if (callingallowed == 1)
@@ -383,7 +390,7 @@ void *stationThread(void *vargp)
             if(stationRead_reg[stationscan][0] == 1)
             {
               stationstatus[stationscan] = 1;
-              come_to_valid_point = stationresponding(stationscan);
+              come_to_valid_point = stationresponding(stationscan, 500000);
               if(come_to_valid_point == 1)
               {
                 stationcontroller(stationscan);
@@ -1090,6 +1097,7 @@ void GUIInit(int argc, char *argv[])
           GTK_FILL, GTK_FILL, 0, 0);
   g_signal_connect (GTK_OBJECT(btnallowcalling), "clicked",
           G_CALLBACK (button_was_clicked), (gpointer) "STCALL");
+  IS_GUI_INITED = 1;
 
   /*
     Robot Status
@@ -1326,129 +1334,6 @@ static void callback( GtkWidget *widget,
 
 	    	}
 	  	}
- //  	if(strcmp(data, "ST1") == 0)
- //  	{
- //  	DEBUG_PRINT("Processing ST1\n");
- //  	gtk_container_foreach (GTK_CONTAINER (actstation1), 
- //  	                          (GtkCallback) recallback, data);
-	// }
-	// else if(strcmp(data, "ST2") == 0)
- //  	{
- //  	DEBUG_PRINT("Processing ST2\n");
- //  	gtk_container_foreach (GTK_CONTAINER (actstation2), 
- //  	                          (GtkCallback) recallback, data);
-	// }
-	// else if(strcmp(data, "ST3") == 0)
- //  	{
- //  	DEBUG_PRINT("Processing ST3\n");
- //  	gtk_container_foreach (GTK_CONTAINER (actstation3), 
- //  	                          (GtkCallback) recallback, data);
-	// }
-	// else if(strcmp(data, "ST4") == 0)
- //  	{
- //  	DEBUG_PRINT("Processing ST4\n");
- //  	gtk_container_foreach (GTK_CONTAINER (actstation4), 
- //  	                          (GtkCallback) recallback, data);
-	// }
-	// else if(strcmp(data, "ST5") == 0)
- //  	{
- //  	DEBUG_PRINT("Processing ST5\n");
- //  	gtk_container_foreach (GTK_CONTAINER (actstation5), 
- //  	                          (GtkCallback) recallback, data);
-	// }
-	// else if(strcmp(data, "ST6") == 0)
- //  	{
- //  	DEBUG_PRINT("Processing ST6\n");
- //  	gtk_container_foreach (GTK_CONTAINER (actstation6), 
- //  	                          (GtkCallback) recallback, data);
-	// }
-	// else if(strcmp(data, "ST7") == 0)
- //  	{
- //  	DEBUG_PRINT("Processing ST7\n");
- //  	gtk_container_foreach (GTK_CONTAINER (actstation7), 
- //  	                          (GtkCallback) recallback, data);
-	// }
-	// else if(strcmp(data, "ST8") == 0)
- //  	{
- //  	DEBUG_PRINT("Processing ST8\n");
- //  	gtk_container_foreach (GTK_CONTAINER (actstation8), 
- //  	                          (GtkCallback) recallback, data);
-	// }
-	// else if(strcmp(data, "ST9") == 0)
- //  	{
- //  	DEBUG_PRINT("Processing ST9\n");
- //  	gtk_container_foreach (GTK_CONTAINER (actstation9), 
- //  	                          (GtkCallback) recallback, data);
-	// }
-	// else if(strcmp(data, "ST10") == 0)
- //  	{
- //  	DEBUG_PRINT("Processing ST10\n");
- //  	gtk_container_foreach (GTK_CONTAINER (actstation10), 
- //  	                          (GtkCallback) recallback, data);
-	// }
-	// else if(strcmp(data, "ST11") == 0)
- //  	{
- //  	DEBUG_PRINT("Processing ST11\n");
- //  	gtk_container_foreach (GTK_CONTAINER (actstation11), 
- //  	                          (GtkCallback) recallback, data);
-	// }
-	// else if(strcmp(data, "ST12") == 0)
- //  	{
- //  	DEBUG_PRINT("Processing ST12\n");
- //  	gtk_container_foreach (GTK_CONTAINER (actstation12), 
- //  	                          (GtkCallback) recallback, data);
-	// }
-	// else if(strcmp(data, "ST13") == 0)
- //  	{
- //  	DEBUG_PRINT("Processing ST13\n");
- //  	gtk_container_foreach (GTK_CONTAINER (actstation13), 
- //  	                          (GtkCallback) recallback, data);
-	// }
-	// else if(strcmp(data, "ST14") == 0)
- //  	{
- //  	DEBUG_PRINT("Processing ST14\n");
- //  	gtk_container_foreach (GTK_CONTAINER (actstation14), 
- //  	                          (GtkCallback) recallback, data);
-	// }
-	// else if(strcmp(data, "ST15") == 0)
- //  	{
- //  	DEBUG_PRINT("Processing ST15\n");
- //  	gtk_container_foreach (GTK_CONTAINER (actstation15), 
- //  	                          (GtkCallback) recallback, data);
-	// }
-	// else if(strcmp(data, "STCALL") == 0)
- //  	{
- //  	DEBUG_PRINT("Processing STCALL\n");
- //  	gtk_container_foreach (GTK_CONTAINER (btnallowcalling), 
- //  	                          (GtkCallback) allowcallinghandler, data);
-	// }
- //  	else
- //  	{
- //  		printf("[ERROR] unknow button\n");
- //  	}
-  // if(strcmp(button_label, "Calling") == 0)
-  // {
-  //   robotRegister_sent[0] = 0;
-  //   gtk_label_set (GTK_LABEL(widget), "Recall Robot");
-  // }
-  // else
-  // {
-  //   if(robotRegister_received[0] == 1)
-  //   {
-  //     snprintf (TEXT, sizeof(TEXT), "ROBOT still in STATION 1\n");
-  //     printtoconsole(TEXT);
-  //   }
-  //   else
-  //   {
-  //     gtk_label_set (GTK_LABEL(widget), "Calling");
-  //     snprintf (TEXT, sizeof(TEXT), "Re-called ROBOT to STATION 1\n");
-  //     printtoconsole(TEXT);
-  //     guisending(1);
-  //   }
-  // }
-  //gtk_label_get(GTK_LABEL(widget), button_label);
-  //g_print ("%s was pressed, %s\n", (char *) data, (char*) button_label);
-
 }
 
 /* Our usual callback function */
@@ -1595,9 +1480,10 @@ void printtoconsole(char* text)
   gtk_text_view_scroll_to_iter(GTK_TEXT_VIEW(wins), &end, 0.0, FALSE, 0.0,0.0);
 }
 
-uint16_t stationresponding(uint16_t id)
+uint16_t stationresponding(uint16_t id, int32_t usleeptime)
 {
   DEBUG_PRINT("%d HAS Requeting\n", id);
+  usleep(usleeptime);
   if(id > 1)
   {
   	// Confirm with Station
@@ -1658,7 +1544,7 @@ uint16_t stationcontroller(uint16_t id)
   while(1)
   {
     printf("Station Controller Hanlder %d!!!\n", id);
-    stationreading(id, stationRead_reg[id], 1000000);
+    stationreading(id, stationRead_reg[id], 100000);
     canceled = stationRead_reg[id][0];
     increasing = stationRead_reg[id][2];
     decreasing = stationRead_reg[id][3];
@@ -1702,7 +1588,7 @@ uint16_t stationcontroller(uint16_t id)
 
 int16_t stationwriting(int16_t id, int16_t* regs)
 {
-  usleep(500000);
+  usleep(200000);
 
   // Setting for writing to station
   modbus_set_response_timeout(modbus_rtu_station_ctx, STATION_TIMEOUT_S, STATION_TIMEOUT_uS);
