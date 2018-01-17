@@ -112,18 +112,17 @@ uint16_t stationcontroller(uint16_t id);
 int16_t stationwriting(int16_t id, int16_t* regs);
 int16_t stationreading(int16_t id, int16_t *regs, int32_t usleeptime);
 
-void guisending(int16_t id);
-
 static void allowcallinghandler( GtkWidget *widget, gpointer data);
 static void callback( GtkWidget *widget, gpointer data);
+
 static void recallback( GtkWidget *widget, gpointer data);
 static void button_was_clicked (GtkWidget *widget, gpointer gdata);
+
 void attachcalling(int16_t data);
 int16_t detachcalling(void);
 void quickSort(void);
 int16_t isemtpyHistory(void);
 void deleteHistory(int16_t data);
-
 int16_t checkingHistory();
 
 ///////////////////////////////////////
@@ -164,10 +163,6 @@ GtkWidget *image;
 int16_t robot_status = 0;
 int16_t robot_sensor = 0;
 uint16_t robot_control = 0;
-
-GtkWidget *colorseldlg = NULL;
-GtkWidget *drawingarea = NULL;
-GdkColor color;
 
 GtkWidget *robotbattery;
 GtkWidget *robotlocation;
@@ -361,8 +356,8 @@ void *stationThread(void *vargp)
         {
           modbus_set_response_timeout(modbus_rtu_station_ctx, STATION_TIMEOUT_S, STATION_TIMEOUT_uS);
           modbus_set_slave(modbus_rtu_station_ctx, stationscan);
-          //modbus_flush(modbus_rtu_station_ctx);
           modbus_set_debug(modbus_rtu_station_ctx, FALSE);
+
           ////////////// Reading //////////////////////
           rc = modbus_read_registers(modbus_rtu_station_ctx, 0, 5, stationRead_reg[stationscan]);
           if(rc == -1)
@@ -373,13 +368,14 @@ void *stationThread(void *vargp)
           else
           {
             int i;
-            DEBUG_PRINT("[%d] STATION %d READs OK, with Data: ", rc, stationscan);
-            for(i=0;i<5;i++)
-            {
-              DEBUG_PRINT("%6d", stationRead_reg[stationscan][i], i);
-            }
-            DEBUG_PRINT("\n");
-
+            #ifdef DEBUG
+	            DEBUG_PRINT("[%d] STATION %d READs OK, with Data: ", rc, stationscan);
+	            for(i=0;i<5;i++)
+	            {
+	              DEBUG_PRINT("%6d", stationRead_reg[stationscan][i], i);
+	            }
+	            DEBUG_PRINT("\n");
+            #endif
             // Sleep between Reading & Writing Thread
             usleep(500000);
             
@@ -406,7 +402,9 @@ void *stationThread(void *vargp)
         }
       }
     }
-    printf("%s %d %d\n", __FUNCTION__, robotRegister_sent[0], robotRegister_received[0]);
+
+    DEBUG_PRINT("%s %d %d\n", __FUNCTION__, robotRegister_received[0], robotRegister_sent[0]);
+
     ////////////////////////////////////
     usleep(500000);
   }
@@ -1515,11 +1513,11 @@ uint16_t stationderesponding(uint16_t id)
 {
   if(stationstatus[id] == 0)
   {
-    printf("%d HASN'T Requeting\n", id);
+    DEBUG_PRINT("%d HASN'T Requeting\n", id);
   }
   else
   {
-    printf("%d HAS canceled Requeting\n", id);
+    DEBUG_PRINT("%d HAS canceled Requeting\n", id);
 
     // Confirm with Station
     stationWrite_reg[id][2] = 0;
@@ -1589,13 +1587,18 @@ uint16_t stationcontroller(uint16_t id)
 int16_t stationwriting(int16_t id, int16_t* regs)
 {
   usleep(200000);
-
+  int16_t ret;
   // Setting for writing to station
   modbus_set_response_timeout(modbus_rtu_station_ctx, STATION_TIMEOUT_S, STATION_TIMEOUT_uS);
   modbus_set_slave(modbus_rtu_station_ctx, id);
   //modbus_flush(modbus_rtu_station_ctx);
   modbus_set_debug(modbus_rtu_station_ctx, FALSE);
-  return modbus_write_registers(modbus_rtu_station_ctx, 0, 5, regs);
+  ret = modbus_write_registers(modbus_rtu_station_ctx, 0, 5, regs);
+  if(ret == -1)
+  {
+  	printf("%d Writing TIMEOUT\n", id);
+  }
+  return ret;
 }
 int16_t stationreading(int16_t id, int16_t *regs, int32_t usleeptime)
 {
@@ -1611,7 +1614,6 @@ int16_t stationreading(int16_t id, int16_t *regs, int32_t usleeptime)
   // Setting for writing to station
   modbus_set_response_timeout(modbus_rtu_station_ctx, STATION_TIMEOUT_S, STATION_TIMEOUT_uS);
   modbus_set_slave(modbus_rtu_station_ctx, id);
-  //modbus_flush(modbus_rtu_station_ctx);
   modbus_set_debug(modbus_rtu_station_ctx, FALSE);
 
   // Begin to read
@@ -1628,14 +1630,6 @@ int16_t stationreading(int16_t id, int16_t *regs, int32_t usleeptime)
     DEBUG_PRINT("%s Station %d Reading OK\n", __FUNCTION__, id);
     return 0;
   }
-}
-
-void guisending(int16_t id)
-{
-  robotRegister_sent[0] = id;
-  stationWrite_reg[id][1] = 1;
-  stationwriting(id, stationWrite_reg[id]);
-  under_control_ofMaster=id;
 }
 
 void button_was_clicked (GtkWidget *widget, gpointer gdata)
