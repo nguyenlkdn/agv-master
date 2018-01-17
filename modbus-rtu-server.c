@@ -109,7 +109,7 @@ uint16_t stationresponding(uint16_t id, int32_t usleeptime);
 uint16_t stationderesponding(uint16_t id);
 
 uint16_t stationcontroller(uint16_t id);
-int16_t stationwriting(int16_t id, int16_t* regs);
+int16_t stationwriting(int16_t id, int16_t* regs, int32_t usleeptime);
 int16_t stationreading(int16_t id, int16_t *regs, int32_t usleeptime);
 
 static void allowcallinghandler( GtkWidget *widget, gpointer data);
@@ -243,14 +243,18 @@ void *stationThread(void *vargp)
     if(robotRegister_received[0] == 15 && robotRegister_sent[0] == 15)
     {
       DEBUG_PRINT("Robot was come to Station 15\n");
+
+      // Turn of the Led add the station 15
       stationWrite_reg[15][1] = 2;
       stationWrite_reg[15][0] = 15;
-      stationwriting(15, stationWrite_reg[15]);
+      stationwriting(15, stationWrite_reg[15], 500000);
+
+      // Wating the Station 15 Confirm or Recalling from Master
       while(stationRead_reg[15][3] == 0 || (stationRead_reg[15][3] == -1))
       {
-      	sleep(1);
-        stationreading(15, stationRead_reg[15], 100000);
-        printf("Wating Station 15 confirms\n");
+      	usleep(LOOP_uSLEEP_TIME);
+        stationreading(15, stationRead_reg[15], 200000);
+        printf("[AGV INFO] Wating Station 15 confirms\n");
         if(robotRegister_sent[0] != 15 )
         {
         	snprintf(TEXT, sizeof(TEXT), "[WARNING] Robot was recalling without confirm of ST 15");
@@ -258,7 +262,11 @@ void *stationThread(void *vargp)
         	break;
         }
       }
+
+      // Default at the station 15 will send robot to Station 1
       robotRegister_sent[0] = 1;
+
+      // Print to log on GUI
       snprintf(TEXT, sizeof(TEXT), "Finished at ST 15 %s", getTime());
       printtoconsole(TEXT);
 
@@ -266,7 +274,7 @@ void *stationThread(void *vargp)
       stationWrite_reg[15][0] = 0;
       stationWrite_reg[15][1] = 0;
       stationWrite_reg[15][2] = 0;
-      stationwriting(15, stationWrite_reg[15]);
+      stationwriting(15, stationWrite_reg[15], 500000);
     }
 
     else if(isemtpyHistory() == 0)
@@ -276,22 +284,24 @@ void *stationThread(void *vargp)
     		// Get the reqeusting from history
     		if(checkingHistory() != -1)
     		{
+
+    			// Get the history from Buffer
     			under_control_ofMaster = checkingHistory();
-    			printf("Under control of Master at the %d\n", under_control_ofMaster);
+    			printf("[AGV INFO] Under control of Master at the %d\n", under_control_ofMaster);
 
     			// Request robot to stations
     			robotRegister_sent[0] = under_control_ofMaster;
     	  		
     	  		// Confirm with station
     			stationWrite_reg[under_control_ofMaster][1] = 1;
-    			stationwriting(under_control_ofMaster, stationWrite_reg[under_control_ofMaster]);
+    			stationwriting(under_control_ofMaster, stationWrite_reg[under_control_ofMaster], 500000);
 
     	  		// Checking robot come station or not
     	  		if(stationresponding(under_control_ofMaster, 500000) == 1)
     	  		{
     	  			// Turn on the led
     	  			stationWrite_reg[under_control_ofMaster][1] = 2;
-   					stationwriting(under_control_ofMaster, stationWrite_reg[under_control_ofMaster]);
+   					stationwriting(under_control_ofMaster, stationWrite_reg[under_control_ofMaster], 500000);
     	  		  	
     	  		  	// Allow station increase/decrease the carier
     	  		  	stationcontroller(under_control_ofMaster);
@@ -312,36 +322,37 @@ void *stationThread(void *vargp)
     	  				stationWrite_reg[under_control_ofMaster][0] = 0;
     	  				stationWrite_reg[under_control_ofMaster][1] = 0;
     	  				stationWrite_reg[under_control_ofMaster][2] = 0;
-    	  				stationwriting(under_control_ofMaster, stationWrite_reg[under_control_ofMaster]);
+    	  				stationwriting(under_control_ofMaster, stationWrite_reg[under_control_ofMaster], 500000);
     	  			}
     	  		}
     		}
-    		usleep(500000);
+    		usleep(LOOP_uSLEEP_TIME);
     	}
     }
     else if (callingallowed == 1)
     {
-    	printf("Searching the requesting\n");
-
       /*
         List of station will be ignored
       */
-      DEBUG_PRINT("Ignored %d: ", STATION_MAX);
-      for(rc=1;rc<=STATION_MAX;rc++)
-      {
-        stationid = rc;
-        if(stationignore[rc] == 0)
-        {
-          DEBUG_PRINT("%3d", rc);
-        }
-      }
-      DEBUG_PRINT("\n");
+    	#ifdef DEBUG
+	      DEBUG_PRINT("Ignored %d: ", STATION_MAX);
+	      for(rc=1;rc<=STATION_MAX;rc++)
+	      {
+	        stationid = rc;
+	        if(stationignore[rc] == 0)
+	        {
+	          DEBUG_PRINT("%3d", rc);
+	        }
+	      }
+	      DEBUG_PRINT("\n");
+	    #endif
       ////////////////////////////////////
       /*
         Reading Stations
       */
       int32_t stationscan;
       uint16_t come_to_valid_point;
+
       if(robotRegister_received[0] >= 2)
       {
         stationscan = robotRegister_received[0];
@@ -350,6 +361,9 @@ void *stationThread(void *vargp)
       {
         stationscan=STATION_START;
       }
+
+      printf("[AGV INFO] Searching the requesting %d -> %d\n", stationscan, STATION_MAX);
+
       for(;stationscan<=STATION_MAX;stationscan++)
       {
         if(stationignore[stationscan] == 1)
@@ -363,7 +377,7 @@ void *stationThread(void *vargp)
           if(rc == -1)
           {
             memset(stationRead_reg[stationscan], -1, sizeof(stationRead_reg[stationscan]));
-            printf("STATION %d: READ TIMEOUT!\n", stationscan);
+            printf("[AGV ERROR] STATION %d: READ TIMEOUT!\n", stationscan);
           }
           else
           {
@@ -449,7 +463,7 @@ void *robotThread(void *vargp)
       if(rc != 5)
       {
         rewrite = 1;
-        DEBUG_PRINT("Robot Writing Failed so that re-writing\n");
+        DEBUG_PRINT("[AGV ERROR] Robot Writing Failed so that re-writing\n");
       }
       else
       {
@@ -476,7 +490,7 @@ void *robotThread(void *vargp)
     }
     else
     {
-      printf("Robot Reading: Timeout %d\n", rc);
+      printf("[AGV ERROR] Robot Reading: Timeout %d\n", rc);
     }
     if(robotRegister_received[0] != 0)
     {
@@ -584,7 +598,7 @@ void *robotThread(void *vargp)
                                (GtkCallback) recallback, "ST15");
       }
     }
-    usleep(500000);
+    usleep(LOOP_uSLEEP_TIME);
   }
   return NULL;
 }
@@ -1486,7 +1500,7 @@ uint16_t stationresponding(uint16_t id, int32_t usleeptime)
   {
   	// Confirm with Station
   	stationWrite_reg[id][2] = 2;
-  	stationwriting(id, stationWrite_reg[id]);
+  	stationwriting(id, stationWrite_reg[id], 500000);
   }
 
   // Request to Robots
@@ -1502,7 +1516,7 @@ uint16_t stationresponding(uint16_t id, int32_t usleeptime)
   	if(id > 1)
   	{
   		stationWrite_reg[id][0] = id;
-  		stationwriting(id, stationWrite_reg[id]);
+  		stationwriting(id, stationWrite_reg[id], 500000);
   	}
     return 1;
   }
@@ -1521,7 +1535,7 @@ uint16_t stationderesponding(uint16_t id)
 
     // Confirm with Station
     stationWrite_reg[id][2] = 0;
-    stationwriting(id, stationWrite_reg[id]);
+    stationwriting(id, stationWrite_reg[id], 500000);
 
     // Clear station calling logs
     stationstatus[id] = 0;
@@ -1541,8 +1555,10 @@ uint16_t stationcontroller(uint16_t id)
   canceled = 0;
   while(1)
   {
-    printf("Station Controller Hanlder %d!!!\n", id);
-    stationreading(id, stationRead_reg[id], 100000);
+  	usleep(LOOP_uSLEEP_TIME);
+    printf("[AGV INFO] Station Controller Hanlder %d!!!\n", id);
+
+    stationreading(id, stationRead_reg[id], 200000);
     canceled = stationRead_reg[id][0];
     increasing = stationRead_reg[id][2];
     decreasing = stationRead_reg[id][3];
@@ -1569,7 +1585,7 @@ uint16_t stationcontroller(uint16_t id)
 
       // Clear all station regs
       memset(stationWrite_reg[id], 0, 5);
-      stationwriting(id, stationWrite_reg[id]);
+      stationwriting(id, stationWrite_reg[id], 500000);
 
       // Clear station calling logs
       stationstatus[id] = 0;
@@ -1584,7 +1600,7 @@ uint16_t stationcontroller(uint16_t id)
   return 1;
 }
 
-int16_t stationwriting(int16_t id, int16_t* regs)
+int16_t stationwriting(int16_t id, int16_t* regs, int32_t usleeptime)
 {
   usleep(200000);
   int16_t ret;
@@ -1596,7 +1612,7 @@ int16_t stationwriting(int16_t id, int16_t* regs)
   ret = modbus_write_registers(modbus_rtu_station_ctx, 0, 5, regs);
   if(ret == -1)
   {
-  	printf("%d Writing TIMEOUT\n", id);
+  	printf("[AGV ERROR] %d Writing TIMEOUT\n", id);
   }
   return ret;
 }
@@ -1622,7 +1638,7 @@ int16_t stationreading(int16_t id, int16_t *regs, int32_t usleeptime)
   // Check reading status
   if(rc == -1)
   {
-    printf("%s Station %d Reading TIMEOUT\n", __FUNCTION__, id);
+    printf("[AGV ERROR] %s Station %d Reading TIMEOUT\n", __FUNCTION__, id);
     return 1;
   }
   else
@@ -1644,7 +1660,7 @@ void attachcalling(int16_t data)
 	int idx, isinsert=0;
 	if(History.windex == 100)
 	{
-		printf("[Error] Full calling history\n");
+		printf("[AGV ERROR] Full calling history\n");
 	}
 	else
 	{
@@ -1663,23 +1679,27 @@ void attachcalling(int16_t data)
 			History.windex++;
 		}
 	}
+	#ifdef DEBUG
+		printf("History Before: ");
+		for(idx=0;idx<History.windex;idx++)
+		{
+			printf("%3d", History.data[idx]);
+		}
+		printf("\n");
+	#endif
 
-	// printf("History Before: ");
-	// for(idx=0;idx<History.windex;idx++)
-	// {
-	// 	printf("%3d", History.data[idx]);
-	// }
-	// printf("\n");
-
+	// Arragne the buffer
 	quickSort();
 
 	/////// Arranged Buffer //////////////////
-	printf("History After: ");
-	for(idx=0;idx<History.windex;idx++)
-	{
-		printf("%3d", History.data[idx]);
-	}
-	printf("\n");
+	#ifdef DEBUG
+		printf("[AGV ERROR] History After: ");
+		for(idx=0;idx<History.windex;idx++)
+		{
+			printf("%3d", History.data[idx]);
+		}
+		printf("\n");
+	#endif
 }
 int16_t detachcalling(void)
 {
@@ -1698,6 +1718,7 @@ int16_t detachcalling(void)
 			History.data[idx] = History.data[idx+1];
 		}
 		History.windex--;
+		
 		/////// Arranged Buffer //////////////////
 		printf("Got: %d, History: ", ret);
 		for(idx=0;idx<History.windex;idx++)
