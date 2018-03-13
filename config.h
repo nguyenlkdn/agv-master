@@ -1,7 +1,7 @@
-#define ROBOT_DEVICE	      "/dev/myrobot"
-#define STATION_DEVICE	      "/dev/mystation"
-//#define ROBOT_DEVICE	      "/dev/ttyUSB1"
-//#define STATION_DEVICE	      "/dev/ttyUSB0"
+//#define ROBOT_DEVICE	      "/dev/myrobot"
+//#define STATION_DEVICE	      "/dev/mystation"
+#define ROBOT_DEVICE	      "/dev/ttyUSB1"
+#define STATION_DEVICE	      "/dev/ttyUSB2"
 #define STATION_MAX		      	15
 #define STATION_START		  	2
 

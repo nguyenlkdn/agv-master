@@ -49,10 +49,13 @@ enum {TCP, RTU};
 
 #define STATION_TIMEOUT_uS        0
 #define STATION_TIMEOUT_S         1
+
 #define STATION_WRITE_TIMEOUT_uS  0
 #define STATION_WRITE_TIMEOUT_S   1
+
 #define ROBOT_WRITE_TIMEOUT_S     1
 #define ROBOT_WRITE_TIMEOUT_uS    0
+
 #define ROBOT_READ_TIMEOUT_S      1
 #define ROBOT_READ_TIMEOUT_uS     0
 /*
@@ -124,6 +127,7 @@ void quickSort(void);
 int16_t isemtpyHistory(void);
 void deleteHistory(int16_t data);
 int16_t checkingHistory();
+int16_t robotlocationGet(void);
 
 ///////////////////////////////////////
 /*
@@ -194,7 +198,7 @@ int main(int argc, char *argv[])
   stationInit();
   pthread_t stationThread_id, userThread_id, robotThread_id;
   pthread_t testing_id;
-
+  //robotRegister_sent[0] = 15;
   pthread_create(&userThread_id, NULL, userThread, NULL);
   pthread_create(&robotThread_id, NULL, robotThread, NULL);
   pthread_create(&stationThread_id, NULL, stationThread, NULL);
@@ -252,7 +256,7 @@ void *stationThread(void *vargp)
       // Wating the Station 15 Confirm or Recalling from Master
       while(stationRead_reg[15][3] == 0 || (stationRead_reg[15][3] == -1))
       {
-      	usleep(LOOP_uSLEEP_TIME);
+      	usleep(1000000);
         stationreading(15, stationRead_reg[15], 200000);
         printf("[AGV INFO] Wating Station 15 confirms\n");
         if(robotRegister_sent[0] != 15 )
@@ -315,6 +319,7 @@ void *stationThread(void *vargp)
     	  		{
     	  			if(robotRegister_received[0] > under_control_ofMaster)
     	  			{
+                printf("[AGV INFO] Removed %d due to robot ignore that station\n", under_control_ofMaster);
     	  				// Clear History if robot ignore RFID
     	  				deleteHistory(under_control_ofMaster);
 
@@ -323,6 +328,8 @@ void *stationThread(void *vargp)
     	  				stationWrite_reg[under_control_ofMaster][1] = 0;
     	  				stationWrite_reg[under_control_ofMaster][2] = 0;
     	  				stationwriting(under_control_ofMaster, stationWrite_reg[under_control_ofMaster], 500000);
+
+                break;
     	  			}
     	  		}
     		}
@@ -353,7 +360,7 @@ void *stationThread(void *vargp)
       int32_t stationscan;
       uint16_t come_to_valid_point;
 
-      if(robotRegister_received[0] >= 2)
+      if(robotRegister_received[0] > 2)
       {
         stationscan = robotRegister_received[0];
       }
@@ -519,7 +526,7 @@ void *robotThread(void *vargp)
       {
         robot_sensor = robotRegister_received[2];
       }
-      robotRegister_sent[2] = 0;
+      // robotRegister_sent[2] = 0;
 
       //////////////////////// Reset status /////////////////////////////
       if(robotRegister_received[0] == 1)
@@ -638,7 +645,7 @@ void robotInit()
 
 void stationInit()
 {
-  modbus_rtu_station_ctx = modbus_new_rtu(STATION_DEVICE, 38400, 'N', 8, 1);
+  modbus_rtu_station_ctx = modbus_new_rtu(STATION_DEVICE, 9600, 'N', 8, 1);
   if(modbus_connect(modbus_rtu_station_ctx) == -1)
    {
     fprintf(stderr, "%s connection failed: %s\n", STATION_DEVICE, modbus_strerror(errno));
@@ -1136,7 +1143,7 @@ static void callback( GtkWidget *widget,
                       gpointer   data )
 {
 	const char* button_label = gtk_label_get_label(GTK_LABEL(widget));
-	    if(strcmp(data, "ST1") == 0)
+    if(strcmp(data, "ST1") == 0)
 	    {
 	    	if(strcmp(button_label, "Calling") == 0)
 	    	{
@@ -1485,8 +1492,6 @@ void printtoconsole(char* text)
 {
   GtkTextIter start;
   GtkTextIter end;
-  // gtk_text_buffer_get_bounds(consoletxt, &start, &end);
-  // gtk_text_buffer_delete(consoletxt, &start, &end);
   gtk_text_buffer_insert(consoletxt, &iter, text, -1);
   gtk_text_buffer_get_end_iter(consoletxt, &end);
   gtk_text_view_scroll_to_iter(GTK_TEXT_VIEW(wins), &end, 0.0, FALSE, 0.0,0.0);
@@ -1494,7 +1499,7 @@ void printtoconsole(char* text)
 
 uint16_t stationresponding(uint16_t id, int32_t usleeptime)
 {
-  DEBUG_PRINT("%d HAS Requeting\n", id);
+  printf("[AGV INFO] %d HAS Requeting\n", id);
   usleep(usleeptime);
   if(id > 1)
   {
@@ -1527,11 +1532,11 @@ uint16_t stationderesponding(uint16_t id)
 {
   if(stationstatus[id] == 0)
   {
-    DEBUG_PRINT("%d HASN'T Requeting\n", id);
+    printf("[AGV INFO] %d HASN'T Requeting\n", id);
   }
   else
   {
-    DEBUG_PRINT("%d HAS canceled Requeting\n", id);
+    printf("[AGV INFO] %d HAS canceled Requeting\n", id);
 
     // Confirm with Station
     stationWrite_reg[id][2] = 0;
@@ -1568,7 +1573,7 @@ uint16_t stationcontroller(uint16_t id)
       )
     {
       robotRegister_sent[1]=1;
-      DEBUG_PRINT("Increased the Carier\n");
+      printf("\r[AGV INFO] Increased the Carier");
     }
     else if(
             (increasing == 0) &&
@@ -1576,12 +1581,12 @@ uint16_t stationcontroller(uint16_t id)
       )
     {
       robotRegister_sent[1]=0;
-      DEBUG_PRINT("Decreased the Carier\n");
+      DEBUG_PRINT("\r[AGV INFO] Decreased the Carier");
     }
 
     if(canceled == 0)
     {
-      DEBUG_PRINT("Finished at station %d\n", id);
+      DEBUG_PRINT("\nFinished at station %d\n", id);
 
       // Clear all station regs
       memset(stationWrite_reg[id], 0, 5);
@@ -1595,6 +1600,11 @@ uint16_t stationcontroller(uint16_t id)
 
       return 0;
     }
+
+    if(robotlocationGet() != id)
+    {
+      return 0;
+    }
     DEBUG_PRINT("Robot is working at %d\n", id);
   }
   return 1;
@@ -1604,18 +1614,25 @@ int16_t stationwriting(int16_t id, int16_t* regs, int32_t usleeptime)
 {
   usleep(200000);
   int16_t ret;
+
   // Setting for writing to station
   modbus_set_response_timeout(modbus_rtu_station_ctx, STATION_TIMEOUT_S, STATION_TIMEOUT_uS);
   modbus_set_slave(modbus_rtu_station_ctx, id);
-  //modbus_flush(modbus_rtu_station_ctx);
   modbus_set_debug(modbus_rtu_station_ctx, FALSE);
+  
+  // Begin to write to station
   ret = modbus_write_registers(modbus_rtu_station_ctx, 0, 5, regs);
+
+  // Check the returned values
   if(ret == -1)
   {
   	printf("[AGV ERROR] %d Writing TIMEOUT\n", id);
   }
+
+  // Return writing status
   return ret;
 }
+
 int16_t stationreading(int16_t id, int16_t *regs, int32_t usleeptime)
 {
   // Sleep for each reading
@@ -1718,7 +1735,7 @@ int16_t detachcalling(void)
 			History.data[idx] = History.data[idx+1];
 		}
 		History.windex--;
-		
+
 		/////// Arranged Buffer //////////////////
 		printf("Got: %d, History: ", ret);
 		for(idx=0;idx<History.windex;idx++)
@@ -1785,4 +1802,9 @@ int16_t checkingHistory()
 	{
 		return -1;
 	}
+}
+
+int16_t robotlocationGet(void)
+{
+  return robotRegister_received[0];
 }
