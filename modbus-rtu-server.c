@@ -246,18 +246,24 @@ void *stationThread(void *vargp)
   {
     if(robotRegister_received[0] == 15 && robotRegister_sent[0] == 15)
     {
-      DEBUG_PRINT("Robot was come to Station 15\n");
+      printf("[AGV INFO] Robot was come to Station 15: %d\n", stationRead_reg[15][3]);
 
       // Turn of the Led add the station 15
-      stationWrite_reg[15][1] = 2;
+      //stationWrite_reg[15][1] = 2;
       stationWrite_reg[15][0] = 15;
+      stationWrite_reg[15][1] = 0;
+      stationWrite_reg[15][2] = 0;
+      stationWrite_reg[15][3] = 0;
+      stationWrite_reg[15][4] = 0;
       stationwriting(15, stationWrite_reg[15], 500000);
 
       // Wating the Station 15 Confirm or Recalling from Master
       while(stationRead_reg[15][3] == 0 || (stationRead_reg[15][3] == -1))
       {
+        //stationwriting(15, stationWrite_reg[15], 1000000);
       	usleep(1000000);
-        stationreading(15, stationRead_reg[15], 200000);
+        stationreading(15, stationRead_reg[15], 1000000);
+        //usleep(1000000);
         printf("[AGV INFO] Wating Station 15 confirms\n");
         if(robotRegister_sent[0] != 15 )
         {
@@ -266,7 +272,7 @@ void *stationThread(void *vargp)
         	break;
         }
       }
-
+      stationRead_reg[15][3] = 0;
       // Default at the station 15 will send robot to Station 1
       robotRegister_sent[0] = 1;
 
@@ -1587,7 +1593,7 @@ uint16_t stationcontroller(uint16_t id)
     if(canceled == 0)
     {
       DEBUG_PRINT("\nFinished at station %d\n", id);
-
+      robotRegister_sent[1]=0;
       // Clear all station regs
       memset(stationWrite_reg[id], 0, 5);
       stationwriting(id, stationWrite_reg[id], 500000);
