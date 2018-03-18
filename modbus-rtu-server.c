@@ -47,8 +47,8 @@
 
 enum {TCP, RTU};
 
-#define STATION_TIMEOUT_uS        0
-#define STATION_TIMEOUT_S         1
+#define STATION_TIMEOUT_uS        200000
+#define STATION_TIMEOUT_S         0
 
 #define STATION_WRITE_TIMEOUT_uS  0
 #define STATION_WRITE_TIMEOUT_S   1
@@ -197,19 +197,16 @@ int main(int argc, char *argv[])
   robotInit();
   stationInit();
   pthread_t stationThread_id, userThread_id, robotThread_id;
-  pthread_t testing_id;
-  //robotRegister_sent[0] = 15;
+
   pthread_create(&userThread_id, NULL, userThread, NULL);
   pthread_create(&robotThread_id, NULL, robotThread, NULL);
   pthread_create(&stationThread_id, NULL, stationThread, NULL);
 
-  //pthread_create(&testing_id, NULL, testing, NULL);
 
   pthread_join(userThread_id, NULL);
   pthread_join(robotThread_id, NULL);
   pthread_join(stationThread_id, NULL);
 
-  //pthread_join(testing_id, NULL);
   return 0;
 }
 
@@ -218,24 +215,6 @@ void *userThread()
   GUIInit(0, NULL);
 }
 
-void *testing()
-{
-	int pos;
-  while(1)
-  {
-  	if(isemtpyHistory() == 0)
-  	{
-  		pos = checkingHistory();
-  		printf("Getting Calling: %d\n", pos);
-  		//deleteHistory(pos);
-  	}
-  	else
-  	{
-  		printf("No any calling\n");
-  	}
-  	sleep(1);
-  }
-}
 // A normal C function that is executed as a thread 
 // when its name is specified in pthread_create()
 void *stationThread(void *vargp)
@@ -265,12 +244,6 @@ void *stationThread(void *vargp)
         stationreading(15, stationRead_reg[15], 1000000);
         //usleep(1000000);
         printf("[AGV INFO] Wating Station 15 confirms\n");
-        if(robotRegister_sent[0] != 15 )
-        {
-        	snprintf(TEXT, sizeof(TEXT), "[WARNING] Robot was recalling without confirm of ST 15");
-        	printtoconsole(TEXT);
-        	break;
-        }
       }
       stationRead_reg[15][3] = 0;
       // Default at the station 15 will send robot to Station 1
@@ -286,6 +259,15 @@ void *stationThread(void *vargp)
       stationWrite_reg[15][2] = 0;
       stationwriting(15, stationWrite_reg[15], 500000);
     }
+
+    // if(robotRegister_sent[0] == 1)
+    // {
+    //   while(robotRegister_sent[0] == 1)
+    //   {
+    //     printf("Wating to station 1: %d\n", robotRegister_sent[0]);
+    //     sleep(1);
+    //   }
+    // }
 
     else if(isemtpyHistory() == 0)
     {
@@ -309,9 +291,9 @@ void *stationThread(void *vargp)
     	  		// Checking robot come station or not
     	  		if(stationresponding(under_control_ofMaster, 500000) == 1)
     	  		{
-    	  			// Turn on the led
-    	  			stationWrite_reg[under_control_ofMaster][1] = 2;
-   					stationwriting(under_control_ofMaster, stationWrite_reg[under_control_ofMaster], 500000);
+    	  			  // Turn on the led
+    	  			  stationWrite_reg[under_control_ofMaster][1] = 2;
+   					    stationwriting(under_control_ofMaster, stationWrite_reg[under_control_ofMaster], 500000);
     	  		  	
     	  		  	// Allow station increase/decrease the carier
     	  		  	stationcontroller(under_control_ofMaster);
@@ -342,23 +324,24 @@ void *stationThread(void *vargp)
     		usleep(LOOP_uSLEEP_TIME);
     	}
     }
-    else if (callingallowed == 1)
+    
+    if (callingallowed == 1)
     {
       /*
         List of station will be ignored
       */
-    	#ifdef DEBUG
-	      DEBUG_PRINT("Ignored %d: ", STATION_MAX);
-	      for(rc=1;rc<=STATION_MAX;rc++)
-	      {
-	        stationid = rc;
-	        if(stationignore[rc] == 0)
-	        {
-	          DEBUG_PRINT("%3d", rc);
-	        }
-	      }
-	      DEBUG_PRINT("\n");
-	    #endif
+      #ifdef DEBUG
+        DEBUG_PRINT("Ignored %d: ", STATION_MAX);
+        for(rc=1;rc<=STATION_MAX;rc++)
+        {
+          stationid = rc;
+          if(stationignore[rc] == 0)
+          {
+            DEBUG_PRINT("%3d", rc);
+          }
+        }
+        DEBUG_PRINT("\n");
+      #endif
       ////////////////////////////////////
       /*
         Reading Stations
@@ -366,16 +349,16 @@ void *stationThread(void *vargp)
       int32_t stationscan;
       uint16_t come_to_valid_point;
 
-      if(robotRegister_received[0] > 2)
+      if(robotRegister_received[0] >= 1 & robotRegister_received[0] < 15)
       {
-        stationscan = robotRegister_received[0];
+        stationscan = robotRegister_received[0]+1;
       }
       else
       {
-        stationscan=STATION_START;
+        stationscan=8;
       }
 
-      printf("[AGV INFO] Searching the requesting %d -> %d\n", stationscan, STATION_MAX);
+      printf("[AGV INFO] Searching the requesting %d -> %d\n", stationscan, STATION_MAX-1);
 
       for(;stationscan<=STATION_MAX;stationscan++)
       {
@@ -396,12 +379,12 @@ void *stationThread(void *vargp)
           {
             int i;
             #ifdef DEBUG
-	            DEBUG_PRINT("[%d] STATION %d READs OK, with Data: ", rc, stationscan);
-	            for(i=0;i<5;i++)
-	            {
-	              DEBUG_PRINT("%6d", stationRead_reg[stationscan][i], i);
-	            }
-	            DEBUG_PRINT("\n");
+              DEBUG_PRINT("[%d] STATION %d READs OK, with Data: ", rc, stationscan);
+              for(i=0;i<5;i++)
+              {
+                DEBUG_PRINT("%6d", stationRead_reg[stationscan][i], i);
+              }
+              DEBUG_PRINT("\n");
             #endif
             // Sleep between Reading & Writing Thread
             usleep(500000);
@@ -412,23 +395,24 @@ void *stationThread(void *vargp)
             // */
             if(stationRead_reg[stationscan][0] == 1)
             {
+              printf("Station %d requested attaching %d\n", stationscan, stationscan);
               stationstatus[stationscan] = 1;
-              come_to_valid_point = stationresponding(stationscan, 500000);
-              if(come_to_valid_point == 1)
-              {
-                stationcontroller(stationscan);
-              }
-              break;
+              attachcalling(stationscan);
             }
             else
             {
-              stationderesponding(stationscan);
+              if(stationstatus[stationscan] == 1)
+              {
+                stationstatus[stationscan] = 0;
+                printf("Station %d canceled request\n", stationscan);
+                deleteHistory(stationscan);
+              }
             }
             ////////////////////////////////////
           }
         }
       }
-    }
+    } 
 
     DEBUG_PRINT("%s %d %d\n", __FUNCTION__, robotRegister_received[0], robotRegister_sent[0]);
 
@@ -535,81 +519,81 @@ void *robotThread(void *vargp)
       // robotRegister_sent[2] = 0;
 
       //////////////////////// Reset status /////////////////////////////
-      if(robotRegister_received[0] == 1)
-      {
-        gtk_container_foreach (GTK_CONTAINER (actstation1), 
-                               (GtkCallback) recallback, "ST1");
-      }
-      else if(robotRegister_received[0] == 2)
-      {
-        gtk_container_foreach (GTK_CONTAINER (actstation2), 
-                               (GtkCallback) recallback, "ST2");
-      }
-      else if(robotRegister_received[0] == 3)
-      {
-        gtk_container_foreach (GTK_CONTAINER (actstation3), 
-                               (GtkCallback) recallback, "ST3");
-      }
-      else if(robotRegister_received[0] == 4)
-      {
-        gtk_container_foreach (GTK_CONTAINER (actstation4), 
-                               (GtkCallback) recallback, "ST4");
-      }
-      else if(robotRegister_received[0] == 5)
-      {
-        gtk_container_foreach (GTK_CONTAINER (actstation5), 
-                               (GtkCallback) recallback, "ST5");
-      }
-      else if(robotRegister_received[0] == 6)
-      {
-        gtk_container_foreach (GTK_CONTAINER (actstation6), 
-                               (GtkCallback) recallback, "ST6");
-      }
-      else if(robotRegister_received[0] == 7)
-      {
-        gtk_container_foreach (GTK_CONTAINER (actstation7), 
-                               (GtkCallback) recallback, "ST7");
-      }
-      else if(robotRegister_received[0] == 8)
-      {
-        gtk_container_foreach (GTK_CONTAINER (actstation8), 
-                               (GtkCallback) recallback, "ST8");
-      }
-      else if(robotRegister_received[0] == 9)
-      {
-        gtk_container_foreach (GTK_CONTAINER (actstation9), 
-                               (GtkCallback) recallback, "ST9");
-      }
-      else if(robotRegister_received[0] == 10)
-      {
-        gtk_container_foreach (GTK_CONTAINER (actstation10), 
-                               (GtkCallback) recallback, "ST10");
-      }
-      else if(robotRegister_received[0] == 11)
-      {
-        gtk_container_foreach (GTK_CONTAINER (actstation11), 
-                               (GtkCallback) recallback, "ST11");
-      }
-      else if(robotRegister_received[0] == 12)
-      {
-        gtk_container_foreach (GTK_CONTAINER (actstation12), 
-                               (GtkCallback) recallback, "ST12");
-      }
-      else if(robotRegister_received[0] == 13)
-      {
-        gtk_container_foreach (GTK_CONTAINER (actstation13), 
-                               (GtkCallback) recallback, "ST13");
-      }
-      else if(robotRegister_received[0] == 14)
-      {
-        gtk_container_foreach (GTK_CONTAINER (actstation14), 
-                               (GtkCallback) recallback, "ST14");
-      }
-      else if(robotRegister_received[0] == 15)
-      {
-        gtk_container_foreach (GTK_CONTAINER (actstation15), 
-                               (GtkCallback) recallback, "ST15");
-      }
+      // if(robotRegister_received[0] == 1)
+      // {
+      //   gtk_container_foreach (GTK_CONTAINER (actstation1), 
+      //                          (GtkCallback) recallback, "ST1");
+      // }
+      // else if(robotRegister_received[0] == 2)
+      // {
+      //   gtk_container_foreach (GTK_CONTAINER (actstation2), 
+      //                          (GtkCallback) recallback, "ST2");
+      // }
+      // else if(robotRegister_received[0] == 3)
+      // {
+      //   gtk_container_foreach (GTK_CONTAINER (actstation3), 
+      //                          (GtkCallback) recallback, "ST3");
+      // }
+      // else if(robotRegister_received[0] == 4)
+      // {
+      //   gtk_container_foreach (GTK_CONTAINER (actstation4), 
+      //                          (GtkCallback) recallback, "ST4");
+      // }
+      // else if(robotRegister_received[0] == 5)
+      // {
+      //   gtk_container_foreach (GTK_CONTAINER (actstation5), 
+      //                          (GtkCallback) recallback, "ST5");
+      // }
+      // else if(robotRegister_received[0] == 6)
+      // {
+      //   gtk_container_foreach (GTK_CONTAINER (actstation6), 
+      //                          (GtkCallback) recallback, "ST6");
+      // }
+      // else if(robotRegister_received[0] == 7)
+      // {
+      //   gtk_container_foreach (GTK_CONTAINER (actstation7), 
+      //                          (GtkCallback) recallback, "ST7");
+      // }
+      // else if(robotRegister_received[0] == 8)
+      // {
+      //   gtk_container_foreach (GTK_CONTAINER (actstation8), 
+      //                          (GtkCallback) recallback, "ST8");
+      // }
+      // else if(robotRegister_received[0] == 9)
+      // {
+      //   gtk_container_foreach (GTK_CONTAINER (actstation9), 
+      //                          (GtkCallback) recallback, "ST9");
+      // }
+      // else if(robotRegister_received[0] == 10)
+      // {
+      //   gtk_container_foreach (GTK_CONTAINER (actstation10), 
+      //                          (GtkCallback) recallback, "ST10");
+      // }
+      // else if(robotRegister_received[0] == 11)
+      // {
+      //   gtk_container_foreach (GTK_CONTAINER (actstation11), 
+      //                          (GtkCallback) recallback, "ST11");
+      // }
+      // else if(robotRegister_received[0] == 12)
+      // {
+      //   gtk_container_foreach (GTK_CONTAINER (actstation12), 
+      //                          (GtkCallback) recallback, "ST12");
+      // }
+      // else if(robotRegister_received[0] == 13)
+      // {
+      //   gtk_container_foreach (GTK_CONTAINER (actstation13), 
+      //                          (GtkCallback) recallback, "ST13");
+      // }
+      // else if(robotRegister_received[0] == 14)
+      // {
+      //   gtk_container_foreach (GTK_CONTAINER (actstation14), 
+      //                          (GtkCallback) recallback, "ST14");
+      // }
+      // else if(robotRegister_received[0] == 15)
+      // {
+      //   gtk_container_foreach (GTK_CONTAINER (actstation15), 
+      //                          (GtkCallback) recallback, "ST15");
+      // }
     }
     usleep(LOOP_uSLEEP_TIME);
   }
@@ -1566,10 +1550,8 @@ uint16_t stationcontroller(uint16_t id)
   canceled = 0;
   while(1)
   {
-  	usleep(LOOP_uSLEEP_TIME);
     printf("[AGV INFO] Station Controller Hanlder %d!!!\n", id);
-
-    stationreading(id, stationRead_reg[id], 200000);
+    stationreading(id, stationRead_reg[id], 1000000);
     canceled = stationRead_reg[id][0];
     increasing = stationRead_reg[id][2];
     decreasing = stationRead_reg[id][3];
@@ -1579,7 +1561,7 @@ uint16_t stationcontroller(uint16_t id)
       )
     {
       robotRegister_sent[1]=1;
-      printf("\r[AGV INFO] Increased the Carier");
+      printf("\r[AGV INFO] %d Increased the Carier", id);
     }
     else if(
             (increasing == 0) &&
@@ -1587,7 +1569,7 @@ uint16_t stationcontroller(uint16_t id)
       )
     {
       robotRegister_sent[1]=0;
-      DEBUG_PRINT("\r[AGV INFO] Decreased the Carier");
+      printf("\r[AGV INFO] %d Decreased the Carier", id);
     }
 
     if(canceled == 0)
