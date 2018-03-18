@@ -5,7 +5,7 @@
 #define STATION_MAX		      	15
 #define STATION_START		  	2
 
-#define LOOP_uSLEEP_TIME		500000
+#define LOOP_uSLEEP_TIME		1000000
 uint16_t isfullscreen	   =  1;
 uint8_t  stationignore[STATION_MAX];
 //#define DEBUG

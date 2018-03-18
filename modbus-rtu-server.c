@@ -64,7 +64,7 @@ enum {TCP, RTU};
 #define font "Sans 60"
 PangoFontDescription *font_desc;
 char TEXT[255];
-uint8_t callingallowed = 1;
+uint8_t callingallowed = 0;
 uint16_t UserCallingBuffer[10];
 GtkTextBuffer *consoletxt;
 GtkTextIter iter;
@@ -77,6 +77,7 @@ int16_t stationRead_reg[STATION_MAX][5];
 int16_t stationWrite_reg[STATION_MAX][5];
 int16_t stationstatus[STATION_MAX];
 int16_t under_control_ofMaster=0;
+int16_t ismaster_allowed = 0;
 int16_t IS_GUI_INITED = 0;
 /*
 ////////// Robot Variables ///////////////////
@@ -166,6 +167,7 @@ GtkWidget *btnallowcalling;
 GtkWidget *image;
 int16_t robot_status = 0;
 int16_t robot_sensor = 0;
+int32_t robot_enc = -1;
 uint16_t robot_control = 0;
 
 GtkWidget *robotbattery;
@@ -244,6 +246,7 @@ void *stationThread(void *vargp)
         stationreading(15, stationRead_reg[15], 1000000);
         //usleep(1000000);
         printf("[AGV INFO] Wating Station 15 confirms\n");
+        printf("15 Data: %d %d", stationRead_reg[15][2], stationRead_reg[15][3]);
       }
       stationRead_reg[15][3] = 0;
       // Default at the station 15 will send robot to Station 1
@@ -262,10 +265,11 @@ void *stationThread(void *vargp)
 
     // if(robotRegister_sent[0] == 1)
     // {
-    //   while(robotRegister_sent[0] == 1)
+    //   while(ismaster_allowed == 0)
     //   {
-    //     printf("Wating to station 1: %d\n", robotRegister_sent[0]);
+    //     printf("Wating to station 1: %d\n", ismaster_allowed);
     //     sleep(1);
+    //     ismaster_allowed = 0;
     //   }
     // }
 
@@ -321,10 +325,10 @@ void *stationThread(void *vargp)
     	  			}
     	  		}
     		}
-    		usleep(LOOP_uSLEEP_TIME);
+        break;
     	}
     }
-    
+    sleep(1);
     if (callingallowed == 1)
     {
       /*
@@ -349,14 +353,19 @@ void *stationThread(void *vargp)
       int32_t stationscan;
       uint16_t come_to_valid_point;
 
-      if(robotRegister_received[0] >= 1 & robotRegister_received[0] < 15)
+      if(robotRegister_received[0] == 0)
+      {
+        stationscan = 8;
+      }
+      else if(robotRegister_received[0] < 14)
       {
         stationscan = robotRegister_received[0]+1;
       }
       else
       {
-        stationscan=8;
+        stationscan = 15;
       }
+
 
       printf("[AGV INFO] Searching the requesting %d -> %d\n", stationscan, STATION_MAX-1);
 
@@ -413,7 +422,10 @@ void *stationThread(void *vargp)
         }
       }
     } 
-
+    else
+    {
+      printf("[AGV Info] No allowed calling from station\n");
+    }
     DEBUG_PRINT("%s %d %d\n", __FUNCTION__, robotRegister_received[0], robotRegister_sent[0]);
 
     ////////////////////////////////////
@@ -451,7 +463,7 @@ void *robotThread(void *vargp)
       ((resend == 1) || (rewrite == 1))
       )
     {
-      DEBUG_PRINT("Write to robot: %d %d %d %d %d\n", robotRegister_sent[0], robotRegister_sent[1], robotRegister_sent[2], robotRegister_sent[3], robotRegister_sent[4], robotRegister_sent[5]);
+      printf("Write to robot: %d %d %d %d %d\n", robotRegister_sent[0], robotRegister_sent[1], robotRegister_sent[2], robotRegister_sent[3], robotRegister_sent[4], robotRegister_sent[5]);
       modbus_flush(modbus_rtu_robot_ctx);
       modbus_set_response_timeout(modbus_rtu_robot_ctx, ROBOT_WRITE_TIMEOUT_S, ROBOT_WRITE_TIMEOUT_uS);
       //modbus_set_debug(modbus_rtu_robot_ctx, TRUE);
@@ -511,6 +523,7 @@ void *robotThread(void *vargp)
     }
     else
     {
+      robotRegister_sent[2] = 0;
       robot_status = robotRegister_received[0];
       if(robotRegister_received[2] != 3)
       {
@@ -1464,17 +1477,13 @@ static void allowcallinghandler( GtkWidget *widget,
   const char* button_label = gtk_label_get_label(GTK_LABEL(widget));
   if(strcmp(button_label, "Send yarn NOT DYED") == 0)
   {
-    callingallowed = 0;
+    callingallowed = 1;
     gtk_label_set (GTK_LABEL(widget), "Get yarn dyed");
-    snprintf (TEXT, sizeof(TEXT), "DENIED calling from all Stations\n");
-    printtoconsole(TEXT);
   }
   else
   {
-    callingallowed = 1;
+    callingallowed = 0;
     gtk_label_set (GTK_LABEL(widget), "Send yarn NOT DYED");
-    snprintf (TEXT, sizeof(TEXT), "ALLOWED calling from all Stations\n");
-    printtoconsole(TEXT);
   }
 }
 
@@ -1572,10 +1581,12 @@ uint16_t stationcontroller(uint16_t id)
       printf("\r[AGV INFO] %d Decreased the Carier", id);
     }
 
-    if(canceled == 0)
+    if(canceled == 0 && canceled != -1)
     {
+      printf("%d\n", canceled);
       DEBUG_PRINT("\nFinished at station %d\n", id);
       robotRegister_sent[1]=0;
+
       // Clear all station regs
       memset(stationWrite_reg[id], 0, 5);
       stationwriting(id, stationWrite_reg[id], 500000);
@@ -1643,6 +1654,7 @@ int16_t stationreading(int16_t id, int16_t *regs, int32_t usleeptime)
   // Check reading status
   if(rc == -1)
   {
+    memset(regs, -1, 5);
     printf("[AGV ERROR] %s Station %d Reading TIMEOUT\n", __FUNCTION__, id);
     return 1;
   }
@@ -1655,8 +1667,15 @@ int16_t stationreading(int16_t id, int16_t *regs, int32_t usleeptime)
 
 void button_was_clicked (GtkWidget *widget, gpointer gdata)
 {
-	DEBUG_PRINT("%s was clicked\n ", gdata);
-  	gtk_container_foreach (GTK_CONTAINER (widget), (GtkCallback) callback, gdata);
+	printf("%s was clicked\n ", gdata);
+    if(strcmp(gdata, "STCALL") == 0)
+    {
+      gtk_container_foreach (GTK_CONTAINER (widget), (GtkCallback) allowcallinghandler, gdata);
+    }
+    else
+    {
+      gtk_container_foreach (GTK_CONTAINER (widget), (GtkCallback) callback, gdata);
+    }
 }
 
 void attachcalling(int16_t data)
