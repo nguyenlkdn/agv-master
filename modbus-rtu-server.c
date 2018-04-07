@@ -167,7 +167,8 @@ GtkWidget *btnallowcalling;
 GtkWidget *image;
 int16_t robot_status = 0;
 int16_t robot_sensor = 0;
-int32_t robot_enc = -1;
+uint32_t robot_enc = 0;
+uint32_t robot_recover_enc = 0;
 uint16_t robot_control = 0;
 
 GtkWidget *robotbattery;
@@ -378,7 +379,7 @@ void *stationThread(void *vargp)
           modbus_set_debug(modbus_rtu_station_ctx, FALSE);
 
           ////////////// Reading //////////////////////
-          rc = modbus_read_registers(modbus_rtu_station_ctx, 0, 5, stationRead_reg[stationscan]);
+          rc = modbus_read_registers(modbus_rtu_station_ctx, 0, 3, stationRead_reg[stationscan]);
           if(rc == -1)
           {
             memset(stationRead_reg[stationscan], -1, sizeof(stationRead_reg[stationscan]));
@@ -424,7 +425,7 @@ void *stationThread(void *vargp)
     } 
     else
     {
-      printf("[AGV Info] No allowed calling from station\n");
+      DEBUG_PRINT("[AGV Info] No allowed calling from station\n");
     }
     DEBUG_PRINT("%s %d %d\n", __FUNCTION__, robotRegister_received[0], robotRegister_sent[0]);
 
@@ -463,7 +464,7 @@ void *robotThread(void *vargp)
       ((resend == 1) || (rewrite == 1))
       )
     {
-      printf("Write to robot: %d %d %d %d %d\n", robotRegister_sent[0], robotRegister_sent[1], robotRegister_sent[2], robotRegister_sent[3], robotRegister_sent[4], robotRegister_sent[5]);
+      printf("Write to robot: %d %d %d %d %d %d\n", robotRegister_sent[0], robotRegister_sent[1], robotRegister_sent[2], robotRegister_sent[3], robotRegister_sent[4], robotRegister_sent[5]);
       modbus_flush(modbus_rtu_robot_ctx);
       modbus_set_response_timeout(modbus_rtu_robot_ctx, ROBOT_WRITE_TIMEOUT_S, ROBOT_WRITE_TIMEOUT_uS);
       //modbus_set_debug(modbus_rtu_robot_ctx, TRUE);
@@ -472,7 +473,7 @@ void *robotThread(void *vargp)
       if(rc != 5)
       {
         rewrite = 1;
-        DEBUG_PRINT("[AGV ERROR] Robot Writing Failed so that re-writing\n");
+        printf("[AGV ERROR] Robot Writing Failed so that re-writing\n");
       }
       else
       {
@@ -488,19 +489,21 @@ void *robotThread(void *vargp)
     modbus_flush(modbus_rtu_robot_ctx);
     modbus_set_response_timeout(modbus_rtu_robot_ctx, ROBOT_READ_TIMEOUT_S, ROBOT_READ_TIMEOUT_uS);
     //modbus_set_debug(modbus_rtu_robot_ctx, TRUE);
-    rc = modbus_read_registers(modbus_rtu_robot_ctx, 0, 3, robotRegister_received);
+    rc = modbus_read_registers(modbus_rtu_robot_ctx, 0, 5, robotRegister_received);
     //modbus_set_debug(modbus_rtu_robot_ctx, FALSE);
     if(rc != -1)
     {
       #ifdef RobotModbus_DEBUG
         DEBUG_PRINT("Robot Reading: OK\n");
       #endif
+      robot_enc = (int32_t)((uint16_t)robotRegister_received[4] | (uint16_t)robotRegister_received[5]<<16);
       usleep(200000);
     }
     else
     {
       printf("[AGV ERROR] Robot Reading: Timeout %d\n", rc);
     }
+
     if(robotRegister_received[0] != 0)
     {
       snprintf(TEXT, sizeof(TEXT), "%d", robotRegister_received[0]);
@@ -514,17 +517,38 @@ void *robotThread(void *vargp)
     snprintf(TEXT, sizeof(TEXT), "%d", robotRegister_received[2]);
     gtk_entry_set_text (GTK_ENTRY (robotstatus), TEXT);
 
+    // int i;
+    // printf("######################################################\n");
+    // printf("Robot Data: ");
+    // for(i=0;i<rc;i++)
+    // {
+    //   printf("%3d ", robotRegister_received[i]);
+    // }
+    // printf(" = %8d", robot_enc);
+
+    // printf("\n");
+    // snprintf(TEXT, sizeof(TEXT), "%d", robot_enc);
+    // gtk_entry_set_text (GTK_ENTRY (robotspeedmax), TEXT);
+
+    snprintf(TEXT, sizeof(TEXT), "%d", robotRegister_received[3]);
+    gtk_entry_set_text (GTK_ENTRY (robotbattery), TEXT);
 
     if(robotRegister_received[0] == 0)
     {
       robotRegister_sent[2] = robot_status;
       robotRegister_sent[3] = robot_sensor;
+
+      //robotRegister_sent[5] = robot_recover_enc >> 16;
+      //robotRegister_sent[4] = robot_recover_enc&0x0000ffff;
       DEBUG_PRINT("Robot was reseted\n");
     }
     else
     {
       robotRegister_sent[2] = 0;
       robot_status = robotRegister_received[0];
+      // robot_recover_enc = robot_enc;
+      // printf("[AGV Infor] Stored Encoder: %d\n", robot_recover_enc);
+
       if(robotRegister_received[2] != 3)
       {
         robot_sensor = robotRegister_received[2];
@@ -532,81 +556,81 @@ void *robotThread(void *vargp)
       // robotRegister_sent[2] = 0;
 
       //////////////////////// Reset status /////////////////////////////
-      // if(robotRegister_received[0] == 1)
-      // {
-      //   gtk_container_foreach (GTK_CONTAINER (actstation1), 
-      //                          (GtkCallback) recallback, "ST1");
-      // }
-      // else if(robotRegister_received[0] == 2)
-      // {
-      //   gtk_container_foreach (GTK_CONTAINER (actstation2), 
-      //                          (GtkCallback) recallback, "ST2");
-      // }
-      // else if(robotRegister_received[0] == 3)
-      // {
-      //   gtk_container_foreach (GTK_CONTAINER (actstation3), 
-      //                          (GtkCallback) recallback, "ST3");
-      // }
-      // else if(robotRegister_received[0] == 4)
-      // {
-      //   gtk_container_foreach (GTK_CONTAINER (actstation4), 
-      //                          (GtkCallback) recallback, "ST4");
-      // }
-      // else if(robotRegister_received[0] == 5)
-      // {
-      //   gtk_container_foreach (GTK_CONTAINER (actstation5), 
-      //                          (GtkCallback) recallback, "ST5");
-      // }
-      // else if(robotRegister_received[0] == 6)
-      // {
-      //   gtk_container_foreach (GTK_CONTAINER (actstation6), 
-      //                          (GtkCallback) recallback, "ST6");
-      // }
-      // else if(robotRegister_received[0] == 7)
-      // {
-      //   gtk_container_foreach (GTK_CONTAINER (actstation7), 
-      //                          (GtkCallback) recallback, "ST7");
-      // }
-      // else if(robotRegister_received[0] == 8)
-      // {
-      //   gtk_container_foreach (GTK_CONTAINER (actstation8), 
-      //                          (GtkCallback) recallback, "ST8");
-      // }
-      // else if(robotRegister_received[0] == 9)
-      // {
-      //   gtk_container_foreach (GTK_CONTAINER (actstation9), 
-      //                          (GtkCallback) recallback, "ST9");
-      // }
-      // else if(robotRegister_received[0] == 10)
-      // {
-      //   gtk_container_foreach (GTK_CONTAINER (actstation10), 
-      //                          (GtkCallback) recallback, "ST10");
-      // }
-      // else if(robotRegister_received[0] == 11)
-      // {
-      //   gtk_container_foreach (GTK_CONTAINER (actstation11), 
-      //                          (GtkCallback) recallback, "ST11");
-      // }
-      // else if(robotRegister_received[0] == 12)
-      // {
-      //   gtk_container_foreach (GTK_CONTAINER (actstation12), 
-      //                          (GtkCallback) recallback, "ST12");
-      // }
-      // else if(robotRegister_received[0] == 13)
-      // {
-      //   gtk_container_foreach (GTK_CONTAINER (actstation13), 
-      //                          (GtkCallback) recallback, "ST13");
-      // }
-      // else if(robotRegister_received[0] == 14)
-      // {
-      //   gtk_container_foreach (GTK_CONTAINER (actstation14), 
-      //                          (GtkCallback) recallback, "ST14");
-      // }
-      // else if(robotRegister_received[0] == 15)
-      // {
-      //   gtk_container_foreach (GTK_CONTAINER (actstation15), 
-      //                          (GtkCallback) recallback, "ST15");
-      // }
+      if(robotRegister_received[0] == 1)
+      {
+        gtk_container_foreach (GTK_CONTAINER (actstation1), 
+                               (GtkCallback) recallback, "ST1");
+      }
+      else if(robotRegister_received[0] == 2)
+      {
+        gtk_container_foreach (GTK_CONTAINER (actstation2), 
+                               (GtkCallback) recallback, "ST2");
+      }
+      else if(robotRegister_received[0] == 3)
+      {
+        gtk_container_foreach (GTK_CONTAINER (actstation3), 
+                               (GtkCallback) recallback, "ST3");
+      }
+      else if(robotRegister_received[0] == 4)
+      {
+        gtk_container_foreach (GTK_CONTAINER (actstation4), 
+                               (GtkCallback) recallback, "ST4");
+      }
+      else if(robotRegister_received[0] == 5)
+      {
+        gtk_container_foreach (GTK_CONTAINER (actstation5), 
+                               (GtkCallback) recallback, "ST5");
+      }
+      else if(robotRegister_received[0] == 6)
+      {
+        gtk_container_foreach (GTK_CONTAINER (actstation6), 
+                               (GtkCallback) recallback, "ST6");
+      }
+      else if(robotRegister_received[0] == 7)
+      {
+        gtk_container_foreach (GTK_CONTAINER (actstation7), 
+                               (GtkCallback) recallback, "ST7");
+      }
+      else if(robotRegister_received[0] == 8)
+      {
+        gtk_container_foreach (GTK_CONTAINER (actstation8), 
+                               (GtkCallback) recallback, "ST8");
+      }
+      else if(robotRegister_received[0] == 9)
+      {
+        gtk_container_foreach (GTK_CONTAINER (actstation9), 
+                               (GtkCallback) recallback, "ST9");
+      }
+      else if(robotRegister_received[0] == 10)
+      {
+        gtk_container_foreach (GTK_CONTAINER (actstation10), 
+                               (GtkCallback) recallback, "ST10");
+      }
+      else if(robotRegister_received[0] == 11)
+      {
+        gtk_container_foreach (GTK_CONTAINER (actstation11), 
+                               (GtkCallback) recallback, "ST11");
+      }
+      else if(robotRegister_received[0] == 12)
+      {
+        gtk_container_foreach (GTK_CONTAINER (actstation12), 
+                               (GtkCallback) recallback, "ST12");
+      }
+      else if(robotRegister_received[0] == 13)
+      {
+        gtk_container_foreach (GTK_CONTAINER (actstation13), 
+                               (GtkCallback) recallback, "ST13");
+      }
+      else if(robotRegister_received[0] == 14)
+      {
+        gtk_container_foreach (GTK_CONTAINER (actstation14), 
+                               (GtkCallback) recallback, "ST14");
+      }
+      else if(robotRegister_received[0] == 15)
+      {
+        gtk_container_foreach (GTK_CONTAINER (actstation15), 
+                               (GtkCallback) recallback, "ST15");
+      }
     }
     usleep(LOOP_uSLEEP_TIME);
   }
@@ -811,7 +835,7 @@ void GUIInit(int argc, char *argv[])
   gtk_table_attach(GTK_TABLE(table), robotconnection, 5, 6, 6, 7, 
       GTK_FILL, GTK_FILL, 0, 0);
 
-  title = gtk_label_new("Robot Speed Max: ");
+  title = gtk_label_new("Robot Encoder: ");
   gtk_table_attach(GTK_TABLE(table), title, 4, 5, 7, 8, 
       GTK_FILL, GTK_FILL, 0, 0);
 
